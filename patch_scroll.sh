@@ -1,0 +1,1 @@
+sed -i '96i\  const [showScrollTop, setShowScrollTop] = useState(false);\n\  useEffect(() => {\n    const handleScroll = () => {\n      setShowScrollTop(window.scrollY > 400);\n    };\n    window.addEventListener("scroll", handleScroll);\n    return () => window.removeEventListener("scroll", handleScroll);\n  }, []);\n' src/App.tsx

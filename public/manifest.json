@@ -1,0 +1,45 @@
+{
+  "short_name": "SplitMate",
+  "name": "SplitMate - Chia Tiền Nhóm sòng phẳng",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#059669",
+  "theme_color": "#059669",
+  "display": "standalone",
+  "orientation": "portrait",
+  "share_target": {
+    "action": "/share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "receipt",
+          "accept": ["image/jpeg", "image/png", "image/webp", "image/jpg"]
+        }
+      ]
+    }
+  }
+}

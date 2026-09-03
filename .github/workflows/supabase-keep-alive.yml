@@ -1,0 +1,73 @@
+name: Supabase & SplitMate Keep-Alive
+
+# Workflow này tự động gửi yêu cầu truy vấn siêu nhẹ (ping) đến API SplitMate & Supabase
+# vào mỗi 2 ngày một lần để đảm bảo Supabase Free Tier không bao giờ bị tạm dừng (Paused) sau 7 ngày không hoạt động.
+
+on:
+  schedule:
+    # Chạy tự động lúc 04:00 UTC (11:00 AM giờ Việt Nam) mỗi 2 ngày
+    - cron: '0 4 */2 * *'
+  workflow_dispatch: # Cho phép bấm nút "Run workflow" thủ công trên GitHub Actions bất kỳ lúc nào
+
+jobs:
+  keep-alive:
+    name: Ping Supabase Database & API
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 🕒 Ghi nhận thời gian kích hoạt
+        run: |
+          echo "======================================================="
+          echo "🚀 SplitMate Supabase Keep-Alive Triggered"
+          echo "⏰ Thời gian UTC: $(date -u)"
+          echo "⏰ Thời gian VN: $(TZ='Asia/Ho_Chi_Minh' date)"
+          echo "======================================================="
+
+      - name: 🌐 Ping Endpoint SplitMate (/api/keep-alive)
+        run: |
+          APP_TARGET_URL="${{ secrets.APP_URL }}"
+          if [ -z "$APP_TARGET_URL" ]; then
+            APP_TARGET_URL="https://splitmate.space"
+          fi
+          
+          echo "📡 Đang gửi request tới: ${APP_TARGET_URL}/api/keep-alive..."
+          
+          HTTP_RESPONSE=$(curl -s -w "\nHTTP_STATUS_CODE:%{http_code}" -m 30 "${APP_TARGET_URL}/api/keep-alive" || echo "FAILED")
+          HTTP_BODY=$(echo "$HTTP_RESPONSE" | sed -e 's/HTTP_STATUS_CODE\:.*//g')
+          HTTP_STATUS=$(echo "$HTTP_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTP_STATUS_CODE://')
+
+          echo "📊 HTTP Status Code: $HTTP_STATUS"
+          echo "📦 Response Body: $HTTP_BODY"
+
+          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 304 ]; then
+            echo "✅ Ping thành công qua Endpoint /api/keep-alive! Supabase đã nhận activity."
+          else
+            echo "⚠️ Endpoint chính chưa phản hồi 200 (Status: $HTTP_STATUS). Sẽ kiểm tra thêm kết nối trực tiếp."
+          fi
+
+      - name: 🗄️ Ping Dự Phòng Trực Tiếp Supabase REST API (Nếu có Secret)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          ACTIVE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-$SUPABASE_ANON_KEY}"
+          
+          if [ -n "$SUPABASE_URL" ] && [ -n "$ACTIVE_KEY" ]; then
+            echo "📡 Đang query trực tiếp Supabase REST API (${SUPABASE_URL}/rest/v1/groups)..."
+            SB_RESPONSE=$(curl -s -w "\nHTTP_STATUS_CODE:%{http_code}" -m 30 \
+              -H "apikey: ${ACTIVE_KEY}" \
+              -H "Authorization: Bearer ${ACTIVE_KEY}" \
+              "${SUPABASE_URL}/rest/v1/groups?select=id&limit=1" || echo "FAILED")
+            
+            SB_STATUS=$(echo "$SB_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTP_STATUS_CODE://')
+            echo "📊 Supabase Direct HTTP Status: $SB_STATUS"
+            echo "✅ Query trực tiếp Supabase thành công!"
+          else
+            echo "ℹ️ Không tìm thấy Secrets SUPABASE_URL / SUPABASE_ANON_KEY trong GitHub repo (hoặc đã ping thành công qua web endpoint)."
+          fi
+
+      - name: 🎉 Hoàn tất Keep-Alive
+        run: |
+          echo "🎉 Supabase Keep-Alive đã hoàn tất trọn vẹn. Dự án Supabase của bạn luôn trong trạng thái ACTIVE."

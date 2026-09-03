@@ -1,0 +1,136 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;850&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Đồng bộ dải màu emerald thành màu xanh ngọc lục bảo tươi sáng của Finzo (#03B875) */
+  --color-emerald-50: #e6f7f0;
+  --color-emerald-100: #ccf3e3;
+  --color-emerald-200: #99e6c8;
+  --color-emerald-300: #66daac;
+  --color-emerald-400: #33cd91;
+  --color-emerald-500: #03b875; /* Sắc xanh ngọc lục bảo Finzo chính hiệu */
+  --color-emerald-600: #03b875; /* Sử dụng đồng bộ với bg-emerald-600 */
+  --color-emerald-700: #02935d;
+  --color-emerald-800: #027a4e;
+  --color-emerald-900: #01613e;
+  --color-emerald-950: #013723;
+
+  /* Đồng bộ màu green để các nút dùng green cũng có màu xanh ngọc lục bảo */
+  --color-green-50: #e6f7f0;
+  --color-green-100: #ccf3e3;
+  --color-green-200: #99e6c8;
+  --color-green-300: #66daac;
+  --color-green-400: #33cd91;
+  --color-green-500: #03b875;
+  --color-green-600: #03b875;
+  --color-green-700: #02935d;
+  --color-green-800: #027a4e;
+  --color-green-900: #01613e;
+}
+
+/* Base styling enhancements */
+html, body {
+  overscroll-behavior: none;
+}
+@media (max-width: 767px) {
+  html {
+    /* Base for very small screens (e.g. under 360px) */
+    font-size: 13.5px; 
+  }
+}
+@media (min-width: 360px) and (max-width: 767px) {
+  html {
+    /* Standard preview/mobile screens (e.g. 360px - 389px) */
+    font-size: 14.5px;
+  }
+}
+@media (min-width: 390px) and (max-width: 767px) {
+  html {
+    /* Medium-large mobile screens (e.g. iPhone 13/14 Pro - 390px to 414px) */
+    font-size: 15.5px;
+  }
+}
+@media (min-width: 415px) and (max-width: 767px) {
+  html {
+    /* Pro Max / Plus screens (e.g. iPhone 13 Pro Max, iPhone 14 Plus - 415px to 440px) */
+    font-size: 16.5px;
+  }
+}
+@media (min-width: 441px) and (max-width: 767px) {
+  html {
+    /* Large phablets (441px to 767px) */
+    font-size: 17.5px;
+  }
+}
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+body {
+  font-family: var(--font-sans);
+  background-color: #f4f6f8; /* Nền xám trắng nhạt và mịn của Finzo */
+  color: #1a1d1f; /* Màu chữ đen đậm sang trọng và hiện đại */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Remove native password reveal button */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+input[type="password"]::-webkit-contacts-auto-fill-button,
+input[type="password"]::-webkit-credentials-auto-fill-button {
+  visibility: hidden;
+  display: none !important;
+}
+
+/* Custom scrollbar utility */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #03b87533; /* Pastel emerald scrollbar thumb */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #03b87566;
+}
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) {
+  margin-bottom: 10px;
+}
+
+/* FinTech UI Standardization Utilities */
+.nowrap-label {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+}
+
+.safe-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatar-fixed {
+  flex-shrink: 0 !important;
+  aspect-ratio: 1 / 1;
+}
+
+/* Smooth tap & focus styling */
+button, a {
+  -webkit-tap-highlight-color: transparent;
+}
+

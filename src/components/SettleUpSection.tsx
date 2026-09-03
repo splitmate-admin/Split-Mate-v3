@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Member, Expense, Group, SimplifiedTransaction, MemberBalance, DebtOffset, PendingReceipt } from "../types";
-import { ArrowLeftRight, ArrowRight, CheckCircle2, FileText, QrCode, AlertCircle, X, Handshake, ChevronRight, Check, Loader2, Landmark, Copy, Upload, AlertTriangle, Settings, Sparkles } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, CheckCircle2, FileText, QrCode, AlertCircle, X, Handshake, ChevronRight, Check, Loader2, Landmark, Copy, Upload, AlertTriangle, Settings, Sparkles, Trash2, RefreshCw } from "lucide-react";
 
 import { calculateBalances, simplifyDebts } from "../utils/debtSimplifier";
 import { motion, AnimatePresence } from "framer-motion";
@@ -196,7 +196,7 @@ export default function SettleUpSection({
         body: JSON.stringify({
           fileName,
           image: compressed,
-          groupId: activeGroup.id
+          groupId: activeGroup?.id
         })
       });
       if (!response.ok) throw new Error("Upload failed");
@@ -205,92 +205,25 @@ export default function SettleUpSection({
 
       const parsedAmount = parseInt(confirmedQrAmountStr.replace(/[^0-9]/g, "")) || 0;
 
-      // Quét AI bằng Gemini để tự động đối soát biên lai
-      let isAiMatched = false;
-      let scannedAmount = 0;
-      let noteText = "";
-
-      try {
-        const scanRes = await fetch("/api/receipt/scan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image: compressed })
-        });
-        if (scanRes.ok) {
-          const scanData = await scanRes.json();
-          if (scanData && scanData.success && scanData.data) {
-            const resObj = scanData.data;
-            if (!resObj.isUnreadable && resObj.items && resObj.items.length > 0) {
-              scannedAmount = resObj.items[0].amount || 0;
-              if (scannedAmount > 0) {
-                noteText = `AI quét biên lai: ${new Intl.NumberFormat("vi-VN").format(scannedAmount)}đ`;
-                // Khớp lệnh nếu số tiền AI quét xấp xỉ/bằng số tiền thanh toán (chênh lệch <= 1000đ)
-                if (Math.abs(scannedAmount - parsedAmount) <= 1000) {
-                  isAiMatched = true;
-                }
-              }
-            }
-          }
-        }
-      } catch (scanErr) {
-        console.warn("AI scan receipt error:", scanErr);
+      const rec: PendingReceipt = {
+        id: "rec_" + Date.now(),
+        fromId: activePayTx.fromId,
+        toId: activePayTx.toId,
+        amount: parsedAmount,
+        status: "pending",
+        uploadedAt: new Date().toISOString(),
+        receiptImage: uploadedUrl
+      };
+      
+      if (onUpdatePendingReceipts) {
+        await onUpdatePendingReceipts([...pendingReceipts, rec]);
       }
-
-      if (isAiMatched) {
-        // Tự động duyệt hoàn tất nợ ngay lập tức nếu AI quét khớp 100%
-        if (activePayTx.toId === "group") {
-          handleDebtorSettle(activePayTx.fromId, parsedAmount);
-        } else {
-          handleCreditorSettle(activePayTx.toId, parsedAmount);
-        }
-
-        const approvedRec: PendingReceipt = {
-          id: "rec_" + Date.now(),
-          fromId: activePayTx.fromId,
-          toId: activePayTx.toId,
-          amount: parsedAmount,
-          status: "approved",
-          uploadedAt: new Date().toISOString(),
-          receiptImage: uploadedUrl,
-          verified_by_ai: true,
-          memberNote: `✨ AI Khớp lệnh tự động (${new Intl.NumberFormat("vi-VN").format(scannedAmount)}đ)`
-        };
-
-        if (onUpdatePendingReceipts) {
-          onUpdatePendingReceipts([...pendingReceipts, approvedRec]);
-        }
-
-        setActivePayTx(null);
-        setToastMsg({
-          title: "✨ AI Khớp Lệnh Thành Công!",
-          desc: `Biên lai ${new Intl.NumberFormat("vi-VN").format(scannedAmount)}đ khớp 100% với số tiền. Đã tự động duyệt hoàn tất!`,
-          type: "success"
-        });
-      } else {
-        const rec: PendingReceipt = {
-          id: "rec_" + Date.now(),
-          fromId: activePayTx.fromId,
-          toId: activePayTx.toId,
-          amount: parsedAmount,
-          status: "pending",
-          uploadedAt: new Date().toISOString(),
-          receiptImage: uploadedUrl,
-          verified_by_ai: false,
-          memberNote: noteText || undefined
-        };
-        
-        if (onUpdatePendingReceipts) {
-          onUpdatePendingReceipts([...pendingReceipts, rec]);
-        }
-        setActivePayTx(null);
-        setToastMsg({
-          title: "Thành công",
-          desc: scannedAmount > 0 
-            ? `Đã gửi biên lai (AI quét được ${new Intl.NumberFormat("vi-VN").format(scannedAmount)}đ). Đang chờ Trưởng nhóm đối soát.`
-            : "Đã gửi yêu cầu kèm biên lai. Đang chờ Trưởng nhóm đối soát.",
-          type: "success"
-        });
-      }
+      setActivePayTx(null);
+      setToastMsg({
+        title: "Đã gửi biên lai",
+        desc: "Biên lai đã được lưu vào danh sách chờ duyệt để đối soát và khấu trừ công nợ.",
+        type: "success"
+      });
     } catch (err) {
       console.error(err);
       setToastMsg({ title: "Lỗi", desc: "Không thể upload biên lai.", type: "error" });
@@ -486,6 +419,22 @@ export default function SettleUpSection({
       await onUpdatePendingReceipts(updatedReceipts);
     }
     setToastMsg({ title: "Đã từ chối", desc: "Đã từ chối biên lai này.", type: "success" });
+  };
+
+  const handleDeleteReceipt = async (receiptId: string) => {
+    const updatedReceipts = pendingReceipts.filter(r => r.id !== receiptId);
+    if (onUpdatePendingReceipts) {
+      await onUpdatePendingReceipts(updatedReceipts);
+    }
+    setToastMsg({ title: "Đã xóa", desc: "Đã xóa biên lai thành công.", type: "success" });
+  };
+
+  const handleResetReceiptToPending = async (receiptId: string) => {
+    const updatedReceipts = pendingReceipts.map(r => r.id === receiptId ? { ...r, status: "pending" as const, adminNote: undefined } : r);
+    if (onUpdatePendingReceipts) {
+      await onUpdatePendingReceipts(updatedReceipts);
+    }
+    setToastMsg({ title: "Chờ duyệt lại", desc: "Đã chuyển biên lai về trạng thái Chờ duyệt. Bạn có thể bấm Duyệt biên lai để khấu trừ công nợ.", type: "success" });
   };
 
   // Helper for QR
@@ -971,29 +920,14 @@ export default function SettleUpSection({
                 </div>
 
                 {/* Upload Receipt */}
-                {(!activeGroup?.plan || activeGroup?.plan === "FREE") ? (
-                  <div 
-                    onClick={() => onShowUpgradeModal()}
-                    className="bg-amber-50/80 border border-amber-200/90 rounded-2xl p-3.5 text-center space-y-1 cursor-pointer hover:bg-amber-100/70 transition-all shadow-xs"
-                  >
-                    <div className="flex items-center justify-center gap-1.5 text-amber-900 font-extrabold text-xs">
-                      <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
-                      <span>Xác nhận nhanh bằng ảnh biên lai AI</span>
-                    </div>
-                    <p className="text-[10.5px] text-amber-800 font-medium leading-snug">
-                      🔒 AI tự động đối soát biên lai chuyển khoản khả dụng trên Gói Bè Bạn & Hội Làng. <span className="font-extrabold underline text-amber-900">Bấm để nâng cấp ngay →</span>
-                    </p>
+                <label className={`block bg-white border border-emerald-200/80 rounded-2xl p-3.5 border-dashed text-center space-y-1 cursor-pointer hover:bg-emerald-50/50 transition-colors ${isUploadingReceipt ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleReceiptUpload} disabled={isUploadingReceipt} />
+                  <div className="w-7 h-7 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto">
+                    {isUploadingReceipt ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                   </div>
-                ) : (
-                  <label className={`block bg-white border border-emerald-100 rounded-2xl p-4 border-dashed text-center space-y-1.5 cursor-pointer hover:bg-emerald-50/50 transition-colors ${isUploadingReceipt ? 'opacity-50 pointer-events-none' : ''}`}>
-                    <input type="file" accept="image/*" className="hidden" onChange={handleReceiptUpload} disabled={isUploadingReceipt} />
-                    <div className="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto">
-                      {isUploadingReceipt ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                    </div>
-                    <p className="text-xs font-bold text-slate-800">{isUploadingReceipt ? '✨ AI đang quét & đối soát...' : 'Xác nhận nhanh bằng ảnh biên lai'}</p>
-                    <p className="text-[10px] text-slate-500 leading-tight">Tải ảnh chụp màn hình chuyển khoản lên đây để AI đối soát tự động</p>
-                  </label>
-                )}
+                  <p className="text-xs font-bold text-slate-800">{isUploadingReceipt ? 'Đang tải ảnh lên...' : 'Tải ảnh biên lai chuyển khoản'}</p>
+                  <p className="text-[10px] text-slate-500 leading-tight">Lưu ảnh chụp màn hình chuyển khoản để đối soát công nợ</p>
+                </label>
               </div>
 
               {/* Footer */}
@@ -1503,11 +1437,6 @@ export default function SettleUpSection({
                         }`}>
                           {rec.status === "pending" ? "Chờ duyệt" : (rec.status === "approved" ? "Đã duyệt" : "Bị từ chối")}
                         </span>
-                        {rec.verified_by_ai && (
-                          <span className="inline-flex items-center text-[9px] font-black uppercase bg-teal-50 border border-teal-200 text-teal-700 px-2 py-0.5 rounded-full">
-                            AI Khớp Lệnh ✨
-                          </span>
-                        )}
                         {(rec.uploadedAt || rec.createdAt) && (
                           <span className="text-[10px] text-slate-400 font-medium ml-1">
                             {formatDateTime(rec.uploadedAt || rec.createdAt)}
@@ -1522,19 +1451,32 @@ export default function SettleUpSection({
                       )}
                     </div>
 
-                    {rec.receiptImage && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewImage(rec.receiptImage)}
-                        className="w-12 h-12 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden shrink-0 group relative hover:border-emerald-500 transition-colors cursor-pointer"
-                        title="Bấm để phóng to biên nhận"
-                      >
-                        <img src={rec.receiptImage} alt="Receipt proof" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                        <div className="absolute inset-0 bg-black/15 group-hover:bg-black/25 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span className="text-[8px] text-white font-black uppercase">Xem</span>
-                        </div>
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {rec.receiptImage && (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewImage(rec.receiptImage)}
+                          className="w-12 h-12 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden shrink-0 group relative hover:border-emerald-500 transition-colors cursor-pointer"
+                          title="Bấm để phóng to biên nhận"
+                        >
+                          <img src={rec.receiptImage} alt="Receipt proof" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                          <div className="absolute inset-0 bg-black/15 group-hover:bg-black/25 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-[8px] text-white font-black uppercase">Xem</span>
+                          </div>
+                        </button>
+                      )}
+
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteReceipt(rec.id)}
+                          className="w-8 h-8 rounded-xl border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 flex items-center justify-center transition-colors cursor-pointer"
+                          title="Xóa biên lai này"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {rec.status === "pending" && isAdmin && (
@@ -1542,16 +1484,52 @@ export default function SettleUpSection({
                       <button
                         type="button"
                         onClick={() => handleRejectReceipt(rec)}
-                        className="flex-1 px-3 py-2.5 bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-600 font-extrabold text-xs rounded-xl transition-all cursor-pointer"
+                        className="flex-1 px-3 py-2 bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-600 font-extrabold text-xs rounded-xl transition-all cursor-pointer"
                       >
                         Từ chối
                       </button>
                       <button
                         type="button"
                         onClick={() => handleApproveReceipt(rec)}
-                        className="flex-1 px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-600 font-extrabold text-xs rounded-xl transition-all cursor-pointer"
+                        className="flex-1 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-600 font-extrabold text-xs rounded-xl transition-all cursor-pointer"
                       >
                         Duyệt biên lai
+                      </button>
+                    </div>
+                  )}
+
+                  {rec.status === "approved" && isAdmin && (
+                    <div className="flex gap-2 border-t border-slate-50 pt-2 mt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handleResetReceiptToPending(rec.id)}
+                        className="flex-1 py-1.5 px-3 bg-slate-50 hover:bg-slate-100 active:scale-95 text-slate-600 font-bold text-[11px] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                        title="Chuyển trạng thái về chờ duyệt để duyệt lại"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        Chuyển về Chờ duyệt
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleApproveReceipt(rec)}
+                        className="flex-1 py-1.5 px-3 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-700 font-bold text-[11px] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                        title="Khấu trừ công nợ ngay nếu trước đó chưa được trừ"
+                      >
+                        <CheckCircle2 className="w-3 h-3" />
+                        Khấu trừ công nợ
+                      </button>
+                    </div>
+                  )}
+
+                  {rec.status === "rejected" && isAdmin && (
+                    <div className="flex gap-2 border-t border-slate-50 pt-2 mt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handleResetReceiptToPending(rec.id)}
+                        className="flex-1 py-1.5 px-3 bg-slate-50 hover:bg-slate-100 active:scale-95 text-slate-600 font-bold text-[11px] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        Mở lại (Chờ duyệt)
                       </button>
                     </div>
                   )}

@@ -1163,6 +1163,16 @@ Mỗi khi triển khai một tính năng hoặc thay đổi mới:
     - Thêm helper `checkGroupsSchemaBillingCyclesColumns()` để phát hiện động sự tồn tại của cột `billing_cycles` trên Supabase, hỗ trợ cả layout JSON `data`, layout cột phẳng và layout Auto-Pack.
     - Cập nhật `supabaseGetGroupsByOwnerOrEmail`, `supabaseGetGroupById`, `supabaseGetGroupByMemberAccessCode` và `supabaseSaveGroup` để lưu trữ và truy xuất mảng `billingCycles` hoàn toàn mượt mà.
   - Cung cấp câu lệnh SQL tùy chọn cho người dùng muốn thêm cột `billing_cycles` vào bảng `groups` trên Supabase Database: `ALTER TABLE groups ADD COLUMN IF NOT EXISTS billing_cycles JSONB DEFAULT '[]'::jsonb;`.
+- **03/09/2026 (Loại bỏ AI Khớp Lệnh Tự Động & Chuẩn hóa Đối Soát Biên Lai Chuyển Khoản)**:
+  - **Mục tiêu**: Khắc phục triệt để lỗi biên lai chuyển khoản (ví dụ hoàn tiền 2.000.000đ cho Panh) bị AI tự động duyệt dẫn đến xung đột ghi đè state làm mất khoản chi tiêu khấu trừ công nợ, đồng thời loại bỏ rủi ro AI tự duyệt ngoài ý muốn.
+  - **Thực hiện (`src/components/SettleUpSection.tsx`)**:
+    - **Loại bỏ AI Khớp Lệnh**: Gỡ bỏ API scan Gemini tự động khớp lệnh khi upload ảnh biên lai trong `handleReceiptUpload`. Mọi biên lai chuyển khoản khi tải lên đều được lưu trữ an toàn vào Supabase Storage với trạng thái `pending` (Chờ duyệt).
+    - **Làm sạch giao diện**: Gỡ bỏ badge `AI KHỚP LỆNH ✨` và nhãn quảng bá AI rườm rà. Chuyển khung upload thành "Tải ảnh biên lai chuyển khoản" với thiết kế phẳng mỏng nhẹ.
+    - **Quản lý biên lai toàn diện cho Trưởng nhóm**:
+      - Bổ sung nút **Xóa biên lai (Trash2)** cho phép Trưởng nhóm xóa bất kỳ biên lai nào (chờ duyệt, đã duyệt, từ chối).
+      - Bổ sung nút **"Khấu trừ công nợ"** và **"Chuyển về Chờ duyệt"** cho các biên lai đã duyệt (giúp xử lý ngay lập tức các biên lai bị kẹt trước đó như khoản 2tr của Panh chỉ với 1 click).
+      - Thao tác "Duyệt biên lai" luôn thực thi qua `onBatchSettleAndReceipt` nguyên tử, đồng thời tạo giao dịch khấu trừ và đổi trạng thái biên lai thành `approved`, đảm bảo công nợ giảm chính xác 100%.
+
 
 
 

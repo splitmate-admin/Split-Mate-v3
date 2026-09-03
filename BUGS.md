@@ -9,6 +9,21 @@
 
 ## 2. LỊCH SỬ KHẮC PHỤC BUGS (RESOLVED ISSUES)
 
+### [03/09/2026] Loại bỏ AI Khớp Lệnh Tự Động & Khắc phục lỗi Biên lai Đã Duyệt nhưng Không Trừ Nợ
+- **Mô tả**: Khi người dùng tải ảnh biên lai chuyển khoản lên Modal QR thanh toán (ví dụ: hoàn tiền 2.000.000đ cho Panh), hệ thống tự động quét AI và khớp lệnh `isAiMatched`, gán nhãn "ĐÃ DUYỆT - AI KHỚP LỆNH ✨". Tuy nhiên, khoản tiền 2.000.000đ không hề được khấu trừ khỏi công nợ (tổng nợ của Panh vẫn giữ nguyên 3.800.000đ), và do trạng thái đã là "Đã duyệt" nên Trưởng nhóm không có cách nào bấm duyệt lại hay xóa biên lai lỗi.
+- **Nguyên nhân**:
+  1. Trong `handleReceiptUpload` (`SettleUpSection.tsx`), khi `isAiMatched = true`, hệ thống gọi hàm thêm chi tiêu hoàn nợ `handleCreditorSettle` (hoặc `handleDebtorSettle`), nhưng ngay lập tức sau đó lại gọi `onUpdatePendingReceipts([...pendingReceipts, approvedRec])`.
+  2. Do state React trong `App.tsx` chưa kịp re-render với khoản chi tiêu mới, `handleUpdatePendingReceipts` đã chụp lấy đối tượng `activeGroup` cũ (chưa có expense hoàn tiền) và ghi đè lên Supabase, làm mất vĩnh viễn khoản chi tiêu vừa tạo.
+  3. Tính năng tự động duyệt bằng AI tiềm ẩn rủi ro sai lệch tài chính nếu ảnh mờ, chuyển sai người nhận hoặc scan nhầm số tiền.
+- **Giải pháp**:
+  1. **Loại bỏ triệt để tính năng AI Khớp Lệnh**: Gỡ bỏ lệnh scan AI tự động duyệt trong `handleReceiptUpload`, gỡ bỏ toàn bộ nhãn/badge `AI KHỚP LỆNH ✨`, đơn giản hóa form upload thành thuần túy lưu trữ chứng từ ảnh chuyển khoản.
+  2. **Quy trình duyệt an toàn & nguyên tử**: Khi upload ảnh biên lai, biên lai luôn được lưu ở trạng thái `pending` (Chờ duyệt). Trưởng nhóm kiểm tra thực tế và bấm **"Duyệt biên lai"** (`handleApproveReceipt`), kích hoạt `onBatchSettleAndReceipt` ghi đồng thời cả khoản chi tiêu hoàn tiền lẫn cập nhật trạng thái biên lai trong cùng 1 transaction nguyên tử, đảm bảo số dư công nợ được trừ chính xác 100%.
+  3. **Cung cấp công cụ xử lý cho Trưởng nhóm**:
+     - Bổ sung nút **Xóa biên lai (Trash2)** cho Trưởng nhóm đối với mọi biên lai (chờ duyệt, đã duyệt, từ chối).
+     - Đối với các biên lai đã duyệt nhưng bị kẹt chưa trừ nợ trước đây: Bổ sung nút **"Khấu trừ công nợ"** (tạo giao dịch trừ nợ ngay lập tức) và nút **"Chuyển về Chờ duyệt"** (để Trưởng nhóm duyệt lại chuẩn xác).
+- **Trạng thái**: ✅ Fixed & Verified.
+
+
 ### [28/08/2026] Triển khai Cơ chế Giữ Hoạt Động (Keep-Alive) cho Supabase Free Tier chống Pause sau 7 ngày
 - **Mô tả**: Dự án sử dụng Supabase gói miễn phí (Free Tier) có thể tự động chuyển sang trạng thái tạm dừng (Paused) nếu sau 7 ngày liên tiếp không có truy vấn người dùng, khiến ứng dụng gặp lỗi kết nối và cần khôi phục thủ công trên dashboard.
 - **Nguyên nhân**: Cơ chế scale-to-zero tự động của Supabase đối với các dự án Free Tier không có traffic API trong 7 ngày.

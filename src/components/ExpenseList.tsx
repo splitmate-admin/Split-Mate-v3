@@ -7,6 +7,7 @@ import {
   Plus, Users, FolderPlus
 } from "lucide-react";
 import { formatDateTime, patchOldTimestamp, parsePatchedTime } from "../utils/dateUtils";
+import { formatCurrencyAmount, useTranslation } from "../utils/i18n";
 
 interface ExpenseListProps {
   expenses: Expense[];
@@ -52,6 +53,17 @@ export default function ExpenseList({
   const [activeReceiptImage, setActiveReceiptImage] = useState<string | null>(null);
   const [expandedExpenseIds, setExpandedExpenseIds] = useState<Record<string, boolean>>({});
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const { lang, t } = useTranslation();
+  
+  const categoryFilters = [
+    { key: "all", name: t("cat_all"), emoji: "✨" },
+    { key: "food", name: t("cat_food"), emoji: "🍔" },
+    { key: "transport", name: t("cat_transport"), emoji: "🚗" },
+    { key: "shopping", name: t("cat_shopping"), emoji: "🛍️" },
+    { key: "accommodation", name: t("cat_hotel"), emoji: "🏨" },
+    { key: "entertainment", name: t("cat_entertainment"), emoji: "🎉" },
+    { key: "other", name: t("cat_other"), emoji: "💸" }
+  ];
   
   const toggleExpenseExpand = (id: string) => {
     setExpandedExpenseIds((prev) => ({
@@ -108,7 +120,7 @@ export default function ExpenseList({
 
   // Formatter helpers
   const formatMoney = (val: number) => {
-    return new Intl.NumberFormat("vi-VN").format(Math.round(val)) + "đ";
+    return formatCurrencyAmount(val, activeGroup?.currency || "VND");
   };
 
   const formatDate = (dateStr: string) => {
@@ -214,14 +226,14 @@ export default function ExpenseList({
     if (isNew) {
       return (
         <span key="new" className="inline-flex items-center bg-rose-50 text-rose-500 text-[9px] font-black px-1.5 py-0.5 rounded-md border border-rose-100 select-none uppercase tracking-wider animate-pulse">
-          MỚI THÊM
+          {lang === 'vi' ? 'MỚI THÊM' : 'NEW'}
         </span>
       );
     }
     if (isEdited) {
       return (
         <span key="edited" className="inline-flex items-center bg-orange-50 text-orange-500 text-[9px] font-black px-1.5 py-0.5 rounded-md border border-orange-100 select-none uppercase tracking-wider">
-          ĐÃ SỬA ✏️
+          {lang === 'vi' ? 'ĐÃ SỬA ✏️' : 'EDITED ✏️'}
         </span>
       );
     }
@@ -392,12 +404,12 @@ export default function ExpenseList({
           {viewMode === "calendar" ? (
             <>
               <Calendar className="w-4 h-4 text-[#03B875]" />
-              <span>Lịch chi tiêu</span>
+              <span>{lang === 'vi' ? 'Lịch chi tiêu' : 'Expense Calendar'}</span>
             </>
           ) : (
             <>
               <List className="w-4 h-4 text-[#03B875]" />
-              <span>Danh sách chi tiêu</span>
+              <span>{lang === 'vi' ? 'Danh sách chi tiêu' : 'Expense List'}</span>
             </>
           )}
         </h4>
@@ -414,7 +426,7 @@ export default function ExpenseList({
             }`}
           >
             <List className="w-3.5 h-3.5" />
-            <span>Danh sách</span>
+            <span>{lang === 'vi' ? 'Danh sách' : 'List'}</span>
           </button>
           <button
             type="button"
@@ -426,7 +438,7 @@ export default function ExpenseList({
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
-            <span>Lịch</span>
+            <span>{lang === 'vi' ? 'Lịch' : 'Calendar'}</span>
           </button>
         </div>
       </div>
@@ -441,7 +453,7 @@ export default function ExpenseList({
             </div>
             <input
               type="text"
-              placeholder="Search here..."
+              placeholder={t("search")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-slate-100/60 border-none rounded-2xl py-2.5 pl-9 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-slate-200 transition-all text-slate-800 placeholder:text-slate-400"
@@ -479,7 +491,7 @@ export default function ExpenseList({
                 onChange={(e) => setFilterPayerId(e.target.value)}
                 className="w-full bg-white border border-slate-200/60 rounded-xl py-2 pl-3 pr-8 text-xs focus:outline-none focus:ring-1 focus:ring-[#03B875] transition-all text-slate-700 cursor-pointer appearance-none"
               >
-                <option value="all">Tất cả người chi</option>
+                <option value="all">{lang === 'vi' ? 'Tất cả người chi' : 'All Payers'}</option>
                 {members.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.emoji} {m.name}
@@ -496,8 +508,8 @@ export default function ExpenseList({
                 onChange={(e) => setSortBy(e.target.value as "date" | "updated_at")}
                 className="w-full bg-white border border-slate-200/60 rounded-xl py-2 pl-3 pr-8 text-xs focus:outline-none focus:ring-1 focus:ring-[#03B875] transition-all font-bold text-[#03B875] cursor-pointer appearance-none"
               >
-                <option value="date">📅 Ngày đi ăn</option>
-                <option value="updated_at">✏️ Mới cập nhật</option>
+                <option value="date">{lang === 'vi' ? '📅 Ngày đi ăn' : '📅 Expense Date'}</option>
+                <option value="updated_at">{lang === 'vi' ? '✏️ Mới cập nhật' : '✏️ Recently Updated'}</option>
               </select>
               <ChevronDown className="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-[#03B875] pointer-events-none" />
             </div>
@@ -506,7 +518,7 @@ export default function ExpenseList({
 
         {/* Horizontal Quick Filter Pills */}
         <div className="no-scrollbar overflow-x-auto flex gap-2 py-1 select-none" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-          {CATEGORY_FILTERS.map((cat) => {
+          {categoryFilters.map((cat) => {
             const isSelected = selectedCategory === cat.key;
             return (
               <button
@@ -646,7 +658,9 @@ export default function ExpenseList({
               </div>
               <div className="text-left">
                 <p className="text-[10px] text-[#64748B] font-bold uppercase tracking-wider">
-                  {selectedDate ? `Chi tiêu ngày ${formatDate(selectedDate)}` : `Tổng chi tiêu ${getMonthName(currentMonth)}`}
+                  {selectedDate 
+                    ? (lang === 'vi' ? `Chi tiêu ngày ${formatDate(selectedDate)}` : `Expenses on ${formatDate(selectedDate)}`)
+                    : (lang === 'vi' ? `Tổng chi tiêu ${getMonthName(currentMonth)}` : `Total expenses ${getMonthName(currentMonth)}`)}
                 </p>
                 <p className="font-extrabold text-sm sm:text-base text-[#03B875] font-mono">
                   {formatMoney(selectedDate ? totalSelectedDay : totalNavigatedMonth)}
@@ -657,8 +671,8 @@ export default function ExpenseList({
             <div className="text-left sm:text-right shrink-0">
               <p className="text-[11px] text-[#64748B] font-bold">
                 {selectedDate 
-                  ? `Có ${selectedDayExpenses.length} khoản chi tiêu chung` 
-                  : `Có ${navigatedMonthExpenses.length} khoản chi tiêu chung`}
+                  ? (lang === 'vi' ? `Có ${selectedDayExpenses.length} khoản chi tiêu chung` : `${selectedDayExpenses.length} shared expenses`) 
+                  : (lang === 'vi' ? `Có ${navigatedMonthExpenses.length} khoản chi tiêu chung` : `${navigatedMonthExpenses.length} shared expenses`)}
               </p>
               {selectedDate && (
                 <button 
@@ -666,7 +680,7 @@ export default function ExpenseList({
                   onClick={() => setSelectedDate(null)}
                   className="text-[10px] text-[#03B875] hover:text-[#02935d] font-black cursor-pointer hover:underline inline-flex items-center gap-0.5 mt-0.5"
                 >
-                  <span>← Xem chi tiêu cả tháng</span>
+                  <span>{lang === 'vi' ? '← Xem chi tiêu cả tháng' : '← View whole month'}</span>
                 </button>
               )}
             </div>
@@ -684,11 +698,13 @@ export default function ExpenseList({
               </div>
               <div className="space-y-1 max-w-sm mx-auto">
                 <span className="inline-block px-3 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white uppercase tracking-wider mb-1 shadow-2xs">
-                  👉 BƯỚC 2: THÊM THÀNH VIÊN VÀO NHÓM
+                  {lang === 'vi' ? '👉 BƯỚC 2: THÊM THÀNH VIÊN VÀO NHÓM' : '👉 STEP 2: ADD GROUP MEMBERS'}
                 </span>
-                <h4 className="font-extrabold text-[#0F172A] text-xs sm:text-sm">Nhóm của bạn hiện mới có 1 người!</h4>
+                <h4 className="font-extrabold text-[#0F172A] text-xs sm:text-sm">
+                  {lang === 'vi' ? 'Nhóm của bạn hiện mới có 1 người!' : 'Your group currently has only 1 member!'}
+                </h4>
                 <p className="text-[11px] text-slate-600 leading-relaxed">
-                  Để chia tiền chính xác, hãy thêm các bạn cùng ăn chơi / đi du lịch vào nhóm trước nhé.
+                  {lang === 'vi' ? 'Để chia tiền chính xác, hãy thêm các bạn cùng ăn chơi / đi du lịch vào nhóm trước nhé.' : 'To split bills accurately, add your friends/trip mates to the group first.'}
                 </p>
               </div>
               <div className="pt-1">
@@ -698,7 +714,7 @@ export default function ExpenseList({
                   className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl transition-all shadow-md shadow-amber-500/25 active:scale-95 cursor-pointer uppercase tracking-wider"
                 >
                   <UserPlus className="w-4 h-4 text-white shrink-0" />
-                  <span>Bấm Thêm Thành Viên Ngay</span>
+                  <span>{lang === 'vi' ? 'Bấm Thêm Thành Viên Ngay' : 'Add Members Now'}</span>
                 </button>
               </div>
             </div>
@@ -710,11 +726,13 @@ export default function ExpenseList({
               </div>
               <div className="space-y-1 max-w-sm mx-auto">
                 <span className="inline-block px-3 py-0.5 rounded-full text-[10px] font-black bg-[#03B875] text-white uppercase tracking-wider mb-1 shadow-2xs">
-                  👉 BƯỚC 3: GHI SỔ HÓA ĐƠN ĐẦU TIÊN
+                  {lang === 'vi' ? '👉 BƯỚC 3: GHI SỔ HÓA ĐƠN ĐẦU TIÊN' : '👉 STEP 3: RECORD FIRST EXPENSE'}
                 </span>
-                <h4 className="font-bold text-[#0F172A] text-xs sm:text-sm">Nhập các khoản chi tiêu phát sinh</h4>
+                <h4 className="font-bold text-[#0F172A] text-xs sm:text-sm">
+                  {lang === 'vi' ? 'Nhập các khoản chi tiêu phát sinh' : 'Record your group expenses'}
+                </h4>
                 <p className="text-[11px] text-[#64748B] leading-relaxed">
-                  Hãy bấm nút bên dưới để thêm chi phí phát sinh chung, tự động tính toán và chia tiền hoàn hảo.
+                  {lang === 'vi' ? 'Hãy bấm nút bên dưới để thêm chi phí phát sinh chung, tự động tính toán và chia tiền hoàn hảo.' : 'Click below to add shared expenses, auto-calculate and split debts perfectly.'}
                 </p>
               </div>
               {onNavigateToAdd && (
@@ -724,7 +742,7 @@ export default function ExpenseList({
                     onClick={onNavigateToAdd}
                     className="inline-flex items-center gap-1.5 bg-[#03B875] hover:bg-[#02935d] text-white font-extrabold text-xs px-5 py-2.5 rounded-xl transition-all shadow-md shadow-[#03B875]/20 active:scale-95 cursor-pointer uppercase tracking-wider"
                   >
-                    <span>Thêm chi tiêu ngay</span>
+                    <span>{lang === 'vi' ? 'Thêm chi tiêu ngay' : 'Add Expense Now'}</span>
                     <Sparkles className="w-3.5 h-3.5 text-white shrink-0" />
                   </button>
                 </div>
@@ -807,7 +825,7 @@ export default function ExpenseList({
                               {formattedDesc}
                             </h5>
                             <p className="text-xs text-slate-400 mt-0.5 leading-none flex items-center gap-1.5">
-                              <span>{isFundIn ? "Nộp Quỹ" : "Nhận Quỹ"}</span>
+                              <span>{isFundIn ? (lang === 'vi' ? "Nộp Quỹ" : "Fund Deposit") : (lang === 'vi' ? "Nhận Quỹ" : "Fund Withdraw")}</span>
                               {timeOnly && <span>• {timeOnly}</span>}
                             </p>
                           </div>
@@ -898,28 +916,28 @@ export default function ExpenseList({
                           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
                             <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md text-[11px]">
                               <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                              Ngày: {formatDate(expense.date)}
+                              {lang === 'vi' ? 'Ngày' : 'Date'}: {formatDate(expense.date)}
                             </span>
                             
                             {personalDebtType === "owed" && (
                               <span className="font-bold text-[10px] text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md uppercase tracking-wider flex items-center gap-1 shadow-xs border border-emerald-100 animate-pulse">
-                                💸 Nhận lại: {formatMoney(personalDebtAmount)}
+                                💸 {lang === 'vi' ? 'Nhận lại' : 'Receive'}: {formatMoney(personalDebtAmount)}
                               </span>
                             )}
                             {personalDebtType === "owe" && (
                               <span className="font-bold text-[10px] text-rose-500 bg-rose-50 px-2 py-1 rounded-md uppercase tracking-wider flex items-center gap-1 shadow-xs border border-rose-100 animate-pulse">
-                                💸 Cần trả: {formatMoney(personalDebtAmount)}
+                                💸 {lang === 'vi' ? 'Cần trả' : 'Must Pay'}: {formatMoney(personalDebtAmount)}
                               </span>
                             )}
 
                             {expense.addedBy && (
                               <span className="font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md uppercase tracking-wider text-[10px]">
-                                Thêm: {expense.addedBy === "admin" ? "Ad" : (getMemberNameOnly(expense.addedBy) || "Thành viên")}
+                                {lang === 'vi' ? 'Thêm' : 'Added'}: {expense.addedBy === "admin" ? "Ad" : (getMemberNameOnly(expense.addedBy) || (lang === 'vi' ? "Thành viên" : "Member"))}
                               </span>
                             )}
                             {expense.editedBy && (
                               <span className="font-semibold text-orange-500 bg-orange-50 px-2 py-1 rounded-md uppercase tracking-wider text-[10px]">
-                                Sửa: {expense.editedBy === "admin" ? "Ad" : (getMemberNameOnly(expense.editedBy) || "Thành viên")}
+                                {lang === 'vi' ? 'Sửa' : 'Edited'}: {expense.editedBy === "admin" ? "Ad" : (getMemberNameOnly(expense.editedBy) || (lang === 'vi' ? "Thành viên" : "Member"))}
                               </span>
                             )}
                             {expense.receiptImage && (
@@ -929,7 +947,7 @@ export default function ExpenseList({
                                 className="inline-flex items-center gap-1 text-[10px] bg-sky-50 hover:bg-sky-100 text-sky-600 font-bold px-2 py-1 rounded-md cursor-pointer transition-colors border border-sky-100"
                               >
                                 <FileText className="h-3 w-3" />
-                                Hóa đơn gốc
+                                {lang === 'vi' ? 'Hóa đơn gốc' : 'Original receipt'}
                               </button>
                             )}
                           </div>
@@ -947,7 +965,7 @@ export default function ExpenseList({
                               </div>
                               <div className="flex flex-col text-left">
                                 <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider leading-none">
-                                  Người trả trước
+                                  {lang === 'vi' ? 'Người trả trước' : 'Paid by'}
                                 </span>
                                 <span className="text-xs font-bold text-[#0F172A] leading-tight mt-0.5">
                                   {getMemberNameOnly(expense.payerId)}
@@ -956,7 +974,9 @@ export default function ExpenseList({
                             </div>
                             
                             <div className="flex flex-col items-end gap-1">
-                               <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Chia sẻ: {(expense.participantIds || []).length} người</span>
+                               <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+                                 {lang === 'vi' ? `Chia sẻ: ${(expense.participantIds || []).length} người` : `Split: ${(expense.participantIds || []).length} people`}
+                               </span>
                                <div className="flex -space-x-2">
                                  {(expense.participantIds || []).slice(0, 5).map((pId, idx) => (
                                      <div key={pId} className="w-7 h-7 rounded-full border-2 border-white overflow-hidden shrink-0 shadow-sm" style={{ zIndex: 10 - idx }}>
@@ -981,7 +1001,7 @@ export default function ExpenseList({
                                 className="flex-1 px-3 py-2.5 bg-slate-100/50 hover:bg-slate-100 text-slate-700 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs font-semibold"
                               >
                                 <Pencil className="h-3.5 w-3.5" />
-                                <span>Sửa</span>
+                                <span>{t("edit")}</span>
                               </button>
                               {isAdmin && (
                                 <button
@@ -990,7 +1010,7 @@ export default function ExpenseList({
                                   className="flex-1 px-3 py-2.5 bg-rose-50/50 hover:bg-rose-50 text-rose-600 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs font-semibold"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
-                                  <span>Xóa</span>
+                                  <span>{t("delete")}</span>
                                 </button>
                               )}
                             </div>
@@ -1018,7 +1038,7 @@ export default function ExpenseList({
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <h4 className="font-extrabold text-[#0F172A] text-sm flex items-center gap-1.5">
                 <FileText className="h-4.5 w-4.5 text-[#03B875]" />
-                Ảnh hóa đơn đính kèm
+                {lang === 'vi' ? 'Ảnh hóa đơn đính kèm' : 'Attached receipt image'}
               </h4>
               <button
                 type="button"

@@ -70,7 +70,15 @@ export interface BillingCycle {
 
 export type PlanType = "FREE" | "BE_BAN" | "HOI_LANG" | "DU_HI_30" | "TRY_OFFLINE";
 
-export const getPlanLabel = (plan?: string, isOffline?: boolean): string => {
+export const getPlanLabel = (plan?: string, isOffline?: boolean, lang: 'vi' | 'en' = 'vi'): string => {
+  if (lang === 'en') {
+    if (isOffline || plan === 'TRY_OFFLINE' || plan === 'OFFLINE') return "One-time ⚡";
+    if (!plan || plan === 'FREE') return "Free Plan 🌱";
+    if (plan === 'VIP' || plan === 'BE_BAN') return "Friends ⭐";
+    if (plan === 'PREMIUM' || plan === 'HOI_LANG') return "Village 👑";
+    if (plan === 'DU_HI_30') return "Trip 🚗";
+    return plan;
+  }
   if (isOffline || plan === 'TRY_OFFLINE' || plan === 'OFFLINE') return "Xài 1 lần ⚡";
   if (!plan || plan === 'FREE') return "Gói Free";
   if (plan === 'VIP' || plan === 'BE_BAN') return "Bè Bạn ⭐";
@@ -120,6 +128,7 @@ export interface Group {
   appliedVoucher?: string; // Mã voucher đã dùng để nâng cấp
   adminEmail?: string;
   admin_email?: string;
+  currency?: "VND" | "USD" | "EUR" | "JPY" | "KRW" | "THB" | "SGD";
 }
 
 export interface DebtOffset {

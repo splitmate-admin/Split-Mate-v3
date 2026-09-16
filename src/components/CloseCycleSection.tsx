@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Group, Member, Expense, BillingCycle, getPlanLabel } from "../types";
 import { calculateBalances } from "../utils/debtSimplifier";
+import { formatCurrencyAmount, useTranslation } from "../utils/i18n";
 
 interface CloseCycleSectionProps {
   activeGroup: Group | null;
@@ -62,6 +63,7 @@ export default function CloseCycleSection({
   handleClearActiveGroupData,
   handleLogout
 }: CloseCycleSectionProps) {
+  const { lang, t } = useTranslation();
   const [isClosingModalOpen, setIsClosingModalOpen] = useState(false);
   const [newCycleName, setNewCycleName] = useState("");
   const [selectedArchivedCycle, setSelectedArchivedCycle] = useState<BillingCycle | null>(null);
@@ -71,7 +73,7 @@ export default function CloseCycleSection({
     return (
       <div className="p-6 text-center text-slate-500">
         <Info className="w-8 h-8 text-slate-350 mx-auto mb-2 animate-bounce" />
-        <p className="font-semibold text-xs">Vui lòng chọn hoặc tạo nhóm hoạt động để tiếp tục.</p>
+        <p className="font-semibold text-xs">{lang === 'vi' ? 'Vui lòng chọn hoặc tạo nhóm hoạt động để tiếp tục.' : 'Please select or create an active group to continue.'}</p>
       </div>
     );
   }
@@ -94,12 +96,18 @@ export default function CloseCycleSection({
   // Handle Close Cycle trigger
   const handleOpenCloseCycle = () => {
     if (!isAdmin) {
-      showAlert("Quyền Thủ Quỹ", "Chỉ Trưởng nhóm / Thủ quỹ mới có quyền chốt sổ kỳ chi tiêu.");
+      showAlert(
+        lang === 'vi' ? "Quyền Thủ Quỹ" : "Treasurer Permission",
+        lang === 'vi' ? "Chỉ Trưởng nhóm / Thủ quỹ mới có quyền chốt sổ kỳ chi tiêu." : "Only the group leader / treasurer has permission to close the billing cycle."
+      );
       return;
     }
 
     if (tryOfflineMode || plan === "TRY_OFFLINE") {
-      showAlert("Tính năng Nâng Cấp", "Chế độ xài 1 lần không hỗ trợ chốt sổ và lưu trữ kỳ lịch sử. Vui lòng Đăng ký tài khoản và Nâng cấp nhóm để sử dụng!");
+      showAlert(
+        lang === 'vi' ? "Tính năng Nâng Cấp" : "Upgrade Feature",
+        lang === 'vi' ? "Chế độ xài 1 lần không hỗ trợ chốt sổ và lưu trữ kỳ lịch sử. Vui lòng Đăng ký tài khoản và Nâng cấp nhóm để sử dụng!" : "One-time mode does not support cycle closing and history archiving. Please sign up and upgrade the group to use this feature!"
+      );
       onShowUpgradeModal();
       return;
     }
@@ -110,19 +118,25 @@ export default function CloseCycleSection({
     }
 
     if (expenses.length === 0) {
-      showAlert("Không có hóa đơn", "Kỳ hiện tại chưa có hóa đơn nào được ghi nhận để chốt sổ.");
+      showAlert(
+        lang === 'vi' ? "Không có hóa đơn" : "No Invoices",
+        lang === 'vi' ? "Kỳ hiện tại chưa có hóa đơn nào được ghi nhận để chốt sổ." : "There are no recorded expenses in the current cycle to close."
+      );
       return;
     }
 
-    // Set default name for the cycle: "Kỳ Tháng M/YYYY"
+    // Set default name for the cycle: "Kỳ Tháng M/YYYY" or "Cycle M/YYYY"
     const now = new Date();
-    setNewCycleName(`Kỳ Tháng ${now.getMonth() + 1}/${now.getFullYear()}`);
+    setNewCycleName(lang === 'vi' ? `Kỳ Tháng ${now.getMonth() + 1}/${now.getFullYear()}` : `Cycle ${now.getMonth() + 1}/${now.getFullYear()}`);
     setIsClosingModalOpen(true);
   };
 
   const handleConfirmCloseCycle = async () => {
     if (!newCycleName.trim()) {
-      showAlert("Lỗi nhập liệu", "Vui lòng nhập tên cho kỳ chi tiêu này.");
+      showAlert(
+        lang === 'vi' ? "Lỗi nhập liệu" : "Input Error",
+        lang === 'vi' ? "Vui lòng nhập tên cho kỳ chi tiêu này." : "Please enter a name for this billing cycle."
+      );
       return;
     }
 
@@ -163,16 +177,22 @@ export default function CloseCycleSection({
 
     try {
       await onUpdateGroup(updatedGroup);
-      showAlert("🎉 Chốt Sổ Thành Công", `Đã lưu trữ thành công "${newCycleName.trim()}" và đặt lại kỳ chi tiêu mới!`);
+      showAlert(
+        lang === 'vi' ? "🎉 Chốt Sổ Thành Công" : "🎉 Cycle Closed Successfully",
+        lang === 'vi' ? `Đã lưu trữ thành công "${newCycleName.trim()}" và đặt lại kỳ chi tiêu mới!` : `Successfully archived "${newCycleName.trim()}" and started a new cycle!`
+      );
     } catch (err) {
       console.error("Error closing cycle:", err);
-      showAlert("Lỗi hệ thống", "Không thể chốt sổ kỳ hiện tại. Vui lòng thử lại sau.");
+      showAlert(
+        lang === 'vi' ? "Lỗi hệ thống" : "System Error",
+        lang === 'vi' ? "Không thể chốt sổ kỳ hiện tại. Vui lòng thử lại sau." : "Failed to close the current cycle. Please try again later."
+      );
     }
   };
 
   // Format currency
   const formatMoney = (amount: number) => {
-    return Math.round(amount).toLocaleString("vi-VN") + " đ";
+    return formatCurrencyAmount(amount, activeGroup?.currency || "VND");
   };
 
   const formatDate = (isoString?: string) => {
@@ -189,7 +209,7 @@ export default function CloseCycleSection({
       <div className="flex items-center justify-between mt-2">
         <div className="text-left">
           <h2 className="text-xl font-black text-slate-850 tracking-tight flex items-center gap-2">
-            Chốt Sổ & Lưu Trữ
+            {lang === 'vi' ? 'Chốt Sổ & Lưu Trữ' : 'Archive & Cycles'}
           </h2>
         </div>
         
@@ -218,24 +238,24 @@ export default function CloseCycleSection({
           <div>
             <h3 className="text-lg font-black text-slate-800 mt-0.5 flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
-              {activeGroup.currentCycleName || "Kỳ Hiện Tại"}
+              {activeGroup.currentCycleName || (lang === 'vi' ? "Kỳ Hiện Tại" : "Current Cycle")}
             </h3>
           </div>
           <span className="bg-emerald-50 text-emerald-700 text-[10px] font-black px-2.5 py-1 rounded-lg border border-emerald-100">
-            Đang hoạt động
+            {lang === 'vi' ? 'Đang hoạt động' : 'Active'}
           </span>
         </div>
 
         {/* Statistical block */}
         <div className="grid grid-cols-2 gap-3 bg-slate-50/50 p-3.5 rounded-2xl border border-slate-100/70">
           <div>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Hóa đơn chưa chốt</p>
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{lang === 'vi' ? 'Hóa đơn chưa chốt' : 'Unarchived Invoices'}</p>
             <p className="text-base font-black text-slate-800 mt-0.5">
-              {currentUnclosedCount} <span className="text-xs font-bold text-slate-500">tờ</span>
+              {currentUnclosedCount} <span className="text-xs font-bold text-slate-500">{lang === 'vi' ? 'tờ' : 'items'}</span>
             </p>
           </div>
           <div>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tổng chi tiêu kỳ này</p>
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{lang === 'vi' ? 'Tổng chi tiêu kỳ này' : 'Total Spending This Cycle'}</p>
             <p className="text-base font-black text-emerald-600 mt-0.5">
               {formatMoney(currentTotalSpending)}
             </p>
@@ -248,14 +268,14 @@ export default function CloseCycleSection({
             <>
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
               <span className="text-xs font-black text-emerald-700">
-                Tất toán sòng phẳng 100% - Sẵn sàng chốt sổ
+                {lang === 'vi' ? 'Tất toán sòng phẳng 100% - Sẵn sàng chốt sổ' : '100% Settled Up - Ready to Archive'}
               </span>
             </>
           ) : (
             <>
               <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
               <span className="text-xs font-black text-rose-600">
-                Còn {unpaidCount} thành viên chưa đóng hết nợ
+                {lang === 'vi' ? `Còn ${unpaidCount} thành viên chưa đóng hết nợ` : `${unpaidCount} member(s) haven't settled up yet`}
               </span>
             </>
           )}
@@ -266,10 +286,12 @@ export default function CloseCycleSection({
           <div className="p-4 bg-amber-50/90 border border-amber-200/80 rounded-2xl space-y-2.5">
             <div className="flex items-center gap-2 text-amber-900 font-extrabold text-xs">
               <Lock className="w-4 h-4 text-amber-600 shrink-0" />
-              <span>Khóa Tính Năng Chốt Sổ (Chế độ xài 1 lần)</span>
+              <span>{lang === 'vi' ? 'Khóa Tính Năng Chốt Sổ (Chế độ xài 1 lần)' : 'Cycle Closing Locked (One-time Mode)'}</span>
             </div>
             <p className="text-[11px] text-amber-900/80 leading-relaxed font-medium">
-              Chế độ xài 1 lần dùng cho các chuyến đi nhanh ngắn hạn và không hỗ trợ chốt sổ hay đóng kỳ lịch sử. Vui lòng Đăng ký tài khoản và Nâng cấp nhóm để mở khóa tính năng Chốt Sổ vĩnh viễn!
+              {lang === 'vi' 
+                ? 'Chế độ xài 1 lần dùng cho các chuyến đi nhanh ngắn hạn và không hỗ trợ chốt sổ hay đóng kỳ lịch sử. Vui lòng Đăng ký tài khoản và Nâng cấp nhóm để mở khóa tính năng Chốt Sổ vĩnh viễn!'
+                : 'One-time mode is for quick short-term trips and does not support archiving. Please sign up and upgrade the group to permanently unlock Cycle Archiving!'}
             </p>
             <button
               type="button"
@@ -277,7 +299,7 @@ export default function CloseCycleSection({
               className="w-full bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              Nâng cấp nhóm để Mở Khóa Chốt Sổ 🚀
+              {lang === 'vi' ? 'Nâng cấp nhóm để Mở Khóa Chốt Sổ 🚀' : 'Upgrade Group to Unlock Archiving 🚀'}
             </button>
           </div>
         ) : (
@@ -286,7 +308,7 @@ export default function CloseCycleSection({
             className="w-full bg-[#03B875] hover:bg-[#029a62] text-white font-black text-xs py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm shadow-emerald-500/10 active:scale-98 cursor-pointer"
           >
             <FolderLock className="w-4 h-4 shrink-0" />
-            Chốt sổ kỳ này & Lưu trữ
+            {lang === 'vi' ? 'Chốt sổ kỳ này & Lưu trữ' : 'Close Cycle & Archive'}
           </button>
         )}
       </div>
@@ -294,7 +316,7 @@ export default function CloseCycleSection({
       {/* 2. ARCHIVED CYCLES AREA */}
       <div className="text-left space-y-3">
         <h3 className="text-xs font-black text-slate-450 uppercase tracking-widest pl-1">
-          Lịch sử các Kỳ đã lưu trữ
+          {lang === 'vi' ? 'Lịch sử các Kỳ đã lưu trữ' : 'Archived Billing Cycles'}
         </h3>
 
         {/* Condition 1: Free Tier or No Cycles Saved yet -> Display Stunning Demo/Sample Cards (The Demo Card Hack) */}
@@ -307,9 +329,9 @@ export default function CloseCycleSection({
                   <Folder className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-xs text-slate-800">📁 Kỳ Tháng 5/2026 (Đã chốt sổ 🔒)</h4>
+                  <h4 className="font-extrabold text-xs text-slate-800">{lang === 'vi' ? '📁 Kỳ Tháng 5/2026 (Đã chốt sổ 🔒)' : '📁 May 2026 Cycle (Archived 🔒)'}</h4>
                   <p className="text-[10px] font-bold text-slate-400 mt-0.5">
-                    01/05 - 31/05/2026 • 18 hóa đơn
+                    {lang === 'vi' ? '01/05 - 31/05/2026 • 18 hóa đơn' : '01/05 - 31/05/2026 • 18 invoices'}
                   </p>
                 </div>
               </div>
@@ -318,10 +340,10 @@ export default function CloseCycleSection({
                 <span className="text-[11px] font-black text-emerald-600">14.520.000 đ</span>
                 <div className="flex gap-2">
                   <span className="text-[9px] font-bold text-slate-400 px-2 py-1 bg-slate-100/50 rounded-md border border-slate-200/30">
-                    📄 PDF Kế Toán
+                    {lang === 'vi' ? '📄 PDF Kế Toán' : '📄 PDF Report'}
                   </span>
                   <span className="text-[9px] font-bold text-slate-400 px-2 py-1 bg-slate-100/50 rounded-md border border-slate-200/30">
-                    📊 Chi tiết
+                    {lang === 'vi' ? '📊 Chi tiết' : '📊 Details'}
                   </span>
                 </div>
               </div>
@@ -333,9 +355,9 @@ export default function CloseCycleSection({
                 <Lock className="w-4 h-4" />
               </div>
               <div className="space-y-0.5">
-                <h4 className="font-black text-xs text-slate-800">Lưu Trữ Chu Kỳ Vĩnh Viễn</h4>
+                <h4 className="font-black text-xs text-slate-800">{lang === 'vi' ? 'Lưu Trữ Chu Kỳ Vĩnh Viễn' : 'Permanent Cycle Archiving'}</h4>
                 <p className="text-[10px] font-bold text-slate-500 max-w-xs mx-auto leading-relaxed">
-                  Bảo toàn hóa đơn chứng từ & xuất báo cáo PDF chuẩn xác cho nhóm.
+                  {lang === 'vi' ? 'Bảo toàn hóa đơn chứng từ & xuất báo cáo PDF chuẩn xác cho nhóm.' : 'Keep records preserved & export accurate accounting PDF reports.'}
                 </p>
               </div>
               <button
@@ -343,7 +365,7 @@ export default function CloseCycleSection({
                 onClick={onShowUpgradeModal}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] py-2 px-4 rounded-lg transition-all shadow-xs inline-flex items-center gap-1 active:scale-95 cursor-pointer"
               >
-                Nâng cấp Bè Bạn / Hội Làng
+                {lang === 'vi' ? 'Nâng cấp Bè Bạn / Hội Làng' : 'Upgrade Group'}
                 <ArrowRight className="w-3 h-3" />
               </button>
             </div>
@@ -354,9 +376,11 @@ export default function CloseCycleSection({
               <Sparkles className="w-5 h-5 animate-pulse" />
             </div>
             <div className="space-y-1">
-              <h4 className="font-black text-xs text-slate-800">Sẵn sàng Lưu trữ Vĩnh viễn</h4>
+              <h4 className="font-black text-xs text-slate-800">{lang === 'vi' ? 'Sẵn sàng Lưu trữ Vĩnh viễn' : 'Ready for Archiving'}</h4>
               <p className="text-[10px] font-bold text-slate-500 max-w-xs mx-auto leading-relaxed">
-                Nhóm đang sử dụng gói cao cấp <span className="text-emerald-600 font-extrabold">{plan === "BE_BAN" ? "Bè Bạn 👥" : "Hội Làng 🏡"}</span>. Chưa có kỳ chi tiêu nào được lưu trữ. Hãy nhấn nút <strong className="text-slate-800">"Chốt sổ kỳ này & Lưu trữ"</strong> phía trên để chốt sổ kì đầu tiên!
+                {lang === 'vi' 
+                  ? <>Nhóm đang sử dụng gói cao cấp <span className="text-emerald-600 font-extrabold">{plan === "BE_BAN" ? "Bè Bạn 👥" : "Hội Làng 🏡"}</span>. Chưa có kỳ chi tiêu nào được lưu trữ. Hãy nhấn nút <strong className="text-slate-800">"Chốt sổ kỳ này & Lưu trữ"</strong> phía trên để chốt sổ kì đầu tiên!</>
+                  : <>This group is on premium plan <span className="text-emerald-600 font-extrabold">{plan === "BE_BAN" ? "Friends 👥" : "Community 🏡"}</span>. No billing cycles have been archived yet. Click <strong className="text-slate-800">"Close Cycle & Archive"</strong> above to archive your first cycle!</>}
               </p>
             </div>
           </div>
@@ -388,7 +412,7 @@ export default function CloseCycleSection({
 
                 <div className="flex justify-between items-center pt-3 border-t border-slate-100">
                   <div className="text-left">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Tổng chi tiêu</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">{lang === 'vi' ? 'Tổng chi tiêu' : 'Total Spending'}</span>
                     <span className="text-sm font-black text-emerald-600">
                       {formatMoney(cycle.totalSpending ?? cycle.expenses?.reduce((sum, e) => sum + e.amount, 0) ?? 0)}
                     </span>
@@ -401,7 +425,7 @@ export default function CloseCycleSection({
                       className="text-[10px] font-black text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100/85 border border-indigo-100 py-1.5 px-3 rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-3xs"
                     >
                       <FileText className="w-3.5 h-3.5" />
-                      PDF Báo Cáo
+                      {lang === 'vi' ? 'PDF Báo Cáo' : 'PDF Report'}
                     </button>
                     
                     <button
@@ -412,7 +436,7 @@ export default function CloseCycleSection({
                       }}
                       className="text-[10px] font-black text-slate-700 hover:text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-200 py-1.5 px-3 rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-3xs"
                     >
-                      Chi tiết
+                      {lang === 'vi' ? 'Chi tiết' : 'Details'}
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -433,21 +457,23 @@ export default function CloseCycleSection({
                 <FolderLock className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-extrabold text-sm text-slate-850">Chốt Sổ Kỳ Chi Tiêu</h4>
+                <h4 className="font-extrabold text-sm text-slate-850">{lang === 'vi' ? 'Chốt Sổ Kỳ Chi Tiêu' : 'Close Billing Cycle'}</h4>
                 <p className="text-[11px] font-bold text-slate-400 mt-1 leading-relaxed">
-                  Thao tác này sẽ đóng và lưu mảng hóa đơn hiện tại làm lịch sử kỳ đã qua, đồng thời đặt lại trang "Tổng quan" & "Chi tiêu" về ban đầu để mở kỳ hoạt động kế tiếp.
+                  {lang === 'vi' 
+                    ? 'Thao tác này sẽ đóng và lưu mảng hóa đơn hiện tại làm lịch sử kỳ đã qua, đồng thời đặt lại trang "Tổng quan" & "Chi tiêu" về ban đầu để mở kỳ hoạt động kế tiếp.'
+                    : 'This action will archive current expenses to history and reset Overview & Expenses to start a fresh cycle.'}
                 </p>
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest pl-0.5">Đặt tên kỳ chi tiêu</label>
+              <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest pl-0.5">{lang === 'vi' ? 'Đặt tên kỳ chi tiêu' : 'Billing Cycle Name'}</label>
               <input
                 type="text"
                 required
                 value={newCycleName}
                 onChange={(e) => setNewCycleName(e.target.value)}
-                placeholder="Ví dụ: Kỳ Tháng 7/2026, Du lịch Nha Trang..."
+                placeholder={lang === 'vi' ? "Ví dụ: Kỳ Tháng 7/2026, Du lịch Nha Trang..." : "e.g. July 2026, Nha Trang Trip..."}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-500 font-semibold text-slate-800 text-xs transition-all"
               />
             </div>
@@ -458,14 +484,14 @@ export default function CloseCycleSection({
                 onClick={() => setIsClosingModalOpen(false)}
                 className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer"
               >
-                Hủy bỏ
+                {lang === 'vi' ? 'Hủy bỏ' : 'Cancel'}
               </button>
               <button
                 type="button"
                 onClick={handleConfirmCloseCycle}
                 className="flex-1 bg-[#03B875] hover:bg-[#029a62] text-white font-extrabold text-xs py-2.5 rounded-xl transition-all shadow-xs cursor-pointer"
               >
-                Xác nhận Chốt sổ
+                {lang === 'vi' ? 'Xác nhận Chốt sổ' : 'Confirm Close'}
               </button>
             </div>
           </div>
@@ -498,21 +524,21 @@ export default function CloseCycleSection({
             {/* Quick stats for this archived cycle */}
             <div className="flex gap-2 bg-slate-50 border border-slate-150 p-3 rounded-2xl mb-4 text-xs font-bold text-slate-600">
               <div className="flex-1 text-center">
-                <span className="text-[10px] text-slate-400 block">Tổng Spending</span>
+                <span className="text-[10px] text-slate-400 block">{lang === 'vi' ? 'Tổng Spending' : 'Total Spending'}</span>
                 <span className="font-extrabold text-emerald-600 text-sm mt-0.5 block">
                   {formatMoney(selectedArchivedCycle.totalSpending ?? selectedArchivedCycle.expenses?.reduce((sum, e) => sum + e.amount, 0) ?? 0)}
                 </span>
               </div>
               <div className="w-[1px] bg-slate-200" />
               <div className="flex-1 text-center">
-                <span className="text-[10px] text-slate-400 block">Số hóa đơn</span>
+                <span className="text-[10px] text-slate-400 block">{lang === 'vi' ? 'Số hóa đơn' : 'Invoices'}</span>
                 <span className="font-extrabold text-slate-850 text-sm mt-0.5 block">
-                  {selectedArchivedCycle.expensesCount ?? selectedArchivedCycle.expenses?.length ?? 0} tờ
+                  {selectedArchivedCycle.expensesCount ?? selectedArchivedCycle.expenses?.length ?? 0} {lang === 'vi' ? 'tờ' : 'items'}
                 </span>
               </div>
               <div className="w-[1px] bg-slate-200" />
               <div className="flex-1 text-center">
-                <span className="text-[10px] text-slate-400 block">Ngày chốt</span>
+                <span className="text-[10px] text-slate-400 block">{lang === 'vi' ? 'Ngày chốt' : 'Closed Date'}</span>
                 <span className="font-extrabold text-slate-850 text-sm mt-0.5 block">
                   {formatDate(selectedArchivedCycle.closedAt ?? selectedArchivedCycle.archivedAt)}
                 </span>
@@ -529,14 +555,14 @@ export default function CloseCycleSection({
                       <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400">
                         <span>{formatDate(exp.date)}</span>
                         <span>•</span>
-                        <span>Trả bởi: {members.find(m => m.id === exp.payerId)?.name || "Không rõ"}</span>
+                        <span>{lang === 'vi' ? 'Trả bởi' : 'Paid by'}: {members.find(m => m.id === exp.payerId)?.name || (lang === 'vi' ? "Không rõ" : "Unknown")}</span>
                       </div>
                     </div>
                     <span className="font-black text-xs text-slate-800">{formatMoney(exp.amount)}</span>
                   </div>
                 ))
               ) : (
-                <p className="text-slate-400 text-xs text-center py-6">Kỳ này không có hóa đơn chi tiết.</p>
+                <p className="text-slate-400 text-xs text-center py-6">{lang === 'vi' ? 'Kỳ này không có hóa đơn chi tiết.' : 'No detailed expenses in this cycle.'}</p>
               )}
             </div>
 
@@ -549,7 +575,7 @@ export default function CloseCycleSection({
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs py-3 rounded-xl mt-4 cursor-pointer text-center flex items-center justify-center gap-1.5 transition-all active:scale-98"
             >
               <FileText className="w-4 h-4" />
-              Xuất PDF Kế Toán Kỳ Này
+              {lang === 'vi' ? 'Xuất PDF Kế Toán Kỳ Này' : 'Export Accounting PDF Report'}
             </button>
           </div>
         </div>
@@ -564,7 +590,7 @@ export default function CloseCycleSection({
               onClick={handleLoadVungTauTestData}
               className="bg-amber-55 hover:bg-amber-100 border border-amber-200 text-amber-800 text-[9px] font-extrabold py-1.5 px-2.5 rounded-lg transition-all cursor-pointer"
             >
-              🧪 Nạp Dữ liệu Mẫu (Vũng Tàu)
+              {lang === 'vi' ? '🧪 Nạp Dữ liệu Mẫu (Vũng Tàu)' : '🧪 Load Sample Data'}
             </button>
           )}
           {handleClearActiveGroupData && (
@@ -573,7 +599,7 @@ export default function CloseCycleSection({
               onClick={handleClearActiveGroupData}
               className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[9px] font-extrabold py-1.5 px-2.5 rounded-lg transition-all cursor-pointer"
             >
-              Xóa dữ liệu chi tiêu
+              {lang === 'vi' ? 'Xóa dữ liệu chi tiêu' : 'Clear Expense Data'}
             </button>
           )}
         </div>

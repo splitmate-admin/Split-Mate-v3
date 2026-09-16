@@ -1598,24 +1598,25 @@ const PORT = Number(process.env.PORT || 3000);
     if (supabaseDb) {
       try {
         const queryStart = Date.now();
-        // Thực hiện truy vấn siêu nhẹ (head count hoặc limit 1) để kích hoạt API Gateway của Supabase, chống pause tự động sau 7 ngày
-        const { count, error } = await supabaseDb
+        // Thực hiện truy vấn đọc thực tế từ Supabase để kích hoạt API Gateway & Database Engine, chống pause tự động sau 7 ngày
+        const { data, count, error } = await supabaseDb
           .from("groups")
-          .select("id", { count: "exact", head: true });
+          .select("id")
+          .limit(1);
         
         supabaseLatencyMs = Date.now() - queryStart;
         if (error) {
           // Thử dự phòng bảng leaders nếu bảng groups có RLS hạn chế
-          const { error: leaderErr } = await supabaseDb.from("leaders").select("email").limit(1);
+          const { data: leaderData, error: leaderErr } = await supabaseDb.from("leaders").select("email").limit(1);
           if (leaderErr) {
             supabaseStatus = `error: ${error.message}`;
           } else {
             supabaseStatus = "active";
-            queryDetails = { source: "leaders", pingLatencyMs: supabaseLatencyMs };
+            queryDetails = { source: "leaders", pingLatencyMs: supabaseLatencyMs, rows: leaderData?.length ?? 0 };
           }
         } else {
           supabaseStatus = "active";
-          queryDetails = { source: "groups", groupsCount: count ?? 0, pingLatencyMs: supabaseLatencyMs };
+          queryDetails = { source: "groups", pingLatencyMs: supabaseLatencyMs, rows: data?.length ?? 0 };
         }
       } catch (err: any) {
         supabaseStatus = `exception: ${err.message || String(err)}`;

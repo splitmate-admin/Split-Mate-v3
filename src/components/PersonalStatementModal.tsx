@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Member, Expense, Group } from "../types";
 import { formatDateTime, patchOldTimestamp, parsePatchedTime } from "../utils/dateUtils";
 import { getMemberAvatar } from "../utils/avatar";
+import { formatCurrencyAmount } from "../utils/i18n";
 import { 
   X, 
   FileText, 
@@ -76,7 +77,7 @@ export default function PersonalStatementModal({
 
   // Formatter helpers
   const formatMoney = (val: number) => {
-    return new Intl.NumberFormat("vi-VN").format(Math.round(val)) + "đ";
+    return formatCurrencyAmount(val, activeGroup?.currency || "VND");
   };
 
   const formatDate = (dateStr: string) => {

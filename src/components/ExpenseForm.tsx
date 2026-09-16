@@ -7,6 +7,7 @@ import { SUPPORTED_BANKS, generateBankDeepLink, VietQRData, parseVietQR, scanQrF
 import { BankAppSelectorModal } from "./BankAppSelectorModal";
 import { BankOption } from "../utils/banks";
 import { getMonthlyReceiptImageCount } from "../utils/receiptLimit";
+import { useTranslation, formatCurrencyAmount } from "../utils/i18n";
 
 interface ExpenseFormProps {
   members: Member[];
@@ -68,6 +69,7 @@ export default function ExpenseForm({
   expenses = [],
   pendingReceipts = [],
 }: ExpenseFormProps) {
+  const { lang, t } = useTranslation();
   const [description, setDescription] = useState("");
   const [amountStr, setAmountStr] = useState("");
   const [payerId, setPayerId] = useState("");
@@ -927,7 +929,12 @@ export default function ExpenseForm({
     "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
     "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
   ];
-  const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+  const ENGLISH_MONTHS = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  const WEEKDAYS_VI = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+  const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const buildCalendarGrid = () => {
     const list: { day: number; isCurrent: boolean; dateObj: Date; isSelected: boolean; isToday: boolean }[] = [];
@@ -1234,17 +1241,17 @@ export default function ExpenseForm({
           {activeQr ? (
             <>
               <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse"></span>
-              <span className="text-indigo-700 font-extrabold">VietQR 1-Chạm ⚡</span>
+              <span className="text-indigo-700 font-extrabold">{lang === 'en' ? "1-Tap VietQR ⚡" : "VietQR 1-Chạm ⚡"}</span>
             </>
           ) : editingExpense ? (
             <>
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse"></span>
-              <span className="text-emerald-700 font-extrabold">Đang sửa chi phí</span>
+              <span className="text-emerald-700 font-extrabold">{t('edit_expense_title')}</span>
             </>
           ) : (
             <>
               <Receipt className="h-4 w-4 text-emerald-600" />
-              <span>Thêm khoản chi chung</span>
+              <span>{t('create_expense_title')}</span>
             </>
           )}
         </h4>
@@ -1285,14 +1292,14 @@ export default function ExpenseForm({
             className="text-[0.6875rem] font-bold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100/70 px-2.5 py-1 rounded-xl transition-all cursor-pointer flex items-center gap-1"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            Hủy và đặt lại
+            {t('cancel')}
           </button>
         )}
       </div>
 
       {members.length === 0 ? (
         <div className="p-5 bg-amber-50 border border-amber-100 rounded-2xl text-center text-xs text-amber-700 font-medium">
-          Vui lòng thêm thành viên vào nhóm trước khi tạo chi phí!
+          {lang === 'en' ? "Please add members before creating an expense!" : "Vui lòng thêm thành viên vào nhóm trước khi tạo chi phí!"}
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -1300,13 +1307,13 @@ export default function ExpenseForm({
             {/* Description */}
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider" htmlFor="expense-desc">
-                Nội dung chi phí
+                {t('note')}
               </label>
               <div className="relative">
                 <input
                   id="expense-desc"
                   type="text"
-                  placeholder="Nhập nội dung..."
+                  placeholder={t('expense_name_placeholder')}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   maxLength={100}
@@ -1318,11 +1325,16 @@ export default function ExpenseForm({
             {/* Category Selector */}
             <div className="space-y-2 col-span-1 md:col-span-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
-                Phân loại / Biểu tượng (Hệ thống sẽ tự chọn nếu để trống)
+                {lang === 'en' ? "Category (Auto-detected if left empty)" : "Phân loại / Biểu tượng (Hệ thống sẽ tự chọn nếu để trống)"}
               </label>
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map((cat) => {
                   const isSelected = categoryKey === cat.key;
+                  const catLabel = cat.key === 'food' ? t('cat_food') :
+                                  cat.key === 'transport' ? t('cat_transport') :
+                                  cat.key === 'shopping' ? t('cat_shopping') :
+                                  cat.key === 'accommodation' ? t('cat_hotel') :
+                                  cat.key === 'entertainment' ? t('cat_entertainment') : t('cat_other');
                   return (
                     <button
                       key={cat.key}
@@ -1335,7 +1347,7 @@ export default function ExpenseForm({
                       }`}
                     >
                       <span className="text-sm">{cat.emoji}</span>
-                      <span>{cat.name}</span>
+                      <span>{catLabel}</span>
                       {isSelected && <Check className="w-3.5 h-3.5 ml-0.5 text-emerald-600" />}
                     </button>
                   );
@@ -1347,11 +1359,11 @@ export default function ExpenseForm({
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider" htmlFor="expense-amount">
-                  Số tiền (VND)
+                  {t('amount')}
                 </label>
                 {isAmountLocked && (
                   <span className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
-                    🔒 Số tiền cố định từ mã QR
+                    🔒 {lang === 'en' ? "Locked from QR code" : "Số tiền cố định từ mã QR"}
                   </span>
                 )}
               </div>
@@ -1376,7 +1388,7 @@ export default function ExpenseForm({
               </div>
               {isAmountLocked && (
                 <p className="text-[10px] text-slate-500 font-medium pl-1">
-                  Số tiền được đặt cố định từ mã QR quét được ({Math.round(activeQr?.amount || 0).toLocaleString("vi-VN")} ₫).
+                  {lang === 'en' ? `Amount locked from scanned QR code (${Math.round(activeQr?.amount || 0).toLocaleString("vi-VN")} ₫)` : `Số tiền được đặt cố định từ mã QR quét được (${Math.round(activeQr?.amount || 0).toLocaleString("vi-VN")} ₫).`}
                 </p>
               )}
             </div>
@@ -1388,11 +1400,11 @@ export default function ExpenseForm({
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 justify-between">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider" htmlFor="expense-payer">
-                  Người trả
+                  {t('payer')}
                 </label>
                 {payerId === "group" && groupPlan === "DU_HI_30" && (
                   <span className="text-[8px] sm:text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded-md animate-pulse">
-                    🚗 Đã tự động chọn Quỹ nhóm theo Gói Du Hí
+                    🚗 {lang === 'en' ? "Auto-selected Fund" : "Đã tự động chọn Quỹ nhóm"}
                   </span>
                 )}
               </div>
@@ -1404,7 +1416,7 @@ export default function ExpenseForm({
                   className="w-full bg-slate-50 border border-slate-200/60 rounded-xl py-2 px-3 pr-8 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 font-bold text-slate-800 text-xs transition-all appearance-none cursor-pointer"
                 >
                   {groupPlan === "DU_HI_30" && (
-                    <option value="group">🏦 Quỹ Nhóm</option>
+                    <option value="group">🏦 {lang === 'en' ? "Group Fund" : "Quỹ Nhóm"}</option>
                   )}
                   {members.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -1421,7 +1433,7 @@ export default function ExpenseForm({
             {/* Date Pick */}
             <div className="space-y-1" id="expense-date-wrapper">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider" htmlFor="expense-date">
-                Ngày phát sinh
+                {t('expense_date')}
               </label>
               <div className="relative">
                 <input
@@ -1461,18 +1473,18 @@ export default function ExpenseForm({
                         type="button"
                         onClick={prevMonth}
                         className="h-8 w-8 flex items-center justify-center hover:bg-slate-100 rounded-xl text-slate-600 hover:text-slate-900 active:scale-95 transition-all cursor-pointer"
-                        title="Tháng trước"
+                        title={lang === 'en' ? "Previous Month" : "Tháng trước"}
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </button>
                       <span className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wide">
-                        {VIETNAMESE_MONTHS[currentMonth]} năm {currentYear}
+                        {lang === 'en' ? `${ENGLISH_MONTHS[currentMonth]} ${currentYear}` : `${VIETNAMESE_MONTHS[currentMonth]} năm ${currentYear}`}
                       </span>
                       <button
                         type="button"
                         onClick={nextMonth}
                         className="h-8 w-8 flex items-center justify-center hover:bg-slate-100 rounded-xl text-slate-600 hover:text-slate-900 active:scale-95 transition-all cursor-pointer"
-                        title="Tháng sau"
+                        title={lang === 'en' ? "Next Month" : "Tháng sau"}
                       >
                         <ChevronRight className="h-4 w-4" />
                       </button>
@@ -1488,7 +1500,7 @@ export default function ExpenseForm({
                         }}
                         className="flex-1 py-1 px-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#03B875] font-bold text-[11px] transition-colors text-center cursor-pointer"
                       >
-                        Hôm nay
+                        {t('today')}
                       </button>
                       <button
                         type="button"
@@ -1499,13 +1511,13 @@ export default function ExpenseForm({
                         }}
                         className="flex-1 py-1 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-[11px] transition-colors text-center cursor-pointer"
                       >
-                        Hôm qua
+                        {t('yesterday')}
                       </button>
                     </div>
 
                     {/* Weekdays */}
                     <div className="grid grid-cols-7 text-center text-[11px] font-black text-slate-400">
-                      {WEEKDAYS.map((w) => (
+                      {(lang === 'en' ? WEEKDAYS_EN : WEEKDAYS_VI).map((w) => (
                         <div key={w} className="py-0.5">{w}</div>
                       ))}
                     </div>
@@ -1545,12 +1557,12 @@ export default function ExpenseForm({
                 <div className="space-y-1.5">
                   <div className="flex flex-col items-end w-full space-y-1.5">
                     <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm">
-                      {planLimit === Infinity ? `${ocrUsage}/∞` : `${ocrUsage}/${planLimit} lượt`}
+                      {planLimit === Infinity ? `${ocrUsage}/∞` : (lang === 'en' ? `${ocrUsage}/${planLimit} scans` : `${ocrUsage}/${planLimit} lượt`)}
                     </span>
                     <div className="w-full">
                       <span className="text-[0.6875rem] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1">
                         <Sparkles className="h-3.5 w-3.5 text-emerald-500 animate-pulse" />
-                        Quét hóa đơn bằng AI ✨
+                        {lang === 'en' ? "Scan Receipt via AI ✨" : "Quét hóa đơn bằng AI ✨"}
                       </span>
                     </div>
                   </div>
@@ -1577,8 +1589,8 @@ export default function ExpenseForm({
                     <label htmlFor="receipt-upload-ai" className="cursor-pointer w-full h-full py-1.5 block">
                       <div className="flex flex-col items-center justify-center">
                         <UploadCloud className={`h-7 w-7 mb-1 text-emerald-500 ${dragActive ? "animate-bounce" : ""}`} />
-                        <p className="text-xs font-extrabold text-slate-700">Kéo thả hoặc click quét AI</p>
-                        <p className="text-[0.625rem] text-emerald-600 font-semibold mt-0.5">Tự động phân tích & điền nhanh</p>
+                        <p className="text-xs font-extrabold text-slate-700">{lang === 'en' ? "Drop or click to scan AI" : "Kéo thả hoặc click quét AI"}</p>
+                        <p className="text-[0.625rem] text-emerald-600 font-semibold mt-0.5">{lang === 'en' ? "Auto-detects items & totals" : "Tự động phân tích & điền nhanh"}</p>
                       </div>
                     </label>
                   </div>
@@ -1588,12 +1600,12 @@ export default function ExpenseForm({
                 <div className="space-y-1.5">
                   <div className="flex flex-col items-end w-full space-y-1.5">
                     <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 shadow-sm">
-                      {groupPlan === 'HOI_LANG' || groupPlan === 'PREMIUM' ? `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/200 ảnh` : (groupPlan === 'DU_HI_30' ? `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/100 ảnh` : (groupPlan === 'BE_BAN' || groupPlan === 'VIP' ? `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/50 ảnh` : `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/10 ảnh`))}
+                      {groupPlan === 'HOI_LANG' || groupPlan === 'PREMIUM' ? (lang === 'en' ? `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/200 images` : `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/200 ảnh`) : (groupPlan === 'DU_HI_30' ? (lang === 'en' ? `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/100 images` : `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/100 ảnh`) : (groupPlan === 'BE_BAN' || groupPlan === 'VIP' ? (lang === 'en' ? `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/50 images` : `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/50 ảnh`) : (lang === 'en' ? `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/10 images` : `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/10 ảnh`)))}
                     </span>
                     <div className="w-full">
                       <span className="text-[0.6875rem] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
                         <ImageIcon className="h-3.5 w-3.5 text-slate-400" />
-                        Ảnh hóa đơn thủ công 📁
+                        {lang === 'en' ? "Manual Receipt 📁" : "Ảnh hóa đơn thủ công 📁"}
                       </span>
                     </div>
                   </div>
@@ -1620,8 +1632,8 @@ export default function ExpenseForm({
                     <label htmlFor="receipt-upload-manual" className="cursor-pointer w-full h-full py-1.5 block">
                       <div className="flex flex-col items-center justify-center">
                         <UploadCloud className={`h-7 w-7 mb-1 text-slate-400 ${manualDragActive ? "animate-bounce" : ""}`} />
-                        <p className="text-xs font-extrabold text-slate-700">Tải ảnh thủ công lên</p>
-                        <p className="text-[0.625rem] text-slate-400 mt-0.5">Chỉ lưu trữ làm minh chứng</p>
+                        <p className="text-xs font-extrabold text-slate-700">{lang === 'en' ? "Upload receipt manually" : "Tải ảnh thủ công lên"}</p>
+                        <p className="text-[0.625rem] text-slate-400 mt-0.5">{lang === 'en' ? "Proof of expense only" : "Chỉ lưu trữ làm minh chứng"}</p>
                       </div>
                     </label>
                   </div>
@@ -1631,7 +1643,7 @@ export default function ExpenseForm({
               <div className="space-y-1.5">
                 <span className="text-[0.6875rem] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
                   <ImageIcon className="h-3.5 w-3.5 text-slate-400" />
-                  Ảnh hóa đơn đã tải lên
+                  {lang === 'en' ? "Attached Receipt Image" : "Ảnh hóa đơn đã tải lên"}
                 </span>
                 
                 <div className="border border-slate-200 rounded-2xl p-4 text-center relative flex flex-col items-center justify-center min-h-[5.625rem] bg-slate-50/45">
@@ -1639,7 +1651,7 @@ export default function ExpenseForm({
                   {isScanning && (
                     <div className="absolute inset-0 bg-white/95 rounded-2xl flex flex-col items-center justify-center space-y-1.5 z-10 animate-in fade-in duration-200">
                       <Loader2 className="h-6 w-6 text-emerald-600 animate-spin" />
-                      <p className="text-xs font-bold text-emerald-800 animate-pulse">🤖 đang đọc hóa đơn...</p>
+                      <p className="text-xs font-bold text-emerald-800 animate-pulse">🤖 {lang === 'en' ? "Reading receipt..." : "đang đọc hóa đơn..."}</p>
                     </div>
                   )}
 
@@ -1652,8 +1664,8 @@ export default function ExpenseForm({
                         className="w-12 h-12 object-cover rounded-lg border border-slate-200 shrink-0"
                       />
                       <div className="text-left min-w-0">
-                        <p className="text-xs font-extrabold text-slate-800 truncate">Ảnh hóa đơn lưu thành công</p>
-                        <p className="text-[0.625rem] text-slate-400">Có thể xem lại trong lịch sử chi phí</p>
+                        <p className="text-xs font-extrabold text-slate-800 truncate">{lang === 'en' ? "Receipt saved successfully" : "Ảnh hóa đơn lưu thành công"}</p>
+                        <p className="text-[0.625rem] text-slate-400">{lang === 'en' ? "Available in expense history" : "Có thể xem lại trong lịch sử chi phí"}</p>
                       </div>
                     </div>
                     <button
@@ -1666,7 +1678,7 @@ export default function ExpenseForm({
                       className="p-1.5 px-3 bg-rose-50 text-rose-600 hover:bg-rose-100/85 rounded-xl text-xs font-extrabold transition-all shrink-0 cursor-pointer"
                       disabled={isScanning}
                     >
-                      Xóa ảnh
+                      {t('delete_receipt_photo')}
                     </button>
                   </div>
                 </div>
@@ -1677,8 +1689,8 @@ export default function ExpenseForm({
               <div className="mt-2.5 p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl text-emerald-800 text-xs font-semibold flex items-start gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
                 <Sparkles className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5 animate-pulse" />
                 <div>
-                  <p className="font-extrabold text-emerald-900">AI đã tự động điền thông tin! ✨</p>
-                  <p className="text-[0.6875rem] text-emerald-700/90 mt-0.5">Tên chi phí, Số tiền và Ngày đã được tự động phân tích từ hóa đơn.</p>
+                  <p className="font-extrabold text-emerald-900">{lang === 'en' ? "AI filled in details! ✨" : "AI đã tự động điền thông tin! ✨"}</p>
+                  <p className="text-[0.6875rem] text-emerald-700/90 mt-0.5">{lang === 'en' ? "Note, amount and date have been extracted from the receipt." : "Tên chi phí, Số tiền và Ngày đã được tự động phân tích từ hóa đơn."}</p>
                 </div>
               </div>
             )}
@@ -1687,9 +1699,9 @@ export default function ExpenseForm({
               <div className="mt-2.5 p-3 bg-amber-50/90 border border-amber-200 rounded-xl text-amber-800 text-xs flex items-start gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
                 <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-extrabold text-amber-950">Không thể nhận diện tự động</p>
+                  <p className="font-extrabold text-amber-950">{lang === 'en' ? "Automatic recognition failed" : "Không thể nhận diện tự động"}</p>
                   <p className="text-[0.6875rem] text-amber-800/90 mt-0.5">{aiErrorMsg}</p>
-                  <p className="text-[0.625rem] text-slate-500 mt-1">Lưu ý: Chụp ảnh hóa đơn rõ nét, đầy đủ ánh sáng và không che khuất các thông tin quan trọng.</p>
+                  <p className="text-[0.625rem] text-slate-500 mt-1">{lang === 'en' ? "Tip: Ensure good lighting, high contrast, and unobstructed details." : "Lưu ý: Chụp ảnh hóa đơn rõ nét, đầy đủ ánh sáng và không che khuất các thông tin quan trọng."}</p>
                 </div>
               </div>
             )}
@@ -1700,7 +1712,7 @@ export default function ExpenseForm({
             <div className="flex flex-col gap-3 border-b border-slate-200/60 pb-3">
               <div className="flex items-center gap-1.5">
                 <Users className="h-4 w-4 text-slate-550" />
-                <span className="text-xs font-bold text-slate-700">Chia sẻ cùng ai ({selectedParticipants.length} người)</span>
+                <span className="text-xs font-bold text-slate-700">{lang === 'en' ? `Split with (${selectedParticipants.length} people)` : `Chia sẻ cùng ai (${selectedParticipants.length} người)`}</span>
               </div>
               <div className="flex items-center justify-between gap-3 w-full">
                 <div className="flex bg-slate-200/70 p-1 rounded-xl">
@@ -1711,7 +1723,7 @@ export default function ExpenseForm({
                       splitMode === "equal" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
                     }`}
                   >
-                    Chia đều
+                    {t('split_equally')}
                   </button>
                   <button
                     type="button"
@@ -1720,7 +1732,7 @@ export default function ExpenseForm({
                       splitMode === "custom" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
                     }`}
                   >
-                    Tùy chỉnh
+                    {t('split_custom')}
                   </button>
                 </div>
                 
@@ -1730,7 +1742,7 @@ export default function ExpenseForm({
                     onClick={handleSelectAll}
                     className="text-[0.6875rem] font-bold text-emerald-600 hover:text-emerald-800 px-1.5 py-0.5 rounded hover:bg-emerald-50 transition-all cursor-pointer"
                   >
-                    Tất cả
+                    {t('select_all_members')}
                   </button>
                   <span className="text-slate-300 text-xs">|</span>
                   <button
@@ -1738,7 +1750,7 @@ export default function ExpenseForm({
                     onClick={handleDeselectAll}
                     className="text-[0.6875rem] font-bold text-rose-500 hover:text-rose-700 px-1.5 py-0.5 rounded hover:bg-rose-50 transition-all cursor-pointer"
                   >
-                    Xóa
+                    {t('deselect_all')}
                   </button>
                 </div>
               </div>
@@ -1856,7 +1868,7 @@ export default function ExpenseForm({
                   <>
                     <div className="flex items-center gap-1.5">
                       <Sparkles className="h-4 w-4 text-emerald-500" />
-                      <span>Dự báo mỗi người đóng:</span>
+                      <span>{lang === 'en' ? "Est. per person:" : "Dự báo mỗi người đóng:"}</span>
                     </div>
                     <span className="font-bold font-mono text-emerald-700">
                       {new Intl.NumberFormat("vi-VN").format(Math.round(costPerPerson))} ₫
@@ -1870,7 +1882,7 @@ export default function ExpenseForm({
                           ? customRemainingAmount < 0 ? "text-rose-500" : "text-amber-500"
                           : "text-emerald-500"
                       }`} />
-                      <span>Số tiền còn lại:</span>
+                      <span>{lang === 'en' ? "Remaining balance:" : "Số tiền còn lại:"}</span>
                     </div>
                     <span className={`font-bold font-mono ${customRemainingAmount === 0 && customRemainingCount === 0 && allocatedAmount === amount ? "text-emerald-700" : customRemainingAmount < 0 ? "text-rose-600" : "text-amber-600"}`}>
                       {new Intl.NumberFormat("vi-VN").format(Math.round(customRemainingAmount))} ₫
@@ -1902,10 +1914,10 @@ export default function ExpenseForm({
             {editingExpense ? (
               <>
                 <Check className="h-4 w-4" />
-                Lưu thay đổi khoản chi
+                {t('save_expense_changes')}
               </>
             ) : (
-              "Thêm chi phí này vào quỹ chung"
+              t('submit_expense')
             )}
           </button>
         </form>

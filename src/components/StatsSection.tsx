@@ -4,6 +4,7 @@ import { calculateBalances } from "../utils/debtSimplifier";
 import { getMemberAvatar } from "../utils/avatar";
 import { Wallet, PieChart, TrendingUp, Sparkles, Award, ChevronDown, ChevronUp } from "lucide-react";
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { Currency, formatCurrencyAmount } from "../utils/i18n";
 
 interface StatsSectionProps {
   members: Member[];
@@ -11,6 +12,7 @@ interface StatsSectionProps {
   debtOffsets?: DebtOffset[];
   hideOverview?: boolean;
   hideAwards?: boolean;
+  currency?: Currency;
 }
 
 const CHART_COLORS = [
@@ -26,7 +28,14 @@ const CHART_COLORS = [
   "#6366f1", // indigo-500
 ];
 
-export default function StatsSection({ members, expenses, debtOffsets, hideOverview = false, hideAwards = false }: StatsSectionProps) {
+export default function StatsSection({ 
+  members, 
+  expenses, 
+  debtOffsets, 
+  hideOverview = false, 
+  hideAwards = false,
+  currency = "VND"
+}: StatsSectionProps) {
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
 
   const balances = calculateBalances(members, expenses, debtOffsets);
@@ -44,10 +53,7 @@ export default function StatsSection({ members, expenses, debtOffsets, hideOverv
 
   // Formatter
   const formatVnd = (num: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(Math.round(num));
+    return formatCurrencyAmount(num, currency);
   };
 
   const getColor = (memberId: string) => {

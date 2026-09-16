@@ -1,12 +1,15 @@
 import React from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Users, X, Plus } from "lucide-react";
+import { Users, X, Plus, Coins } from "lucide-react";
+import { Currency, SUPPORTED_CURRENCIES } from "../utils/i18n";
 
 interface CreateGroupModalProps {
   isOpen: boolean;
   onClose: () => void;
   newGroupName: string;
   setNewGroupName: (name: string) => void;
+  newGroupCurrency?: Currency;
+  setNewGroupCurrency?: (c: Currency) => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 
@@ -15,6 +18,8 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
   onClose,
   newGroupName,
   setNewGroupName,
+  newGroupCurrency = "VND",
+  setNewGroupCurrency,
   onSubmit,
 }) => {
   return (
@@ -63,11 +68,42 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                   autoFocus
                   value={newGroupName}
                   onChange={(e) => setNewGroupName(e.target.value)}
-                  placeholder="Ví dụ: Du lịch Phú Quốc, Tiền trọ nhà chung, ..."
+                  placeholder="Ví dụ: Du lịch Phú Quốc, Singapore Trip, ..."
                   className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-sm font-semibold outline-none transition-all placeholder:text-slate-400"
                   required
                 />
               </div>
+
+              {setNewGroupCurrency && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                    <Coins className="w-3.5 h-3.5 text-amber-500" />
+                    Đơn vị tiền tệ nhóm
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {(Object.keys(SUPPORTED_CURRENCIES) as Currency[]).map((cur) => {
+                      const info = SUPPORTED_CURRENCIES[cur];
+                      const isSelected = newGroupCurrency === cur;
+                      return (
+                        <button
+                          key={cur}
+                          type="button"
+                          onClick={() => setNewGroupCurrency(cur)}
+                          className={`py-2 px-1.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center gap-0.5 ${
+                            isSelected
+                              ? "bg-emerald-50 border-emerald-500 text-emerald-700 font-extrabold shadow-xs"
+                              : "bg-slate-50 border-slate-200 text-slate-600 font-semibold hover:bg-slate-100"
+                          }`}
+                        >
+                          <span className="text-xs">{info.flag}</span>
+                          <span className="text-[11px] leading-tight font-black">{info.code}</span>
+                          <span className="text-[9px] text-slate-400 font-medium">({info.symbol})</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
@@ -93,3 +129,4 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
     </AnimatePresence>
   );
 };
+

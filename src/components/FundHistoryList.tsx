@@ -2,17 +2,20 @@ import React, { useState } from "react";
 import { Member, Expense } from "../types";
 import { getMemberAvatar, getGroupFundAvatar } from "../utils/avatar";
 import { Search, Users, Calendar, User, Trash2, PiggyBank, ArrowDownLeft, ArrowUpRight, ArrowUpDown, Filter, List, ChevronLeft, ChevronRight } from "lucide-react";
+import { Currency, formatCurrencyAmount } from "../utils/i18n";
 
 interface FundHistoryListProps {
   expenses: Expense[];
   members: Member[];
   onDeleteExpense: (id: string) => void;
+  currency?: Currency;
 }
 
 export default function FundHistoryList({
   expenses,
   members,
   onDeleteExpense,
+  currency = "VND",
 }: FundHistoryListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPayerId, setFilterPayerId] = useState("all");
@@ -70,7 +73,7 @@ export default function FundHistoryList({
 
   // Formatter helper
   const formatMoney = (val: number) => {
-    return new Intl.NumberFormat("vi-VN").format(Math.round(val)) + "đ";
+    return formatCurrencyAmount(val, currency);
   };
 
   const formatDate = (dateStr: string) => {

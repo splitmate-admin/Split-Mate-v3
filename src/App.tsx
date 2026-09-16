@@ -28,6 +28,7 @@ import DuHiOnboarding from "./components/DuHiOnboarding";
 import { CreateGroupModal } from "./components/CreateGroupModal";
 import { OfflineModal } from "./components/OfflineModal";
 import { supabase } from "./lib/supabaseClient";
+import { Currency, formatCurrencyAmount, useTranslation } from "./utils/i18n";
 
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -1073,8 +1074,10 @@ export default function App() {
   };
 
   // New Group input controls
+  const { lang, setLang, t } = useTranslation();
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupCurrency, setNewGroupCurrency] = useState<Currency>("VND");
   const [newGroupSuccess, setNewGroupSuccess] = useState(false);
 
   // Listen for open-create-group custom event
@@ -1235,6 +1238,7 @@ export default function App() {
     const newGroup: Group = {
       id: "g_" + Date.now(),
       name,
+      currency: newGroupCurrency || "VND",
       createdAt: new Date().toISOString().split("T")[0],
       members: [
         { 
@@ -1278,6 +1282,7 @@ export default function App() {
     
     setSelectedGroupId(newGroup.id);
     setNewGroupName("");
+    setNewGroupCurrency("VND");
     setIsCreatingGroup(false);
     setNewGroupSuccess(true);
     setTimeout(() => setNewGroupSuccess(false), 2500);
@@ -3717,8 +3722,8 @@ export default function App() {
                 }`}
               >
                 <Activity className={`h-4 w-4 shrink-0 transition-colors ${activeTab === 'bills' ? 'text-emerald-600' : 'text-slate-400'}`} />
-                <span className="whitespace-nowrap text-xs hidden sm:inline">Ghi chép chi tiêu</span>
-                <span className="whitespace-nowrap text-[0.625rem] sm:hidden truncate px-1">Chi tiêu</span>
+                <span className="whitespace-nowrap text-xs hidden sm:inline">{t("tab_expenses")}</span>
+                <span className="whitespace-nowrap text-[0.625rem] sm:hidden truncate px-1">{t("tab_expenses_short")}</span>
               </button>
               <button
                 type="button"
@@ -3730,8 +3735,8 @@ export default function App() {
                 }`}
               >
                 <ArrowLeftRight className={`h-4 w-4 shrink-0 transition-colors ${activeTab === 'settle' ? 'text-emerald-600' : 'text-slate-400'}`} />
-                <span className="whitespace-nowrap text-xs hidden sm:inline">Trả nợ & Quyết toán</span>
-                <span className="whitespace-nowrap text-[0.625rem] sm:hidden truncate px-1">Trả nợ</span>
+                <span className="whitespace-nowrap text-xs hidden sm:inline">{t("tab_settle")}</span>
+                <span className="whitespace-nowrap text-[0.625rem] sm:hidden truncate px-1">{t("tab_settle_short")}</span>
               </button>
               <button
                 type="button"
@@ -3743,8 +3748,8 @@ export default function App() {
                 }`}
               >
                 <FolderLock className={`h-4 w-4 shrink-0 transition-colors ${activeTab === 'participation' ? 'text-emerald-600' : 'text-slate-400'}`} />
-                <span className="whitespace-nowrap text-xs hidden sm:inline">Chốt Sổ & Lưu Trữ</span>
-                <span className="whitespace-nowrap text-[0.625rem] sm:hidden truncate px-1">Chốt sổ</span>
+                <span className="whitespace-nowrap text-xs hidden sm:inline">{t("tab_participation")}</span>
+                <span className="whitespace-nowrap text-[0.625rem] sm:hidden truncate px-1">{t("tab_participation_short")}</span>
               </button>
             </div>
 
@@ -3753,20 +3758,20 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleShareReport}
-                  title="Chia sẻ báo cáo PDF (Zalo, Messenger...)"
+                  title={lang === 'vi' ? "Chia sẻ báo cáo PDF (Zalo, Messenger...)" : "Share PDF Report"}
                   className="p-2.5 border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 flex-1 min-w-[4.375rem] sm:flex-none"
                 >
                   <Share2 className="h-4 w-4 shrink-0" />
-                  <span className="text-[0.625rem] sm:text-xs font-bold whitespace-nowrap">Chia sẻ</span>
+                  <span className="text-[0.625rem] sm:text-xs font-bold whitespace-nowrap">{t("share_report")}</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleExportPDF}
-                  title="Tải báo cáo PDF"
+                  title={lang === 'vi' ? "Tải báo cáo PDF" : "Download PDF Report"}
                   className="p-2.5 border border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 flex-1 min-w-[4.375rem] sm:flex-none"
                 >
                   <Download className="h-4 w-4 shrink-0" />
-                  <span className="text-[0.625rem] sm:text-xs font-bold whitespace-nowrap">Xuất PDF</span>
+                  <span className="text-[0.625rem] sm:text-xs font-bold whitespace-nowrap">{t("export_pdf")}</span>
                 </button>
               </div>
             )}
@@ -3936,6 +3941,7 @@ export default function App() {
                     expenses={expenses}
                     members={members}
                     onDeleteExpense={handleDeleteExpense}
+                    currency={activeGroup?.currency || "VND"}
                   />
                 )}
               </div>
@@ -3947,6 +3953,7 @@ export default function App() {
                     members={members}
                     expenses={expenses}
                     debtOffsets={activeGroup?.debtOffsets}
+                    currency={activeGroup?.currency || "VND"}
                   />
                 </div>
               )}
@@ -4827,6 +4834,7 @@ export default function App() {
                         expenses={expenses}
                         members={members}
                         onDeleteExpense={handleDeleteExpense}
+                        currency={activeGroup?.currency || "VND"}
                       />
                     )}
 
@@ -4873,7 +4881,7 @@ export default function App() {
                     }`}
                   >
                     <Compass className={`h-5 w-5 max-[375px]:h-4.5 max-[375px]:w-4.5 min-[390px]:h-6 min-[390px]:w-6 ${activeTab === "home" ? "text-emerald-600 stroke-[2.5px]" : "text-slate-400"}`} />
-                    <span className="text-[0.625rem] max-[375px]:text-[9px] min-[390px]:text-xs font-bold">Tổng quan</span>
+                    <span className="text-[0.625rem] max-[375px]:text-[9px] min-[390px]:text-xs font-bold">{t("tab_overview")}</span>
                   </button>
 
                   <button
@@ -4886,7 +4894,7 @@ export default function App() {
                   >
                     <Activity className={`h-5 w-5 max-[375px]:h-4.5 max-[375px]:w-4.5 min-[390px]:h-6 min-[390px]:w-6 ${activeTab === "bills" ? "text-emerald-600 stroke-[2.5px]" : "text-slate-400"}`} />
                     <span className="text-[0.625rem] max-[375px]:text-[9px] min-[390px]:text-xs font-bold flex items-center gap-1">
-                      Chi tiêu
+                      {t("tab_expenses_short")}
                       {currentStep === 2 && (
                         <span className="relative flex h-2 w-2 shrink-0">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -4917,7 +4925,7 @@ export default function App() {
                         currentStep === 2
                           ? "text-amber-700 bg-amber-100 animate-pulse font-extrabold"
                           : "text-emerald-600 bg-emerald-50"
-                      }`}>Quét hóa đơn</span>
+                      }`}>{t("scan_bill")}</span>
                     </button>
                   )}
 
@@ -4931,7 +4939,7 @@ export default function App() {
                   >
                     <ArrowLeftRight className={`h-5 w-5 max-[375px]:h-4.5 max-[375px]:w-4.5 min-[390px]:h-6 min-[390px]:w-6 ${activeTab === "settle" ? "text-emerald-600 stroke-[2.5px]" : "text-slate-400"}`} />
                     <span className="text-[0.625rem] max-[375px]:text-[9px] min-[390px]:text-xs font-bold flex items-center gap-1">
-                      Trả nợ
+                      {t("tab_settle_short")}
                       {currentStep === 3 && (
                         <span className="relative flex h-2 w-2 shrink-0">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -4951,7 +4959,7 @@ export default function App() {
                   >
                     <FolderLock className={`h-5 w-5 max-[375px]:h-4.5 max-[375px]:w-4.5 min-[390px]:h-6 min-[390px]:w-6 ${activeTab === "participation" ? "text-emerald-600 stroke-[2.5px]" : "text-slate-400"}`} />
                     <span className="text-[0.625rem] max-[375px]:text-[9px] min-[390px]:text-xs font-bold flex items-center gap-1">
-                      Chốt sổ
+                      {t("tab_participation_short")}
                     </span>
                   </button>
                 </div>
@@ -4965,7 +4973,7 @@ export default function App() {
                   }`}
                 >
                   <Compass className={`h-5.5 w-5.5 max-[375px]:h-5 max-[375px]:w-5 min-[390px]:h-6.5 min-[390px]:w-6.5 ${addExpenseSubTab === "scan" ? "text-emerald-600 stroke-[2.5px]" : "text-slate-400"}`} />
-                  <span className="text-[0.6875rem] max-[375px]:text-[10px] min-[390px]:text-xs font-bold">Quét hóa đơn</span>
+                  <span className="text-[0.6875rem] max-[375px]:text-[10px] min-[390px]:text-xs font-bold">{t("scan_bill")}</span>
                 </button>
 
                 <button
@@ -4976,7 +4984,7 @@ export default function App() {
                   }`}
                 >
                   <Activity className={`h-5.5 w-5.5 max-[375px]:h-5 max-[375px]:w-5 min-[390px]:h-6.5 min-[390px]:w-6.5 ${addExpenseSubTab === "manual" ? "text-emerald-600 stroke-[2.5px]" : "text-slate-400"}`} />
-                  <span className="text-[0.6875rem] max-[375px]:text-[10px] min-[390px]:text-xs font-bold">Nhập thủ công</span>
+                  <span className="text-[0.6875rem] max-[375px]:text-[10px] min-[390px]:text-xs font-bold">{lang === 'vi' ? 'Nhập thủ công' : 'Manual Entry'}</span>
                 </button>
               </div>
             )}
@@ -5193,6 +5201,8 @@ export default function App() {
           onClose={() => setIsCreatingGroup(false)}
           newGroupName={newGroupName}
           setNewGroupName={setNewGroupName}
+          newGroupCurrency={newGroupCurrency}
+          setNewGroupCurrency={setNewGroupCurrency}
           onSubmit={handleCreateGroup}
         />
 

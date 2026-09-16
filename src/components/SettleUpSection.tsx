@@ -9,6 +9,7 @@ import { compressImage } from "../utils/imageCompressor";
 import { getMemberAvatar } from "../utils/avatar";
 import { formatDateTime } from "../utils/dateUtils";
 import { generateVietQRQuickUrl, getBankBin } from "../utils/vietqr";
+import { formatCurrencyAmount, useTranslation } from "../utils/i18n";
 
 const BANK_NAMES: Record<string, string> = {
   "970436": "Vietcombank", "VCB": "Vietcombank",
@@ -85,6 +86,7 @@ export default function SettleUpSection({
   onBatchSettleAndReceipt,
   onUpdatePendingReceipts
 }: SettleUpSectionProps) {
+  const { t, lang } = useTranslation();
   const [showPersonalStatement, setShowPersonalStatement] = useState<boolean>(false);
   const [isOffsetBottomSheetOpen, setIsOffsetBottomSheetOpen] = useState<boolean>(false);
   const [toastMsg, setToastMsg] = useState<{ title: string; desc?: string; type: 'success' | 'error' } | null>(null);
@@ -149,10 +151,7 @@ export default function SettleUpSection({
 
   
   const formatMoney = (val: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(Math.round(val)).replace("₫", "đ");
+    return formatCurrencyAmount(val, activeGroup?.currency || "VND");
   };
 
   const pendingReceipts = activeGroup?.pendingReceipts || [];
@@ -483,10 +482,10 @@ export default function SettleUpSection({
             </div>
             <div className="min-w-0 text-left">
               <h4 className="font-black text-base text-white tracking-tight">
-                Sao Kê Công Nợ Cá Nhân
+                {t('statement_banner_title')}
               </h4>
               <p className="text-xs text-teal-100/90 font-medium mt-0.5">
-                Biến động công nợ cá nhân & khoản chi trước cho nhóm
+                {t('statement_banner_desc')}
               </p>
             </div>
           </div>
@@ -497,7 +496,7 @@ export default function SettleUpSection({
             className="relative z-10 w-full sm:w-auto bg-white hover:bg-emerald-50 text-teal-950 font-black text-xs px-5 py-3 rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 shrink-0 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
           >
             <FileText className="w-4 h-4 text-[#03B875]" />
-            <span>Xem Sao Kê Chi Tiết</span>
+            <span>{t('view_statement_btn')}</span>
             <ChevronRight className="w-4 h-4 text-teal-700" />
           </button>
         </div>
@@ -512,10 +511,10 @@ export default function SettleUpSection({
             </div>
             <div>
               <h5 className="font-extrabold text-xs text-slate-800">
-                Cấn Trừ Nợ Trực Tiếp
+                {t('direct_debt_offset')}
               </h5>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Tự động bù trừ công nợ giữa 2 thành viên không qua ngân hàng.
+                {lang === 'en' ? "Offset balances directly between 2 members without bank transfer." : "Tự động bù trừ công nợ giữa 2 thành viên không qua ngân hàng."}
               </p>
             </div>
           </div>
@@ -523,7 +522,7 @@ export default function SettleUpSection({
             type="button"
             onClick={() => {
               if (!isAdmin) {
-                setToastMsg({ title: "Quyền Trưởng nhóm", desc: "Tính năng tạo cấn trừ công nợ chỉ dành riêng cho Trưởng nhóm.", type: "error" });
+                setToastMsg({ title: lang === 'en' ? "Leader Permission" : "Quyền Trưởng nhóm", desc: lang === 'en' ? "Offsetting debt is only available to the group leader." : "Tính năng tạo cấn trừ công nợ chỉ dành riêng cho Trưởng nhóm.", type: "error" });
                 return;
               }
               setIsOffsetBottomSheetOpen(true);
@@ -533,7 +532,7 @@ export default function SettleUpSection({
             }`}
           >
             <Handshake className={`w-4 h-4 ${isAdmin ? "text-amber-400" : "text-slate-500"}`} />
-            <span>{isAdmin ? "Tạo Cấn Trừ Nợ" : "🔒 Tạo Cấn Trừ (Trưởng nhóm)"}</span>
+            <span>{isAdmin ? (lang === 'en' ? "Create Debt Offset" : "Tạo Cấn Trừ Nợ") : (lang === 'en' ? "🔒 Offset Debt (Leader)" : "🔒 Tạo Cấn Trừ (Trưởng nhóm)")}</span>
           </button>
         </div>
       )}
@@ -542,7 +541,7 @@ export default function SettleUpSection({
         <div className="flex items-center justify-between gap-4 mb-4">
           <h4 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
             <ArrowLeftRight className="h-5 w-5 text-[#03B875]" />
-            Các khoản cần tất toán
+            {t('settle_up_title')}
           </h4>
         </div>
 
@@ -553,9 +552,9 @@ export default function SettleUpSection({
                 <AlertTriangle className="w-4.5 h-4.5" />
               </div>
               <div className="flex-1 min-w-0">
-                <h5 className="font-bold text-xs text-amber-900 leading-snug">Chưa cài STK nhận tiền Quỹ nhóm</h5>
+                <h5 className="font-bold text-xs text-amber-900 leading-snug">{lang === 'en' ? "Group fund bank account not set up" : "Chưa cài STK nhận tiền Quỹ nhóm"}</h5>
                 <p className="text-[11px] text-amber-700 mt-0.5 leading-relaxed">
-                  Cài đặt STK Quỹ để tự động tạo mã QR nộp tiền & tất toán.
+                  {lang === 'en' ? "Configure Fund account to automatically generate QR codes for deposits." : "Cài đặt STK Quỹ để tự động tạo mã QR nộp tiền & tất toán."}
                 </p>
               </div>
             </div>
@@ -565,7 +564,7 @@ export default function SettleUpSection({
               className="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-black px-4 py-2.5 rounded-xl transition-all shadow-3xs flex items-center gap-1.5 shrink-0 self-start sm:self-auto cursor-pointer uppercase tracking-wider animate-pulse"
             >
               <Settings className="w-3.5 h-3.5" />
-              <span>Cài đặt ngay</span>
+              <span>{lang === 'en' ? "Set up now" : "Cài đặt ngay"}</span>
             </button>
           </div>
         )}
@@ -577,8 +576,8 @@ export default function SettleUpSection({
               <CheckCircle2 className="h-6 w-6" />
             </div>
             <div>
-              <p className="font-bold text-slate-700 text-sm">Tuyệt vời! Đã thanh toán sòng phẳng</p>
-              <p className="text-xs text-slate-400 mt-0.5">Không còn khoản nợ nào cần thanh toán.</p>
+              <p className="font-bold text-slate-700 text-sm">{t('all_settled_title')}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{t('all_settled_desc')}</p>
             </div>
           </div>
         ) : (
@@ -590,7 +589,7 @@ export default function SettleUpSection({
 
               const isMyTx = viewingMemberId === tx.memberId;
               
-              const fundTarget = { name: "Quỹ Nhóm", emoji: "🏦" };
+              const fundTarget = { name: lang === 'en' ? "Group Fund" : "Quỹ Nhóm", emoji: "🏦" };
               const sender = isFundIn ? { ...member } : fundTarget;
               const receiver = isFundIn ? fundTarget : { ...member };
 
@@ -606,7 +605,7 @@ export default function SettleUpSection({
                       <div className="w-12 h-12 rounded-full border border-slate-100 overflow-hidden flex items-center justify-center bg-slate-50 shadow-xs">
                         <img 
                           src={getMemberAvatar(sender as any)} 
-                          alt={sender.name}
+                          alt={sender.name} 
                           className="w-full h-full object-cover" 
                           referrerPolicy="no-referrer"
                         />
@@ -617,7 +616,7 @@ export default function SettleUpSection({
                     <div className="flex-1 flex flex-col items-center relative mx-1">
                       <div className="w-full h-px border-t-2 border-dashed border-slate-200 absolute top-1/2 -translate-y-1/2 z-0"></div>
                       <span className="bg-white px-3 py-1 z-10 font-mono font-black text-slate-800 text-xs sm:text-sm tracking-tight border border-slate-100 rounded-full shadow-3xs">
-                        {new Intl.NumberFormat("vi-VN").format(Math.round(tx.amount))}đ
+                        {formatMoney(tx.amount)}
                       </span>
                       <ArrowRight className="h-4 w-4 text-slate-300 absolute top-1/2 -translate-y-1/2 right-0 bg-white" />
                     </div>
@@ -626,7 +625,7 @@ export default function SettleUpSection({
                       <div className="w-12 h-12 rounded-full border border-slate-100 overflow-hidden flex items-center justify-center bg-slate-50 shadow-xs">
                         <img 
                           src={getMemberAvatar(receiver as any)} 
-                          alt={receiver.name}
+                          alt={receiver.name} 
                           className="w-full h-full object-cover" 
                           referrerPolicy="no-referrer"
                         />
@@ -641,7 +640,7 @@ export default function SettleUpSection({
                         <button 
                           onClick={() => {
                             if (!receiverHasBank) {
-                              setToastMsg({ title: "Mở cài đặt Quỹ", desc: "Quỹ nhóm chưa thiết lập STK/Ví nhận tiền. Đang mở cài đặt...", type: "error" });
+                              setToastMsg({ title: lang === 'en' ? "Open Fund Settings" : "Mở cài đặt Quỹ", desc: lang === 'en' ? "Fund account not configured. Opening settings..." : "Quỹ nhóm chưa thiết lập STK/Ví nhận tiền. Đang mở cài đặt...", type: "error" });
                               window.dispatchEvent(new CustomEvent("open-group-settings"));
                               return;
                             }
@@ -650,20 +649,20 @@ export default function SettleUpSection({
                           className="w-full sm:w-auto bg-[#03B875] hover:bg-[#02965f] text-white text-xs font-black px-5 py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
                         >
                           <QrCode className="w-4 h-4" />
-                          Xác nhận nộp
+                          {t('confirm_payment_btn')}
                         </button>
                       ) : (
                         <button 
                           onClick={() => {
                             if (!receiverHasBank) {
-                              setToastMsg({ title: "Lưu ý", desc: "Thành viên chưa thiết lập STK/MoMo.", type: "error" });
+                              setToastMsg({ title: lang === 'en' ? "Notice" : "Lưu ý", desc: lang === 'en' ? "Member has not set up bank account." : "Thành viên chưa thiết lập STK/MoMo.", type: "error" });
                             }
                             setActivePayTx({ fromId: 'group', toId: member.id, amount: tx.amount, qrTab: 'bank', isAdminConfirm: true });
                           }}
                           className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white text-xs font-black px-5 py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
                         >
                           <QrCode className="w-4 h-4" />
-                          Xác nhận hoàn dư
+                          {lang === 'en' ? "Refund excess" : "Xác nhận hoàn dư"}
                         </button>
                       )
                     ) : (
@@ -671,7 +670,7 @@ export default function SettleUpSection({
                         <button 
                           onClick={() => {
                             if (!receiverHasBank) {
-                              setToastMsg({ title: "Chưa thể nộp", desc: "Quỹ nhóm chưa thiết lập STK/Ví nhận tiền. Vui lòng nhắc Trưởng nhóm cấu hình.", type: "error" });
+                              setToastMsg({ title: lang === 'en' ? "Cannot deposit" : "Chưa thể nộp", desc: lang === 'en' ? "Group fund has no bank account configured. Please ask the leader." : "Quỹ nhóm chưa thiết lập STK/Ví nhận tiền. Vui lòng nhắc Trưởng nhóm cấu hình.", type: "error" });
                               return;
                             }
                             setActivePayTx({ fromId: member.id, toId: 'group', amount: tx.amount, qrTab: 'bank', isAdminConfirm: false });
@@ -679,7 +678,7 @@ export default function SettleUpSection({
                           className="w-full sm:w-auto bg-[#03B875] hover:bg-[#02965f] text-white text-xs font-black px-5 py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
                         >
                           <QrCode className="w-4 h-4" />
-                          Nộp quỹ
+                          {lang === 'en' ? "Pay to Fund" : "Nộp quỹ"}
                         </button>
                       )
                     )}
@@ -712,7 +711,7 @@ export default function SettleUpSection({
                 <div className="sticky top-0 bg-[#0B7A54] z-10 px-5 py-3.5 flex items-center justify-between shadow-sm rounded-t-3xl">
                 <h3 className="font-black text-white text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2">
                   <QrCode className="w-4 h-4 sm:w-5 sm:h-5" />
-                  MÃ QR {activePayTx.toId === 'group' ? 'NỘP QUỸ' : 'HOÀN NỢ'}
+                  {lang === 'en' ? `QR CODE ${activePayTx.toId === 'group' ? 'FUND DEPOSIT' : 'DEBT REFUND'}` : `MÃ QR ${activePayTx.toId === 'group' ? 'NỘP QUỸ' : 'HOÀN NỢ'}`}
                 </h3>
                 <button onClick={() => setActivePayTx(null)} className="p-1.5 bg-white/20 text-white rounded-full hover:bg-white/30 cursor-pointer transition-colors">
                   <X className="h-4 w-4" />
@@ -723,7 +722,7 @@ export default function SettleUpSection({
                 <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-3xs">
                   <div className="text-center space-y-0.5 pb-2.5">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                      {activePayTx.toId === 'group' ? 'THÀNH VIÊN NỘP QUỸ' : 'THÀNH VIÊN NHẬN TIỀN'}
+                      {lang === 'en' ? (activePayTx.toId === 'group' ? 'MEMBER DEPOSITING' : 'MEMBER RECEIVING') : (activePayTx.toId === 'group' ? 'THÀNH VIÊN NỘP QUỸ' : 'THÀNH VIÊN NHẬN TIỀN')}
                     </p>
                     <p className="text-base font-black text-slate-800">
                       {activePayTx.toId === 'group' ? getMember(activePayTx.fromId)?.name : getMember(activePayTx.toId)?.name}
@@ -733,14 +732,14 @@ export default function SettleUpSection({
                   <div className="h-px bg-slate-100 w-full mb-3" />
                   
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-xs font-bold text-slate-500">Tổng nợ cần thanh toán:</p>
+                    <p className="text-xs font-bold text-slate-500">{lang === 'en' ? "Total debt to settle:" : "Tổng nợ cần thanh toán:"}</p>
                     <span className="bg-rose-50 text-rose-500 font-bold px-2.5 py-1 rounded-lg text-xs border border-rose-100">
-                      {new Intl.NumberFormat("vi-VN").format(Math.round(activePayTx.amount))} đ
+                      {formatMoney(activePayTx.amount)}
                     </span>
                   </div>
 
                   <div className="space-y-2.5">
-                    <p className="text-[11px] font-bold text-slate-500">💰 SỐ TIỀN THỰC TẾ GỬI (CÓ THỂ SỬA):</p>
+                    <p className="text-[11px] font-bold text-slate-500 uppercase">{lang === 'en' ? "💰 Actual amount to send (editable):" : "💰 SỐ TIỀN THỰC TẾ GỬI (CÓ THỂ SỬA):"}</p>
                     <div className="relative">
                       <input 
                         type="text" 
@@ -756,25 +755,25 @@ export default function SettleUpSection({
                           }
                           if (numericVal > maxAllowed) {
                             numericVal = Math.round(maxAllowed);
-                            setToastMsg({ title: "Lưu ý", desc: `Số tiền không thể vượt quá ${new Intl.NumberFormat("vi-VN").format(Math.round(maxAllowed))}đ`, type: "error" });
+                            setToastMsg({ title: lang === 'en' ? "Notice" : "Lưu ý", desc: lang === 'en' ? `Amount cannot exceed ${formatMoney(maxAllowed)}` : `Số tiền không thể vượt quá ${formatMoney(maxAllowed)}`, type: "error" });
                           }
 
                           setCustomPayAmountStr(numericVal ? new Intl.NumberFormat("vi-VN").format(numericVal) : "");
                         }}
                         className="w-full text-center font-mono font-black text-lg py-2.5 px-4 rounded-xl border-2 border-[#0B7A54] focus:ring-4 focus:ring-[#0B7A54]/10 outline-none text-slate-800 transition-all"
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">đ</span>
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">{activeGroup?.currency || "đ"}</span>
                     </div>
 
                     <button 
                       onClick={() => {
                         const parsed = parseInt(customPayAmountStr.replace(/[^0-9]/g, "")) || 0;
                         setConfirmedQrAmountStr(new Intl.NumberFormat("vi-VN").format(parsed));
-                        setToastMsg({ title: "Thành công", desc: `Đã cập nhật mã QR với số tiền ${new Intl.NumberFormat("vi-VN").format(parsed)}đ`, type: "success" });
+                        setToastMsg({ title: lang === 'en' ? "Success" : "Thành công", desc: lang === 'en' ? `Updated QR code with ${formatMoney(parsed)}` : `Đã cập nhật mã QR với số tiền ${formatMoney(parsed)}`, type: "success" });
                       }}
                       className="w-full bg-[#0B7A54] hover:bg-[#096645] text-white py-2.5 rounded-xl text-xs font-black flex justify-center items-center gap-1.5 transition-all shadow-3xs active:scale-[0.98] cursor-pointer"
                     >
-                      <CheckCircle2 className="w-4 h-4" /> Xác nhận & Cập nhật QR
+                      <CheckCircle2 className="w-4 h-4" /> {lang === 'en' ? "Confirm & Update QR" : "Xác nhận & Cập nhật QR"}
                     </button>
                     
                     <div className="flex items-center gap-2 pt-0.5">
@@ -786,11 +785,11 @@ export default function SettleUpSection({
                           }
                           const val = Math.round(maxAllowed);
                           setCustomPayAmountStr(new Intl.NumberFormat("vi-VN").format(val));
-                          setToastMsg({ title: "Thông báo", desc: "Bấm nút 'Xác nhận & Cập nhật QR' bên trên để tạo lại mã QR.", type: "success" });
+                          setToastMsg({ title: lang === 'en' ? "Notice" : "Thông báo", desc: lang === 'en' ? "Click 'Confirm & Update QR' above to recreate QR code." : "Bấm nút 'Xác nhận & Cập nhật QR' bên trên để tạo lại mã QR.", type: "success" });
                         }}
                         className="flex-1 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors font-bold text-xs cursor-pointer"
                       >
-                        Trả hết (100%)
+                        {lang === 'en' ? "Pay all (100%)" : "Trả hết (100%)"}
                       </button>
                       <button 
                         onClick={() => {
@@ -800,11 +799,11 @@ export default function SettleUpSection({
                           }
                           const val = Math.round(maxAllowed / 2);
                           setCustomPayAmountStr(new Intl.NumberFormat("vi-VN").format(val));
-                          setToastMsg({ title: "Thông báo", desc: "Bấm nút 'Xác nhận & Cập nhật QR' bên trên để tạo lại mã QR.", type: "success" });
+                          setToastMsg({ title: lang === 'en' ? "Notice" : "Thông báo", desc: lang === 'en' ? "Click 'Confirm & Update QR' above to recreate QR code." : "Bấm nút 'Xác nhận & Cập nhật QR' bên trên để tạo lại mã QR.", type: "success" });
                         }}
                         className="flex-1 py-2 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors font-bold text-xs cursor-pointer"
                       >
-                        Trả 1 nửa (50%)
+                        {lang === 'en' ? "Pay half (50%)" : "Trả 1 nửa (50%)"}
                       </button>
                     </div>
                   </div>
@@ -815,7 +814,7 @@ export default function SettleUpSection({
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
                   <p className="text-[11px] font-extrabold text-emerald-800 text-center mb-2 flex items-center justify-center gap-1.5 uppercase tracking-wide">
                     <QrCode className="w-3.5 h-3.5" />
-                    MÃ QR THANH TOÁN NHANH:
+                    {lang === 'en' ? "QUICK PAYMENT QR CODE:" : "MÃ QR THANH TOÁN NHANH:"}
                   </p>
                   
                   <div className="flex justify-center mb-1.5">
@@ -827,14 +826,14 @@ export default function SettleUpSection({
                       } else {
                         return (
                           <div className="w-44 h-44 flex items-center justify-center bg-slate-50 text-slate-400 text-xs text-center p-3 rounded-xl border border-slate-100">
-                            Chưa có mã QR. Vui lòng chuyển khoản theo thông tin thủ công.
+                            {lang === 'en' ? "No QR code available. Please transfer using manual details." : "Chưa có mã QR. Vui lòng chuyển khoản theo thông tin thủ công."}
                           </div>
                         );
                       }
                     })()}
                   </div>
                   <p className="text-center text-[10px] text-slate-500 font-medium">
-                    Quét mã QR để thanh toán tự điền số tiền <span className="text-rose-500 font-bold">{confirmedQrAmountStr || "0"} đ</span>
+                    {lang === 'en' ? "Scan QR to pay with pre-filled amount" : "Quét mã QR để thanh toán tự điền số tiền"} <span className="text-rose-500 font-bold">{confirmedQrAmountStr || "0"} {activeGroup?.currency || "đ"}</span>
                   </p>
                 </div>
 
@@ -846,7 +845,7 @@ export default function SettleUpSection({
                     if (activePayTx.toId === "group") {
                       bankNo = activeGroup?.bankAccount || "";
                       bankCode = activeGroup?.bankCode || "";
-                      receiverName = activeGroup?.bankAccountName || "Quỹ Nhóm";
+                      receiverName = activeGroup?.bankAccountName || (lang === 'en' ? "Group Fund" : "Quỹ Nhóm");
                     } else {
                       const receiver = getMember(activePayTx.toId);
                       bankNo = receiver?.bankAccount || "";
@@ -857,61 +856,61 @@ export default function SettleUpSection({
 
                     const handleCopy = (text: string) => {
                       navigator.clipboard.writeText(text);
-                      setToastMsg({ title: "Thành công", desc: "Đã sao chép", type: "success" });
+                      setToastMsg({ title: lang === 'en' ? "Success" : "Thành công", desc: lang === 'en' ? "Copied" : "Đã sao chép", type: "success" });
                     };
 
                     return (
                       <>
                         <div className="flex items-center justify-between bg-white border border-slate-200/70 rounded-xl p-2.5 px-3">
                           <div>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase">Ngân hàng</p>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">{lang === 'en' ? "Bank" : "Ngân hàng"}</p>
                             <p className="text-xs font-black text-slate-800">
                               {getDisplayBankName(bankCode)}
                             </p>
                           </div>
                           <button onClick={() => handleCopy(getDisplayBankName(bankCode))} className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer">
                             <Copy className="w-3 h-3" />
-                            Sao chép
+                            {lang === 'en' ? "Copy" : "Sao chép"}
                           </button>
                         </div>
                         <div className="flex items-center justify-between bg-white border border-slate-200/70 rounded-xl p-2.5 px-3">
                           <div>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase">Số tài khoản</p>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">{lang === 'en' ? "Account number" : "Số tài khoản"}</p>
                             <p className="text-xs font-black text-slate-800">{bankNo}</p>
                           </div>
                           <button onClick={() => handleCopy(bankNo)} className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer">
                             <Copy className="w-3 h-3" />
-                            Sao chép
+                            {lang === 'en' ? "Copy" : "Sao chép"}
                           </button>
                         </div>
                         <div className="flex items-center justify-between bg-white border border-slate-200/70 rounded-xl p-2.5 px-3">
                           <div>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase">Chủ Tài khoản</p>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">{lang === 'en' ? "Account holder" : "Chủ Tài khoản"}</p>
                             <p className="text-xs font-black text-slate-800 uppercase">{receiverName}</p>
                           </div>
                           <button onClick={() => handleCopy(receiverName.toUpperCase())} className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer">
                             <Copy className="w-3 h-3" />
-                            Sao chép
+                            {lang === 'en' ? "Copy" : "Sao chép"}
                           </button>
                         </div>
                         <div className="flex items-center justify-between bg-white border border-slate-200/70 rounded-xl p-2.5 px-3">
                           <div>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase">Số tiền</p>
-                            <p className="text-xs font-black text-rose-500">{new Intl.NumberFormat("vi-VN").format(parsedAmount)} đ</p>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">{lang === 'en' ? "Amount" : "Số tiền"}</p>
+                            <p className="text-xs font-black text-rose-500">{formatMoney(parsedAmount)}</p>
                           </div>
                           <button onClick={() => handleCopy(parsedAmount.toString())} className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer">
                             <Copy className="w-3 h-3" />
-                            Sao chép số
+                            {lang === 'en' ? "Copy amount" : "Sao chép số"}
                           </button>
                         </div>
                         <div className="flex items-center justify-between bg-white border border-slate-200/70 rounded-xl p-2.5 px-3">
                           <div className="min-w-0 pr-2">
-                            <p className="text-[9px] font-bold text-slate-400 uppercase">Nội dung</p>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">{lang === 'en' ? "Content / Memo" : "Nội dung"}</p>
                             <p className="text-xs font-black text-slate-800 truncate">{memo}</p>
                           </div>
                           <button onClick={() => handleCopy(memo)} className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer shrink-0">
                             <Copy className="w-3 h-3" />
-                            Sao chép
+                            {lang === 'en' ? "Copy" : "Sao chép"}
                           </button>
                         </div>
                       </>
@@ -925,8 +924,8 @@ export default function SettleUpSection({
                   <div className="w-7 h-7 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto">
                     {isUploadingReceipt ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                   </div>
-                  <p className="text-xs font-bold text-slate-800">{isUploadingReceipt ? 'Đang tải ảnh lên...' : 'Tải ảnh biên lai chuyển khoản'}</p>
-                  <p className="text-[10px] text-slate-500 leading-tight">Lưu ảnh chụp màn hình chuyển khoản để đối soát công nợ</p>
+                  <p className="text-xs font-bold text-slate-800">{isUploadingReceipt ? (lang === 'en' ? 'Uploading receipt...' : 'Đang tải ảnh lên...') : (lang === 'en' ? 'Upload transfer receipt proof' : 'Tải ảnh biên lai chuyển khoản')}</p>
+                  <p className="text-[10px] text-slate-500 leading-tight">{lang === 'en' ? 'Save screenshot of bank transfer to verify debt' : 'Lưu ảnh chụp màn hình chuyển khoản để đối soát công nợ'}</p>
                 </label>
               </div>
 
@@ -936,7 +935,7 @@ export default function SettleUpSection({
                   onClick={() => setActivePayTx(null)}
                   className="flex-1 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl text-xs hover:bg-slate-50 transition-colors cursor-pointer"
                 >
-                  Hủy bỏ
+                  {lang === 'en' ? "Cancel" : "Hủy bỏ"}
                 </button>
                 {activePayTx.isAdminConfirm ? (
                   <button 
@@ -951,7 +950,7 @@ export default function SettleUpSection({
                     }}
                     className="flex-1 py-3 bg-[#EBF4FF] text-[#1E40AF] font-bold rounded-xl text-sm hover:bg-[#DBEAFE] transition-colors"
                   >
-                    Xác nhận hoàn tất
+                    {lang === 'en' ? "Confirm completion" : "Xác nhận hoàn tất"}
                   </button>
                 ) : (
                   <button 
@@ -970,11 +969,11 @@ export default function SettleUpSection({
                         onUpdatePendingReceipts([...pendingReceipts, rec]);
                       }
                       setActivePayTx(null);
-                      setToastMsg({ title: "Thành công", desc: "Đã gửi yêu cầu xác nhận", type: "success" });
+                      setToastMsg({ title: lang === 'en' ? "Success" : "Thành công", desc: lang === 'en' ? "Sent confirmation request" : "Đã gửi yêu cầu xác nhận", type: "success" });
                     }}
                     className="flex-1 py-3 bg-[#EBF4FF] text-[#1E40AF] font-bold rounded-xl text-sm hover:bg-[#DBEAFE] transition-colors"
                   >
-                    Xác nhận đã chuyển
+                    {lang === 'en' ? "Confirm sent" : "Xác nhận đã chuyển"}
                   </button>
                 )}
               </div>

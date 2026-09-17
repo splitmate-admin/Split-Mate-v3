@@ -1,3 +1,13 @@
+import { ui } from './i18n/core';
+import type { SupportedCurrency } from './utils/money';
+export interface FxSnapshot {
+  currency: SupportedCurrency;
+  originalAmount: number;
+  rateToVnd: number;
+  quotedAt: string;
+  source: string;
+  originalCustomSplit?: Record<string, number>;
+}
 export interface Member {
   id: string;
   name: string;
@@ -23,6 +33,7 @@ export interface Member {
 }
 
 export interface Expense {
+  fx?: FxSnapshot;
   id: string;
   description: string;
   amount: number;
@@ -70,20 +81,12 @@ export interface BillingCycle {
 
 export type PlanType = "FREE" | "BE_BAN" | "HOI_LANG" | "DU_HI_30" | "TRY_OFFLINE";
 
-export const getPlanLabel = (plan?: string, isOffline?: boolean, lang: 'vi' | 'en' = 'vi'): string => {
-  if (lang === 'en') {
-    if (isOffline || plan === 'TRY_OFFLINE' || plan === 'OFFLINE') return "One-time ⚡";
-    if (!plan || plan === 'FREE') return "Free Plan 🌱";
-    if (plan === 'VIP' || plan === 'BE_BAN') return "Friends ⭐";
-    if (plan === 'PREMIUM' || plan === 'HOI_LANG') return "Village 👑";
-    if (plan === 'DU_HI_30') return "Trip 🚗";
-    return plan;
-  }
-  if (isOffline || plan === 'TRY_OFFLINE' || plan === 'OFFLINE') return "Xài 1 lần ⚡";
-  if (!plan || plan === 'FREE') return "Gói Free";
-  if (plan === 'VIP' || plan === 'BE_BAN') return "Bè Bạn ⭐";
-  if (plan === 'PREMIUM' || plan === 'HOI_LANG') return "Hội Làng 👑";
-  if (plan === 'DU_HI_30') return "Du Hí 🚗";
+export const getPlanLabel = (plan?: string, isOffline?: boolean): string => {
+  if (isOffline || plan === 'TRY_OFFLINE' || plan === 'OFFLINE') return ui('m9c9c248a4c');
+  if (!plan || plan === 'FREE') return ui('m730d8df48c');
+  if (plan === 'VIP' || plan === 'BE_BAN') return ui('m1c14d48cd2');
+  if (plan === 'PREMIUM' || plan === 'HOI_LANG') return ui('m14724ffbc4');
+  if (plan === 'DU_HI_30') return ui('m47f66d8cab');
   return plan;
 };
 
@@ -128,7 +131,6 @@ export interface Group {
   appliedVoucher?: string; // Mã voucher đã dùng để nâng cấp
   adminEmail?: string;
   admin_email?: string;
-  currency?: "VND" | "USD" | "EUR" | "JPY" | "KRW" | "THB" | "SGD";
 }
 
 export interface DebtOffset {

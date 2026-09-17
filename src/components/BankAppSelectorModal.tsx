@@ -1,3 +1,4 @@
+import { ui } from '../i18n/core';
 import React, { useState } from "react";
 import { Search, X, QrCode, AlertTriangle } from "lucide-react";
 import { VIETNAM_BANKS, BankOption } from "../utils/banks";
@@ -61,11 +62,9 @@ export const BankAppSelectorModal: React.FC<BankAppSelectorModalProps> = ({
             </div>
             <div>
               <h3 className="text-base font-black text-slate-900 leading-tight">
-                Chọn ứng dụng
-              </h3>
+                {ui('mb6096433b0')}</h3>
               <p className="text-[0.6875rem] font-medium text-slate-500">
-                Chuyển nhanh qua ứng dụng Ngân hàng hoặc Ví
-              </p>
+                {ui('m600fa21fad')}</p>
             </div>
           </div>
           <button
@@ -83,11 +82,9 @@ export const BankAppSelectorModal: React.FC<BankAppSelectorModalProps> = ({
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div className="space-y-0.5">
               <p className="font-extrabold text-[11px] leading-tight text-amber-900">
-                Đang mở SplitMate trong Zalo / Facebook
-              </p>
+                {ui('mfe4629fab8')}</p>
               <p className="text-[10px] text-amber-800 leading-normal">
-                Vui lòng bấm biểu tượng <strong>3 chấm (⋮ hoặc •••)</strong> góc trên bên phải và chọn <strong>"Mở bằng trình duyệt ngoài"</strong> (Safari/Chrome) để tính năng chuyển tiếp tự động mở app ngân hàng.
-              </p>
+                {ui('m26a4061094')}<strong>{ui('m5f050fb887')}</strong> {ui('m1747b4872e')}<strong>{ui('m1920f8ad4a')}</strong> {ui('mc045f75ad9')}</p>
             </div>
           </div>
         )}
@@ -101,7 +98,7 @@ export const BankAppSelectorModal: React.FC<BankAppSelectorModalProps> = ({
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Tìm kiếm"
+            placeholder={ui('m6671928637')}
             className="w-full pl-10 pr-4 py-2.5 bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-transparent focus:border-emerald-500 rounded-2xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
             autoFocus
           />
@@ -111,8 +108,7 @@ export const BankAppSelectorModal: React.FC<BankAppSelectorModalProps> = ({
               onClick={() => setSearchTerm("")}
               className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 text-xs font-bold"
             >
-              Xóa
-            </button>
+              {ui('maa1d94fc16')}</button>
           )}
         </div>
 
@@ -123,8 +119,7 @@ export const BankAppSelectorModal: React.FC<BankAppSelectorModalProps> = ({
             <div>
               <h4 className="text-xs font-black text-slate-800 mb-2.5 flex items-center gap-1.5 px-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-                Đề xuất
-              </h4>
+                {ui('m769bfe0482')}</h4>
               <div className="grid grid-cols-3 gap-2.5">
                 {popularBanks.map((bank) => (
                   <BankCardItem
@@ -144,8 +139,7 @@ export const BankAppSelectorModal: React.FC<BankAppSelectorModalProps> = ({
             <div>
               <h4 className="text-xs font-black text-slate-800 mb-2.5 flex items-center gap-1.5 px-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-400 inline-block" />
-                Ứng dụng khác
-              </h4>
+                {ui('m1a6a4ea9c6')}</h4>
               <div className="grid grid-cols-3 gap-2.5">
                 {otherBanks.map((bank) => (
                   <BankCardItem
@@ -164,15 +158,14 @@ export const BankAppSelectorModal: React.FC<BankAppSelectorModalProps> = ({
           {filteredBanks.length === 0 && (
             <div className="py-10 text-center space-y-2">
               <p className="text-xs font-bold text-slate-500">
-                Không tìm thấy ngân hàng phù hợp với "{searchTerm}"
+                {ui('m28b185f2d5')}{searchTerm}"
               </p>
               <button
                 type="button"
                 onClick={() => setSearchTerm("")}
                 className="text-xs text-emerald-600 font-extrabold hover:underline cursor-pointer"
               >
-                Xóa từ khóa tìm kiếm
-              </button>
+                {ui('m1d1681fc25')}</button>
             </div>
           )}
         </div>
@@ -191,8 +184,7 @@ export const BankAppSelectorModal: React.FC<BankAppSelectorModalProps> = ({
               htmlFor="set-default-bank-check"
               className="text-xs text-slate-600 font-bold select-none cursor-pointer"
             >
-              Đặt làm ứng dụng mặc định cho các lần sau
-            </label>
+              {ui('m3379222b2e')}</label>
           </div>
         )}
       </div>

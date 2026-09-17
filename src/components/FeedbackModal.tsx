@@ -1,3 +1,5 @@
+import { errorMessage as localizeError } from '../i18n/core';
+import { ui } from '../i18n/core';
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { MessageSquare, X, Send, Star, Sparkles, Info } from "lucide-react";
@@ -22,7 +24,7 @@ export default function FeedbackModal({ currentUser, isOpen, onClose, onSuccess 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim()) {
-      setErrorMessage("Vui lòng nhập nội dung góp ý.");
+      setErrorMessage(ui('m04ea478dda'));
       return;
     }
 
@@ -36,7 +38,7 @@ export default function FeedbackModal({ currentUser, isOpen, onClose, onSuccess 
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: name ? name.trim() : (currentUser?.name || "Ẩn danh"),
+          name: name ? name.trim() : (currentUser?.name || ui('m7f0ab3a994')),
           email: email ? email.trim() : (currentUser?.email || ""),
           type,
           content: content.trim(),
@@ -45,7 +47,7 @@ export default function FeedbackModal({ currentUser, isOpen, onClose, onSuccess 
       });
 
       if (!response.ok) {
-        throw new Error("Không thể gửi phản hồi lúc này.");
+        throw new Error(ui('m42de4a19ac'));
       }
 
       setSubmitSuccess(true);
@@ -56,7 +58,7 @@ export default function FeedbackModal({ currentUser, isOpen, onClose, onSuccess 
         onClose();
       }, 3000);
     } catch (err: any) {
-      setErrorMessage(err.message || "Đã xảy ra lỗi khi kết nối với máy chủ.");
+      setErrorMessage(localizeError(err.message, ui('m229d6e156f')));
     } finally {
       setSubmitting(false);
     }
@@ -90,9 +92,8 @@ export default function FeedbackModal({ currentUser, isOpen, onClose, onSuccess 
                 </div>
                 <div className="text-left">
                   <h3 className="font-extrabold text-sm tracking-tight flex items-center gap-1.5 leading-none">
-                    Góp Ý & Báo Lỗi
-                  </h3>
-                  <span className="text-[0.625rem] text-slate-400 font-medium">Bản quyền SplitMate</span>
+                    {ui('m83b54f6596')}</h3>
+                  <span className="text-[0.625rem] text-slate-400 font-medium">{ui('m86ab2df362')}</span>
                 </div>
               </div>
               <button
@@ -115,10 +116,9 @@ export default function FeedbackModal({ currentUser, isOpen, onClose, onSuccess 
                     <Sparkles className="w-8 h-8 text-emerald-500 animate-pulse fill-emerald-200" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-800 text-base">Gửi Phản Hồi Thành Công!</h4>
+                    <h4 className="font-bold text-slate-800 text-base">{ui('mae1161a1ab')}</h4>
                     <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto leading-relaxed">
-                      Cảm ơn sự đóng góp quý giá của bạn. Ý kiến của bạn đã được ghi lại trực tiếp trên hệ thống FAQ để Admin phản hồi sớm nhất !
-                    </p>
+                      {ui('me803e6f26a')}</p>
                   </div>
                 </motion.div>
               ) : (
@@ -126,15 +126,15 @@ export default function FeedbackModal({ currentUser, isOpen, onClose, onSuccess 
                   {/* Content message */}
                   <div className="space-y-1">
                     <label className="text-[0.625rem] font-bold text-slate-500 flex justify-between" htmlFor="fb-content">
-                      <span>Nội dung phản hồi <span className="text-rose-500">*</span></span>
-                      <span className="text-[0.5625rem] text-slate-400">Tối đa 1000 ký tự</span>
+                      <span>{ui('mffc92ba162')}<span className="text-rose-500">*</span></span>
+                      <span className="text-[0.5625rem] text-slate-400">{ui('mb5f8912d2d')}</span>
                     </label>
                     <textarea
                       id="fb-content"
                       required
                       rows={4}
                       maxLength={1000}
-                      placeholder="Hãy viết những cảm nghĩ, lỗi gặp phải hoặc góp ý của bạn để giúp chúng mình cải tiến sản phẩm..."
+                      placeholder={ui('m0a7f7debff')}
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-500 transition-all text-slate-800 resize-none leading-relaxed"
@@ -158,12 +158,12 @@ export default function FeedbackModal({ currentUser, isOpen, onClose, onSuccess 
                       {submitting ? (
                         <>
                           <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          <span>Đang gửi...</span>
+                          <span>{ui('mcecc548a2b')}</span>
                         </>
                       ) : (
                         <>
                           <Send className="w-3 h-3" />
-                          <span>Gửi đóng góp</span>
+                          <span>{ui('m5da7edab6a')}</span>
                         </>
                       )}
                     </button>
@@ -175,8 +175,7 @@ export default function FeedbackModal({ currentUser, isOpen, onClose, onSuccess 
             {/* Footer indicator */}
             <div className="bg-slate-50 border-t border-slate-100 px-5 py-3 text-center">
               <p className="text-[0.625rem] text-slate-500 leading-normal">
-                Phản hồi của bạn sẽ hiển thị công khai trên <strong>Trang FAQ</strong> để cùng trao đổi & giải đáp thắc mắc.
-              </p>
+                {ui('mb0d5217299')}<strong>{ui('mbc1fefbc54')}</strong> {ui('m418dc2de34')}</p>
             </div>
           </motion.div>
         </div>

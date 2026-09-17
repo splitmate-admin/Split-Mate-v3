@@ -1,5 +1,14 @@
 # BUGS.md - SPLITMATE BUG TRACKER & ISSUE LOG
 
+## Kiểm tra 17/09/2026: i18n và ngoại tệ
+
+- Đã tránh mất phần lẻ ngoại tệ: parser giữ cents và từ chối số sai định dạng; quy đổi lưu VND nguyên.
+- Đã tránh sửa khoản chi theo quote mới: prefill số tiền/tỷ giá từ snapshot; hủy kết quả fetch cũ khi đổi tiền tệ, sửa khoản chi hoặc khóa QR.
+- Đã tránh ghi ngoại tệ vào bank deeplink: mọi amount chuyển khoản đi qua quy đổi VND; QR có amount cố định khóa VND.
+- Đã tránh OCR điền số tiền VND vào ô ngoại tệ: đặt lại currency khi nhận tổng OCR.
+- Đã tránh cấu hình/illustration UI giữ bản dịch cũ khi đổi ngôn ngữ bằng getter; memo thông báo/sao kê phụ thuộc language.
+- Tỷ giá tham khảo không phải tỷ giá mua/bán thực tế. Khi API không hoạt động, nhập tỷ giá thủ công; custom split vẫn nhập bằng VND. Đây là phạm vi thiết kế hiện tại.
+
 > File này ghi nhận danh sách các lỗi (bugs), sự cố hệ thống, và lịch sử sửa lỗi trong quá trình phát triển ứng dụng SplitMate.
 
 ## 1. DANH SÁCH BUGS ĐANG THEO DÕI (ACTIVE ISSUES)
@@ -8,26 +17,6 @@
 ---
 
 ## 2. LỊCH SỬ KHẮC PHỤC BUGS (RESOLVED ISSUES)
-
-### [16/09/2026] Khắc phục triệt để lỗi Supabase bị khóa (Paused) sau 7 ngày không phát sinh dữ liệu
-- **Mô tả**: Supabase Free Tier tự động bị tạm dừng (Paused) sau 7 ngày nếu không có tương tác người dùng, khiến ứng dụng mất kết nối database. Dù trước đó có GitHub Actions, workflow vẫn có thể bị dừng do chính sách tắt Scheduled Actions sau 60 ngày của GitHub hoặc thiếu Secrets URL.
-- **Nguyên nhân**:
-  1. GitHub tự động vô hiệu hóa scheduled cron nếu repository không có commit trong 60 ngày.
-  2. Chưa cấu hình Vercel Cron trực tiếp trong `vercel.json` khi deploy trên Vercel.
-  3. Truy vấn `head count` cũ chưa tải dữ liệu hàng thực tế để kích hoạt sâu PostgREST và database engine của Supabase.
-- **Giải pháp**:
-  1. **Tích hợp Vercel Cron vào `vercel.json`**: Cấu hình `crons` chạy mỗi ngày (`0 4 * * *`) gọi `/api/keep-alive` trực tiếp trên hạ tầng Vercel vĩnh viễn, không lo bị tắt sau 60 ngày.
-  2. **Tối ưu hóa Endpoint `/api/keep-alive`**: Nâng cấp truy vấn sang `.select("id").limit(1)` trực tiếp vào bảng `groups` (hoặc `leaders`), đảm bảo 100% kích hoạt I/O và active state của Supabase.
-  3. **Nâng cấp GitHub Actions Workflow**: Đổi lịch chạy thành hàng ngày (`0 4 * * *`) và bổ sung hướng dẫn chạy thủ công hoặc kích hoạt lại khi cần.
-- **Trạng thái**: ✅ Fixed & Verified.
-
-### [16/09/2026] Đồng bộ Từ điển Song ngữ i18n & Khắc phục lỗi TypeScript Type Missing Keys
-- **Mô tả**: Quá trình kiểm tra kiểu dữ liệu tĩnh (`tsc --noEmit`) phát hiện 10 lỗi cảnh báo thiếu `TranslationKey` trong từ điển `src/utils/i18n.ts` được gọi từ `ExpenseForm.tsx` và `SettleUpSection.tsx` (như `save_expense_changes`, `submit_expense`, `statement_banner_title`, `view_statement_btn`, `settle_up_title`, `all_settled_title`,...).
-- **Nguyên nhân**: Khi bổ sung hỗ trợ đa ngôn ngữ cho form nhập chi tiêu và màn hình tất toán, các khóa dịch chưa được khai báo đồng bộ vào cả 2 đối tượng từ điển `vi` và `en` trong `i18n.ts`.
-- **Giải pháp**:
-  1. Bổ sung đầy đủ các cặp key-value tương ứng cho cả Tiếng Việt và Tiếng Anh trong `src/utils/i18n.ts`.
-  2. Kiểm tra `lint_applet` (`tsc --noEmit`) và `compile_applet` đều chạy thành công 100% không còn bất kỳ lỗi nào.
-- **Trạng thái**: ✅ Fixed & Verified.
 
 ### [03/09/2026] Loại bỏ AI Khớp Lệnh Tự Động & Khắc phục lỗi Biên lai Đã Duyệt nhưng Không Trừ Nợ
 - **Mô tả**: Khi người dùng tải ảnh biên lai chuyển khoản lên Modal QR thanh toán (ví dụ: hoàn tiền 2.000.000đ cho Panh), hệ thống tự động quét AI và khớp lệnh `isAiMatched`, gán nhãn "ĐÃ DUYỆT - AI KHỚP LỆNH ✨". Tuy nhiên, khoản tiền 2.000.000đ không hề được khấu trừ khỏi công nợ (tổng nợ của Panh vẫn giữ nguyên 3.800.000đ), và do trạng thái đã là "Đã duyệt" nên Trưởng nhóm không có cách nào bấm duyệt lại hay xóa biên lai lỗi.
@@ -184,3 +173,29 @@
 - **Nguyên nhân**: Điều kiện kiểm tra `groups.length <= 1` khiến người dùng có 1 nhóm vẫn bị hiển thị thẻ khởi tạo nhóm.
 - **Giải pháp**: Đã sửa điều kiện thành `groups.length === 0` ở trang Tổng quan.
 - **Trạng thái**: ✅ Fixed & Verified.
+
+### [16/09/2026] Khắc phục triệt để lỗi Supabase bị khóa (Paused) sau 7 ngày không phát sinh dữ liệu
+- **Mô tả**: Supabase Free Tier tự động bị tạm dừng (Paused) sau 7 ngày nếu không có tương tác người dùng, khiến ứng dụng mất kết nối database. Dù trước đó có GitHub Actions, workflow vẫn có thể bị dừng do chính sách tắt Scheduled Actions sau 60 ngày của GitHub hoặc thiếu Secrets URL.
+- **Nguyên nhân**:
+  1. GitHub tự động vô hiệu hóa scheduled cron nếu repository không có commit trong 60 ngày.
+  2. Chưa cấu hình Vercel Cron trực tiếp trong `vercel.json` khi deploy trên Vercel.
+  3. Truy vấn `head count` cũ chưa tải dữ liệu hàng thực tế để kích hoạt sâu PostgREST và database engine của Supabase.
+- **Giải pháp**:
+  1. **Tích hợp Vercel Cron vào `vercel.json`**: Cấu hình `crons` chạy mỗi ngày (`0 4 * * *`) gọi `/api/keep-alive` trực tiếp trên hạ tầng Vercel vĩnh viễn, không lo bị tắt sau 60 ngày.
+  2. **Tối ưu hóa Endpoint `/api/keep-alive`**: Nâng cấp truy vấn sang `.select("id").limit(1)` trực tiếp vào bảng `groups` (hoặc `leaders`), đảm bảo 100% kích hoạt I/O và active state của Supabase.
+  3. **Nâng cấp GitHub Actions Workflow**: Đổi lịch chạy thành hàng ngày (`0 4 * * *`) và bổ sung hướng dẫn chạy thủ công hoặc kích hoạt lại khi cần.
+- **Trạng thái**: ✅ Fixed & Verified.
+
+### [16/09/2026] Đồng bộ Từ điển Song ngữ i18n & Khắc phục lỗi TypeScript Type Missing Keys
+- **Mô tả**: Quá trình kiểm tra kiểu dữ liệu tĩnh (`tsc --noEmit`) phát hiện 10 lỗi cảnh báo thiếu `TranslationKey` trong từ điển `src/utils/i18n.ts` được gọi từ `ExpenseForm.tsx` và `SettleUpSection.tsx` (như `save_expense_changes`, `submit_expense`, `statement_banner_title`, `view_statement_btn`, `settle_up_title`, `all_settled_title`,...).
+- **Nguyên nhân**: Khi bổ sung hỗ trợ đa ngôn ngữ cho form nhập chi tiêu và màn hình tất toán, các khóa dịch chưa được khai báo đồng bộ vào cả 2 đối tượng từ điển `vi` và `en` trong `i18n.ts`.
+- **Giải pháp**:
+  1. Bổ sung đầy đủ các cặp key-value tương ứng cho cả Tiếng Việt và Tiếng Anh trong `src/utils/i18n.ts`.
+  2. Kiểm tra `lint_applet` (`tsc --noEmit`) và `compile_applet` đều chạy thành công 100% không còn bất kỳ lỗi nào.
+- **Trạng thái**: ✅ Fixed & Verified.
+
+
+Integration: retained the 2026-09-17 keep-alive fixes; the complete VI/EN/zh-CN provider and VND-backed FX entry supersede the earlier partial i18n/group-currency display implementation. Existing raw expense amounts are not reinterpreted or migrated.
+
+### C2C review corrections
+Manual rates now use grouping-aware parsing consistently; provider/stored numeric quotes retain full precision. Quote calendar dates display in UTC; plan expiry dates display in Vietnam time. Statement watermark timestamps use the active display locale. Regression suite: 11 tests.

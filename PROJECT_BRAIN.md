@@ -1,5 +1,17 @@
 # PROJECT_BRAIN.md - SPLITMATE SYSTEM BRAIN
 
+## Cập nhật 17/09/2026: giao diện và ngoại tệ
+
+`I18nProvider` quản lý `vi/en/zh-CN`, lưu `splitmate_language` trong LocalStorage và đặt `document.lang`. Bản dịch tĩnh được viết trực tiếp trong `src/i18n/uiMessages.ts`; nội dung người dùng không tự dịch. Bộ chọn có ở đăng nhập, toolbar desktop và tài khoản mobile.
+
+`Expense.amount` luôn là VND. Snapshot tùy chọn `fx` gồm `currency`, `originalAmount`, `rateToVnd`, `quotedAt`, `source`. Chi phí VND cũ không cần snapshot. Backend lưu nguyên đối tượng chi tiêu trong JSON nên không cần migration. Sửa ngoại tệ dùng lại snapshot, không tự cập nhật quote.
+
+`GET /api/fx/rates` lấy tỷ giá tham khảo Frankfurter v2, đổi tỷ giá VND→ngoại tệ thành VND trên một đơn vị ngoại tệ; cache 1 giờ, timeout 8 giây, lỗi trả `FX_UNAVAILABLE`. Client cho nhập tỷ giá thủ công; không gửi thông tin người dùng vào API tỷ giá. Hỗ trợ VND/USD/EUR/CNY/JPY/GBP/SGD/THB, VND/JPY không có phần thập phân.
+
+Sổ nợ, quỹ, chi phí nâng cấp, chia tùy chỉnh, biên lai và VietQR tiếp tục dùng VND. Chia tùy chỉnh mới phân bổ dư làm tròn để tổng khớp; giá trị VND thập phân ở dữ liệu cũ được giữ tương thích. QR có số tiền cố định khóa VND; OCR hiện giả định VND và đặt lại tiền tệ khi điền số tiền.
+
+`formatDisplayDateTime` chỉ dùng hiển thị theo locale và múi giờ Việt Nam. `formatDateTime`, `parsePatchedTime` giữ hợp đồng cũ phục vụ sắp xếp/sửa timestamp. Marker `[Nộp Quỹ]`/`[Nhận Quỹ]` phải giữ nguyên khi lưu và so sánh, kể cả trong UI tiếng Anh/Trung.
+
 > **BỘ NÃO HỆ THỐNG DỰ ÁN SPLITMATE**
 > Document này lưu trữ toàn bộ kiến trúc, quy tắc, hướng dẫn, và lịch sử thay đổi của dự án SplitMate. File này giúp AI Agent hiểu trọn vẹn ngữ cảnh dự án mà không cần hỏi lại người dùng.
 
@@ -1172,6 +1184,11 @@ Mỗi khi triển khai một tính năng hoặc thay đổi mới:
       - Bổ sung nút **Xóa biên lai (Trash2)** cho phép Trưởng nhóm xóa bất kỳ biên lai nào (chờ duyệt, đã duyệt, từ chối).
       - Bổ sung nút **"Khấu trừ công nợ"** và **"Chuyển về Chờ duyệt"** cho các biên lai đã duyệt (giúp xử lý ngay lập tức các biên lai bị kẹt trước đó như khoản 2tr của Panh chỉ với 1 click).
       - Thao tác "Duyệt biên lai" luôn thực thi qua `onBatchSettleAndReceipt` nguyên tử, đồng thời tạo giao dịch khấu trừ và đổi trạng thái biên lai thành `approved`, đảm bảo công nợ giảm chính xác 100%.
+
+
+
+
+
 - **16/09/2026 (Bổ sung Đa Ngôn Ngữ Tiếng Anh & Hỗ Trợ Đa Tiền Tệ Toàn Cầu)**:
   - **Mục tiêu**: Cho phép người dùng chuyển đổi linh hoạt giao diện giữa Tiếng Việt và Tiếng Anh, đồng thời hỗ trợ các đồng tiền tệ quốc tế phổ biến (VND, USD, EUR, JPY, KRW, THB, SGD) cho từng nhóm chi tiêu.
   - **Kiến trúc & Tiện ích (`src/utils/i18n.ts`)**:
@@ -1192,6 +1209,7 @@ Mỗi khi triển khai một tính năng hoặc thay đổi mới:
     - **Nâng cấp GitHub Actions (`.github/workflows/supabase-keep-alive.yml`)**: Chuyển tần suất chạy sang hàng ngày `0 4 * * *` làm lớp phòng thủ dự phòng thứ hai.
 
 
+Integration: retained the 2026-09-17 keep-alive fixes; the complete VI/EN/zh-CN provider and VND-backed FX entry supersede the earlier partial i18n/group-currency display implementation. Existing raw expense amounts are not reinterpreted or migrated.
 
-
-
+### C2C review corrections
+Manual rates now use grouping-aware parsing consistently; provider/stored numeric quotes retain full precision. Quote calendar dates display in UTC; plan expiry dates display in Vietnam time. Statement watermark timestamps use the active display locale. Regression suite: 11 tests.

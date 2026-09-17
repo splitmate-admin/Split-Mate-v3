@@ -1,3 +1,4 @@
+import { ui } from '../i18n/core';
 import React, { useState } from 'react';
 import { Download, X, Share, PlusSquare, CheckCircle2 } from 'lucide-react';
 import { usePwaInstall } from '../hooks/usePwaInstall';
@@ -34,9 +35,9 @@ export function InstallAppBanner() {
                 <Download className="w-6 h-6 animate-bounce" />
               </div>
               <div className="flex-1">
-                <h4 className="font-extrabold text-sm mb-0.5 tracking-wide uppercase">Thêm vào Màn hình chính</h4>
+                <h4 className="font-extrabold text-sm mb-0.5 tracking-wide uppercase">{ui('mfab1a261e5')}</h4>
                 <p className="text-[11px] text-emerald-50 font-medium leading-relaxed">
-                  Trải nghiệm mượt như App gốc. Nếu không có thông báo tự động, mở menu trình duyệt (⋮ hoặc ⎋) chọn <strong>"Thêm vào MH chính"</strong>.
+                  {ui('m81984decfb')}<strong>{ui('m6f19069da7')}</strong>.
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -44,8 +45,7 @@ export function InstallAppBanner() {
                   onClick={handleClickInstall}
                   className="bg-white text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm active:scale-95 transition-all whitespace-nowrap cursor-pointer"
                 >
-                  Thêm Ngay
-                </button>
+                  {ui('m27b02d1eca')}</button>
                 <button
                   onClick={() => setDismissed(true)}
                   className="p-1.5 hover:bg-white/20 rounded-lg transition-colors active:scale-95 cursor-pointer"
@@ -80,8 +80,8 @@ export function InstallAppBanner() {
                   <Download className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-base text-slate-900">Thêm vào MH Chính (Thủ công)</h3>
-                  <p className="text-xs text-slate-500 font-medium">Hướng dẫn nhanh cho trình duyệt của bạn</p>
+                  <h3 className="font-extrabold text-base text-slate-900">{ui('me011bc793c')}</h3>
+                  <p className="text-xs text-slate-500 font-medium">{ui('m64ddb7b1ae')}</p>
                 </div>
               </div>
 
@@ -94,8 +94,7 @@ export function InstallAppBanner() {
                       </div>
                       <div>
                         <p className="font-bold text-slate-800">
-                          Bấm nút <span className="text-emerald-600 inline-flex items-center gap-1 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">Chia sẻ <Share className="w-3.5 h-3.5 inline" /></span> ở thanh công cụ Safari.
-                        </p>
+                          {ui('ma9d41a337a')}<span className="text-emerald-600 inline-flex items-center gap-1 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">{ui('m1cb9508032')}<Share className="w-3.5 h-3.5 inline" /></span> {ui('m5a881b25d4')}</p>
                       </div>
                     </div>
 
@@ -105,7 +104,7 @@ export function InstallAppBanner() {
                       </div>
                       <div>
                         <p className="font-bold text-slate-800">
-                          Chọn <span className="text-emerald-600 inline-flex items-center gap-1 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">"Thêm vào MH chính" <PlusSquare className="w-3.5 h-3.5 inline" /></span>
+                          {ui('mc56bb59db6')}<span className="text-emerald-600 inline-flex items-center gap-1 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">{ui('m6f19069da7')}<PlusSquare className="w-3.5 h-3.5 inline" /></span>
                         </p>
                       </div>
                     </div>
@@ -116,8 +115,7 @@ export function InstallAppBanner() {
                       </div>
                       <div>
                         <p className="font-bold text-slate-800">
-                          Nhấn <span className="text-emerald-600 font-extrabold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">"Thêm"</span> ở góc trên bên phải.
-                        </p>
+                          {ui('mf9d302de36')}<span className="text-emerald-600 font-extrabold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">{ui('mccd25093b0')}</span> {ui('mf202960318')}</p>
                       </div>
                     </div>
                   </>
@@ -129,8 +127,7 @@ export function InstallAppBanner() {
                       </div>
                       <div>
                         <p className="font-bold text-slate-800">
-                          Nhấn vào biểu tượng menu <span className="text-emerald-600 font-black bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">⋮ (3 chấm)</span> ở góc trên trình duyệt.
-                        </p>
+                          {ui('m677d5fe5f1')}<span className="text-emerald-600 font-black bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">{ui('mdb4ceaf881')}</span> {ui('maaba1f3df7')}</p>
                       </div>
                     </div>
 
@@ -140,7 +137,7 @@ export function InstallAppBanner() {
                       </div>
                       <div>
                         <p className="font-bold text-slate-800">
-                          Chọn mục <span className="text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">"Thêm vào Màn hình chính"</span> hoặc <span className="text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">"Cài đặt ứng dụng"</span>.
+                          {ui('mc3695481f9')}<span className="text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">{ui('mf394bfa995')}</span> {ui('m2797f4b34f')}<span className="text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">{ui('ma2db61c273')}</span>.
                         </p>
                       </div>
                     </div>
@@ -152,8 +149,7 @@ export function InstallAppBanner() {
                 onClick={() => setShowIosGuide(false)}
                 className="w-full py-3 bg-emerald-600 text-white font-extrabold rounded-2xl shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-2 text-sm"
               >
-                <CheckCircle2 className="w-4 h-4" /> Đã hiểu, Thêm Ngay
-              </button>
+                <CheckCircle2 className="w-4 h-4" /> {ui('maebb46b537')}</button>
             </motion.div>
           </div>
         )}

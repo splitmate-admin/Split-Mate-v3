@@ -1,4 +1,7 @@
+import { getLocale } from '../i18n/core';
+import { ui } from '../i18n/core';
 import React, { useState, useEffect, useMemo } from "react";
+import { useI18n } from '../i18n/I18nProvider';
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Bell, X, CheckCheck, Receipt, CreditCard, PiggyBank, Sparkles, 
@@ -79,20 +82,21 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
   }, [readIds, activeGroup?.id]);
 
   // Generate dynamic notifications filtered smartly by Leader vs Member roles
+  const { language } = useI18n();
   const notifications = useMemo<NotificationItem[]>(() => {
     if (!activeGroup) return [];
 
     const items: NotificationItem[] = [];
 
     // Helper to format currency safely without decimals
-    const formatMoney = (val: number) => Math.round(val || 0).toLocaleString("vi-VN");
+    const formatMoney = (val: number) => Math.round(val || 0).toLocaleString(getLocale());
 
     // -------------------------------------------------------------
     // 1. Pending Receipts / Proofs
     // -------------------------------------------------------------
     pendingReceipts.forEach((receipt) => {
       const uploader = members.find((m) => m.id === receipt.fromId);
-      const uploaderName = uploader ? uploader.name : "Thành viên";
+      const uploaderName = uploader ? uploader.name : ui('mcd264c4a8f');
       const isApproved = receipt.status === "approved";
       const isRejected = receipt.status === "rejected";
 
@@ -103,8 +107,8 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
 
         if (!isMyReceipt && !isForMe) return; // Skip receipts irrelevant to this member
 
-        let title = "Biên lai thanh toán";
-        let msg = `Biên lai ${formatMoney(receipt.amount)}đ của bạn đã được gửi thành công`;
+        let title = ui('m32904ae3b5');
+        let msg = ui('m3a115a77e5', { v0: formatMoney(receipt.amount) });
 
         if (isMyReceipt) {
           if (isApproved) {
@@ -137,8 +141,8 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
         });
       } else {
         // Leader role: Show all group receipts requiring management/approval
-        let title = "Biên lai thanh toán mới";
-        let msg = `${uploaderName} đã tải lên biên lai chuyển khoản ${formatMoney(receipt.amount)}đ chờ bạn duyệt`;
+        let title = ui('m760527b1a1');
+        let msg = ui('m537dd852ae', { v0: uploaderName, v1: formatMoney(receipt.amount) });
         
         if (isApproved) {
           title = "Biên lai đã được duyệt";
@@ -169,7 +173,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
     // -------------------------------------------------------------
     expenses.slice(0, 20).forEach((exp) => {
       const payer = members.find((m) => m.id === exp.payerId);
-      const payerName = exp.payerId === "group" ? "Quỹ Nhóm" : payer ? payer.name : "Thành viên";
+      const payerName = exp.payerId === "group" ? ui('m3f56f2dd08') : payer ? payer.name : ui('mcd264c4a8f');
       const isFund = exp.isFundDeposit;
       const isMyPayer = viewingMemberId && exp.payerId === viewingMemberId;
       const isMyParticipant = viewingMemberId && (exp.participantIds || []).includes(viewingMemberId);
@@ -178,7 +182,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
       if (!isAdmin && viewingMemberId) {
         if (!isMyPayer && !isMyParticipant) return; // Skip non-related expenses
 
-        let title = isFund ? "Yêu cầu nộp quỹ mới" : "Chi tiêu liên quan";
+        let title = isFund ? ui('mb0212cbe46') : ui('mb538d5a3a9');
         let msg = "";
 
         if (isFund) {
@@ -210,10 +214,10 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
         items.push({
           id: `expense_${exp.id}`,
           type: isFund ? "fund" : "expense",
-          title: isFund ? "Yêu cầu nộp quỹ mới" : "Chi tiêu mới trong nhóm",
+          title: isFund ? ui('mb0212cbe46') : ui('m3ff1d107a0'),
           message: isFund
-            ? `${payerName} tạo đợt nộp quỹ: "${exp.description}" - ${formatMoney(exp.amount)}đ`
-            : `${payerName} đã chi "${exp.description}" - ${formatMoney(exp.amount)}đ`,
+            ? ui('m53ce8c23f3', { v0: payerName, v1: exp.description, v2: formatMoney(exp.amount) })
+            : ui('m5ecb83914c', { v0: payerName, v1: exp.description, v2: formatMoney(exp.amount) }),
           timestamp: exp.created_at || exp.date,
           rawTime: new Date(exp.created_at || exp.date).getTime(),
           isRead: readIds.has(`expense_${exp.id}`),
@@ -233,12 +237,12 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
       items.push({
         id: `system_plan_${activeGroup.id}`,
         type: "system",
-        title: `Nhóm thuộc ${planName}`,
+        title: ui('m1f5339a77e', { v0: planName }),
         message: activeGroup.plan === "FREE"
           ? (isAdmin 
-              ? "Nhóm đang ở Gói Free. Nâng cấp ngay để mở khóa không giới hạn hóa đơn & tính năng Quỹ nhóm!" 
-              : "Nhóm đang ở Gói Free. Hãy liên hệ Trưởng nhóm nâng cấp để mở khóa các tính năng cao cấp nhé!")
-          : `Chào mừng bạn đến với nhóm ${activeGroup.name}. Nhóm đã nâng cấp ${planName} thành công!`,
+              ? ui('m9f04c274fb')
+              : ui('mdccbae9fc0'))
+          : ui('m2ef3554958', { v0: activeGroup.name, v1: planName }),
         timestamp: activeGroup.createdAt || new Date().toISOString(),
         rawTime: new Date(activeGroup.createdAt || Date.now()).getTime(),
         isRead: readIds.has(`system_plan_${activeGroup.id}`),
@@ -248,7 +252,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
 
     // Sort newest first
     return items.sort((a, b) => b.rawTime - a.rawTime);
-  }, [activeGroup, expenses, pendingReceipts, members, readIds, isAdmin, viewingMemberId]);
+  }, [activeGroup, expenses, pendingReceipts, members, readIds, isAdmin, viewingMemberId, language]);
 
   const unreadCount = useMemo(() => {
     return notifications.filter((n) => !n.isRead).length;
@@ -374,11 +378,11 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
       const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-      if (diffMins < 1) return "Vừa xong";
-      if (diffMins < 60) return `${diffMins} phút trước`;
-      if (diffHours < 24) return `${diffHours} giờ trước`;
-      if (diffDays === 1) return "Hôm qua";
-      if (diffDays < 7) return `${diffDays} ngày trước`;
+      if (diffMins < 1) return ui('m332d45e4eb');
+      if (diffMins < 60) return ui('m435bf38a36', { v0: diffMins });
+      if (diffHours < 24) return ui('m9c2cc88587', { v0: diffHours });
+      if (diffDays === 1) return ui('m47bd3511b2');
+      if (diffDays < 7) return ui('mdb7c887149', { v0: diffDays });
       
       return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
     } catch {
@@ -415,11 +419,10 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base font-black text-slate-800 tracking-tight">Thông báo</h3>
+                    <h3 className="text-base font-black text-slate-800 tracking-tight">{ui('m5d6af377c2')}</h3>
                     {unreadCount > 0 && (
                       <span className="px-2 py-0.5 bg-rose-500 text-white text-[10px] font-extrabold rounded-full animate-pulse">
-                        {unreadCount} mới
-                      </span>
+                        {unreadCount} {ui('m425c7c6b59')}</span>
                     )}
                   </div>
                   
@@ -428,12 +431,11 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                     {isAdmin ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-md text-[10px] font-extrabold">
                         <Crown className="w-3 h-3 text-amber-500" />
-                        Trưởng nhóm
-                      </span>
+                        {ui('m9c931ee8d2')}</span>
                     ) : (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200/60 rounded-md text-[10px] font-extrabold">
                         <User className="w-3 h-3 text-blue-500" />
-                        Thành viên {currentMember ? `(${currentMember.name})` : ""}
+                        {ui('mcd264c4a8f')}{currentMember ? `(${currentMember.name})` : ""}
                       </span>
                     )}
                   </div>
@@ -461,7 +463,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                       : "text-slate-500 hover:text-slate-700"
                   }`}
                 >
-                  Tất cả ({notifications.length})
+                  {ui('m5587303546')}{notifications.length})
                 </button>
                 <button
                   type="button"
@@ -472,7 +474,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                       : "text-slate-500 hover:text-slate-700"
                   }`}
                 >
-                  Chưa đọc ({unreadCount})
+                  {ui('mba24015ab0')}{unreadCount})
                 </button>
               </div>
 
@@ -483,7 +485,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                   className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
                 >
                   <CheckCheck className="w-3.5 h-3.5" />
-                  <span>Đọc tất cả</span>
+                  <span>{ui('m181296b63d')}</span>
                 </button>
               )}
             </div>
@@ -496,13 +498,13 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                     <Bell className="w-6 h-6 opacity-60" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-700">Chưa có thông báo nào</p>
+                    <p className="text-sm font-bold text-slate-700">{ui('m169c13bc3c')}</p>
                     <p className="text-xs text-slate-400 mt-0.5 max-w-xs mx-auto">
                       {filter === "unread"
-                        ? "Bạn đã đọc hết tất cả thông báo rồi!"
+                        ? ui('m9e0e149b12')
                         : isAdmin 
-                          ? "Các biến động chi tiêu và biên lai thanh toán từ thành viên sẽ xuất hiện tại đây."
-                          : "Các thông báo về chi tiêu có bạn tham gia và biên lai thanh toán của bạn sẽ xuất hiện tại đây."}
+                          ? ui('m61bcbe6898')
+                          : ui('m8c1bd91f6f')}
                     </p>
                   </div>
                 </div>
@@ -555,7 +557,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
 
                         {item.linkTab && (
                           <span className="text-emerald-600 font-bold flex items-center gap-0.5 hover:underline">
-                            Xem chi tiết <ChevronRight className="w-3 h-3" />
+                            {ui('me30c937169')}<ChevronRight className="w-3 h-3" />
                           </span>
                         )}
                       </div>
@@ -572,8 +574,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                 onClick={onClose}
                 className="w-full py-2.5 bg-slate-200/70 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors cursor-pointer"
               >
-                Đóng
-              </button>
+                {ui('md2b73ab2ad')}</button>
             </div>
           </motion.div>
         </motion.div>

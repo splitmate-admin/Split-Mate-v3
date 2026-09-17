@@ -1,3 +1,6 @@
+import { errorMessage as localizeError } from '../i18n/core';
+import { getLocale } from '../i18n/core';
+import { ui } from '../i18n/core';
 import React, { useState, useEffect } from "react";
 import { Member, Expense, DebtOffset } from "../types";
 import { calculateBalances, simplifyDebts } from "../utils/debtSimplifier";
@@ -131,8 +134,8 @@ export default function MemberSection({
 
   const handleAvatarSelect = async (file: File, isEdit: boolean) => {
     if (!file.type.startsWith("image/")) {
-      if (isEdit) setEditError("Chỉ hỗ trợ tải lên file hình ảnh.");
-      else setErrorMsg("Chỉ hỗ trợ tải lên file hình ảnh.");
+      if (isEdit) setEditError(ui('m0fbb61b38b'));
+      else setErrorMsg(ui('m0fbb61b38b'));
       return;
     }
 
@@ -165,11 +168,11 @@ export default function MemberSection({
         if (isEdit) setEditAvatar(data.url);
         else setAvatar(data.url);
       } else {
-        throw new Error(data.error || "Lỗi upload");
+        throw new Error(localizeError(data.error, ui('mfbe7344aca')));
       }
     } catch (err: any) {
       console.error("Lỗi xử lý ảnh đại diện:", err);
-      const errorText = "Lỗi khi tải ảnh lên. Vui lòng thử lại.";
+      const errorText = ui('m3654763c68');
       if (isEdit) setEditError(errorText);
       else setErrorMsg(errorText);
     } finally {
@@ -184,12 +187,12 @@ export default function MemberSection({
 
     const trimmedName = name.trim();
     if (!trimmedName) {
-      setErrorMsg("Vui lòng nhập tên thành viên.");
+      setErrorMsg(ui('m068c374364'));
       return;
     }
 
     if (members.some((m) => m.name.toLowerCase() === trimmedName.toLowerCase())) {
-      setErrorMsg("Tên này đã tồn tại trong nhóm.");
+      setErrorMsg(ui('mbd5b3d5b38'));
       return;
     }
 
@@ -256,20 +259,20 @@ export default function MemberSection({
     if (!isSettled) {
       if (askConfirm) {
         askConfirm(
-          "Không thể xóa thành viên",
-          "Chỉ có thể xóa thành viên khi nhóm đã quyết toán sòng phẳng (không còn dư nợ) hoặc đã được chốt sổ.",
+          ui('mc4241b8c53'),
+          ui('m963af27a7f'),
           () => {}
         );
       } else {
-        alert("Chỉ có thể xóa thành viên khi nhóm đã quyết toán sòng phẳng (không còn dư nợ) hoặc đã được chốt sổ.");
+        alert(ui('m963af27a7f'));
       }
       return;
     }
 
     if (askConfirm) {
       askConfirm(
-        "Xác nhận xóa thành viên",
-        "Bạn có chắc chắn muốn xóa thành viên này khỏi nhóm? Các hóa đơn lịch sử cũ vẫn được giữ nguyên.",
+        ui('mf6ba7b1695'),
+        ui('m0c6c2feb1c'),
         () => onRemoveMember(memberId)
       );
     } else {
@@ -338,12 +341,12 @@ export default function MemberSection({
     setEditError("");
     const trimmed = editName.trim();
     if (!trimmed) {
-      setEditError("Tên không được bỏ trống");
+      setEditError(ui('m5c888109ce'));
       return;
     }
 
     if (members.some((m) => m.id !== memberId && m.name.toLowerCase() === trimmed.toLowerCase())) {
-      setEditError("Tên này đã tồn tại.");
+      setEditError(ui('m472a8b3401'));
       return;
     }
 
@@ -385,10 +388,10 @@ export default function MemberSection({
   // Safe VND formatting
   const formatBalance = (val: number) => {
     const absVal = Math.round(Math.abs(val));
-    const formatted = new Intl.NumberFormat("vi-VN").format(absVal) + "đ";
+    const formatted = new Intl.NumberFormat(getLocale()).format(absVal) + "đ";
     if (val > 0.5) return <span className="text-emerald-600 font-bold whitespace-nowrap">+{formatted}</span>;
     if (val < -0.5) return <span className="text-rose-500 font-bold whitespace-nowrap">-{formatted}</span>;
-    return <span className="text-slate-400 whitespace-nowrap">Đã hòa</span>;
+    return <span className="text-slate-400 whitespace-nowrap">{ui('m9003dae1fc')}</span>;
   };
 
   return (
@@ -407,11 +410,9 @@ export default function MemberSection({
           >
             <span className="flex items-center gap-2">
               <UserPlus className={`h-4 w-4 text-emerald-600 ${members.length <= 1 ? "animate-bounce" : ""}`} />
-              Thêm thành viên mới
-              {members.length <= 1 && (
+              {ui('m45d630e2ad')}{members.length <= 1 && (
                 <span className="bg-amber-100 text-amber-800 text-[0.5625rem] px-2 py-0.5 rounded-full font-black animate-pulse ml-1 shrink-0 uppercase tracking-wide">
-                  Bước 2: Cần làm
-                </span>
+                  {ui('m4921ae30a8')}</span>
               )}
             </span>
             <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isAddMemberOpen ? "rotate-180" : ""}`} />
@@ -421,17 +422,16 @@ export default function MemberSection({
             <form onSubmit={handleSubmit} className="space-y-4 pt-4 border-t border-slate-100 animate-in fade-in duration-200">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider" htmlFor="member-name-input">
-                Tên thành viên
-              </label>
+                {ui('mcde9a41c68')}</label>
               <div className="flex gap-2">
                 <span className="inline-flex items-center justify-center bg-slate-50 rounded-2xl border border-slate-200 w-11 h-11 text-xl transition-all relative group shadow-xs overflow-hidden shrink-0 p-0.5">
-                  <img src={getMemberAvatar({ name: name || "Tên", avatar })} className="w-full h-full object-cover rounded-[0.8rem]" referrerPolicy="no-referrer" />
+                  <img src={getMemberAvatar({ name: name || ui('me826b62a7b'), avatar })} className="w-full h-full object-cover rounded-[0.8rem]" referrerPolicy="no-referrer" />
                 </span>
 
                 <input
                   id="member-name-input"
                   type="text"
-                  placeholder="Ví dụ: Hoàng Nam, Thùy Chi..."
+                  placeholder={ui('mf80f48f05d')}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   maxLength={40}
@@ -446,14 +446,13 @@ export default function MemberSection({
                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between" htmlFor="member-email-input">
                   <span className="flex items-center gap-1.5">
                     <Mail className="h-3.5 w-3.5 text-emerald-600" />
-                    Email Gmail (Tùy chọn - Tìm & liên kết)
-                  </span>
+                    {ui('med29948fa5')}</span>
                 </label>
                 <div className="flex gap-2">
                   <input
                     id="member-email-input"
                     type="email"
-                    placeholder="Ví dụ: abc@gmail.com"
+                    placeholder={ui('md09de55d86')}
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
@@ -470,7 +469,7 @@ export default function MemberSection({
 
                       const isEmailExist = members.some(m => m.email && m.email.toLowerCase() === cleanEmail);
                       if (isEmailExist) {
-                        setAddEmailCheckStatus({ type: 'error', text: 'Email này đã tồn tại trong nhóm.' });
+                        setAddEmailCheckStatus({ type: 'error', get text() { return ui('m8e63ae2e80'); } });
                         return;
                       }
 
@@ -485,20 +484,20 @@ export default function MemberSection({
                         });
                         const data = await res.json();
                         if (data.found) {
-                          setAddEmailCheckStatus({ type: 'success', text: `Đã tìm thấy tài khoản Gmail: ${data.name || cleanEmail}` });
+                          setAddEmailCheckStatus({ type: 'success', text: ui('m57ce272c38', { v0: data.name || cleanEmail }) });
                           if (data.name && !name.trim()) {
                             setName(data.name);
                           } else if (data.name && name.trim() && name.trim() !== data.name) {
-                            if (window.confirm(`Tìm thấy tài khoản Gmail "${data.name}". Bạn có muốn dùng tên này cho thành viên không?`)) {
+                            if (window.confirm(ui('m1aa412d390', { v0: data.name }))) {
                               setName(data.name);
                             }
                           }
                           if (data.avatar) setAvatar(data.avatar);
                         } else {
-                          setAddEmailCheckStatus({ type: 'not_found', text: 'Tài khoản chưa đăng ký Gmail trên hệ thống. Hệ thống sẽ lưu email này để gửi lời mời.' });
+                          setAddEmailCheckStatus({ type: 'not_found', get text() { return ui('m42fcca40fc'); } });
                         }
                       } catch (err) {
-                        setAddEmailCheckStatus({ type: 'error', text: 'Không thể kết nối kiểm tra email.' });
+                        setAddEmailCheckStatus({ type: 'error', get text() { return ui('m95dbdf0fa6'); } });
                       } finally {
                         setCheckingAddEmail(false);
                       }
@@ -508,7 +507,7 @@ export default function MemberSection({
                     {checkingAddEmail ? (
                       <RefreshCw className="h-3.5 w-3.5 animate-spin text-emerald-600" />
                     ) : (
-                      "Tìm Gmail"
+                      ui('me7f3745c2d')
                     )}
                   </button>
                 </div>
@@ -522,7 +521,7 @@ export default function MemberSection({
                   </p>
                 )}
                 {!addEmailCheckStatus && (
-                  <p className="text-[0.5625rem] text-slate-400 leading-tight">Nhập email để tìm và tự động điền tên, ảnh thành viên đã đăng ký Gmail.</p>
+                  <p className="text-[0.5625rem] text-slate-400 leading-tight">{ui('m9d9b89c57d')}</p>
                 )}
               </div>
             )}
@@ -530,7 +529,7 @@ export default function MemberSection({
             {/* Color choice */}
             {!tryOfflineMode && (
               <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Màu đại diện</span>
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{ui('m0370c62d1e')}</span>
                 <div className="flex flex-wrap gap-2">
                   {MEMBER_COLORS.map((col) => {
                     const isActive = selectedColor === col.class;
@@ -559,8 +558,7 @@ export default function MemberSection({
               <div className="space-y-1.5 text-left">
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                   <User className="h-3.5 w-3.5 text-emerald-600" />
-                  Ảnh đại diện thành viên (Tùy chọn)
-                </span>
+                  {ui('ma8e7adc1a6')}</span>
                 
                 <div className="flex items-center gap-3">
                   <input
@@ -587,9 +585,8 @@ export default function MemberSection({
                         />
                         <div className="text-left">
                           <p className="text-xs font-extrabold text-emerald-650">
-                            Đã tải ảnh đại diện lên
-                          </p>
-                          <p className="text-[0.625rem] text-slate-400">Hình đại diện sẽ hiển thị trong nhóm</p>
+                            {ui('ma1c8354093')}</p>
+                          <p className="text-[0.625rem] text-slate-400">{ui('m4ca6726cbf')}</p>
                         </div>
                       </div>
                       <button
@@ -597,8 +594,7 @@ export default function MemberSection({
                         onClick={() => setAvatar(null)}
                         className="p-1 px-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-xl text-[0.625rem] font-extrabold transition-all cursor-pointer border border-rose-100"
                       >
-                        Xóa ảnh
-                      </button>
+                        {ui('ma501ea7f86')}</button>
                     </div>
                   ) : (
                     <label
@@ -612,13 +608,13 @@ export default function MemberSection({
                       {loadingAvatar ? (
                         <div className="flex flex-col items-center gap-1.5">
                           <RefreshCw className="h-5 w-5 text-emerald-600 animate-spin" />
-                          <p className="text-[0.625rem] text-emerald-650 font-bold">Đang tải và tối ưu hóa ảnh...</p>
+                          <p className="text-[0.625rem] text-emerald-650 font-bold">{ui('meb9233d7c4')}</p>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center">
                           <UploadCloud className="h-5 w-5 text-slate-400 mb-1" />
-                          <p className="text-[0.6875rem] font-extrabold text-slate-700">Tải ảnh đại diện của bạn lên</p>
-                          <p className="text-[0.5625rem] text-slate-450 mt-0.5">Hệ thống tự động điều chỉnh tỷ lệ 1:1 đẹp mắt</p>
+                          <p className="text-[0.6875rem] font-extrabold text-slate-700">{ui('m13acc0194e')}</p>
+                          <p className="text-[0.5625rem] text-slate-450 mt-0.5">{ui('m4255a6b231')}</p>
                         </div>
                       )}
                     </label>
@@ -643,8 +639,7 @@ export default function MemberSection({
               }`}
             >
               <Plus className="h-4 w-4" />
-              Thêm vào nhóm
-            </button>
+              {ui('m366d87ccbb')}</button>
           </form>
           )}
         </div>
@@ -659,7 +654,7 @@ export default function MemberSection({
         >
           <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
             <Users className="h-4 w-4 text-emerald-600" />
-            Thành viên nhóm ({members.length})
+            {ui('m34a5f5a3ec')}{members.length})
           </h4>
           <div className="flex items-center gap-2">
             <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isMembersListOpen ? "rotate-180" : ""}`} />
@@ -672,20 +667,20 @@ export default function MemberSection({
               <div className="p-2.5 bg-emerald-50/70 border border-emerald-100/60 rounded-2xl flex items-center gap-2 text-[0.6875rem] text-emerald-850">
                 <Crown className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                 <span className="leading-tight font-medium">
-                  <strong>Quyền Admin:</strong> {tryOfflineMode ? "Quản lý danh sách thành viên tham gia hoạt động chi tiêu." : "Click biểu tượng bút sửa để chỉnh sửa tên, màu sắc, tài khoản nhận tiền thành viên."}
+                  <strong>{ui('m389efb8a8e')}</strong> {tryOfflineMode ? ui('m9922c5b936') : ui('m951342d8a7')}
                 </span>
               </div>
             ) : (
               <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center gap-2 text-[0.6875rem] text-slate-600">
                 <Users className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                <span className="leading-tight font-medium"><strong>Thành viên xem:</strong> Thông tin tất cả thành viên của nhóm.</span>
+                <span className="leading-tight font-medium"><strong>{ui('m46fb7b1825')}</strong> {ui('m122669f9cf')}</span>
               </div>
             )}
 
             {displayMembers.length === 0 ? (
               <div className="text-center py-8 text-slate-400 text-xs space-y-2">
-                <p className="font-medium">Nhóm chưa có thành viên nào.</p>
-                <p className="text-slate-400">Hãy thêm thành viên để bắt đầu ghi chi phí.</p>
+                <p className="font-medium">{ui('m36a57aae14')}</p>
+                <p className="text-slate-400">{ui('m29befffdc6')}</p>
               </div>
             ) : (
               <div className="divide-y divide-slate-100 max-h-[21.875rem] overflow-y-auto pr-1">
@@ -704,7 +699,7 @@ export default function MemberSection({
                       {isAdmin ? (
                         <>
                           <span className="inline-flex items-center justify-center bg-white rounded-xl border border-slate-200 w-9 h-9 text-lg transition-all relative shrink-0 p-0.5 overflow-hidden">
-                            <img src={getMemberAvatar({ name: editName || "Tên", avatar: editAvatar })} className="w-full h-full object-cover rounded-[0.4rem]" referrerPolicy="no-referrer" />
+                            <img src={getMemberAvatar({ name: editName || ui('me826b62a7b'), avatar: editAvatar })} className="w-full h-full object-cover rounded-[0.4rem]" referrerPolicy="no-referrer" />
                           </span>
                           <input
                             type="text"
@@ -738,12 +733,12 @@ export default function MemberSection({
                         <div className="space-y-1.5 text-left bg-white/40 p-2 rounded-xl border border-slate-150">
                           <span className="text-[0.625rem] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                             <Mail className="h-3 w-3 text-emerald-500" />
-                            {isMemberEmailLocked ? "Email liên kết tài khoản" : "Mời thay thế (Email liên kết)"}
+                            {isMemberEmailLocked ? ui('me2b2c915fb') : ui('m9f16ecd2a1')}
                           </span>
                           <div className="flex gap-2">
                             <input
                               type="email"
-                              placeholder="Ví dụ: abc@gmail.com"
+                              placeholder={ui('md09de55d86')}
                               value={isMemberEmailLocked ? lockedMemberEmail : editEmail}
                               disabled={isMemberEmailLocked}
                               onChange={(e) => setEditEmail(e.target.value)}
@@ -757,7 +752,7 @@ export default function MemberSection({
 
                                 const isEmailExist = members.some(m => m.id !== member.id && m.email && m.email.toLowerCase() === editEmail.trim().toLowerCase());
                                 if (isEmailExist) {
-                                  setEmailCheckStatus({ type: 'error', text: 'Email này đã tồn tại trong nhóm. Vui lòng dùng email khác.' });
+                                  setEmailCheckStatus({ type: 'error', get text() { return ui('m5dff98a817'); } });
                                   return;
                                 }
 
@@ -769,24 +764,23 @@ export default function MemberSection({
                                   });
                                   const data = await res.json();
                                   if (data.found) {
-                                    if (window.confirm(`Đã tìm thấy tài khoản: ${data.name}. Bạn có chắc chắn muốn mời người này thay thế vị trí hiện tại?`)) {
+                                    if (window.confirm(ui('m7ba5d7d7f1', { v0: data.name }))) {
                                       setEditName(data.name || editName);
                                       if (data.avatar) setEditAvatar(data.avatar);
-                                      setEmailCheckStatus({ type: 'success', text: 'Đã xác nhận thay thế! Bấm Lưu thay đổi để hoàn tất.' });
+                                      setEmailCheckStatus({ type: 'success', get text() { return ui('m2a838dfea6'); } });
                                     } else {
-                                      setEmailCheckStatus({ type: 'info', text: 'Đã hủy thay thế.' });
+                                      setEmailCheckStatus({ type: 'info', get text() { return ui('mf967d30c7c'); } });
                                     }
                                   } else {
-                                    setEmailCheckStatus({ type: 'not_found', text: 'Tài khoản chưa đăng ký. Bạn có muốn gửi email mời không?' });
+                                    setEmailCheckStatus({ type: 'not_found', get text() { return ui('md7cf0a09ef'); } });
                                   }
                                 } catch (err) {
-                                  setEmailCheckStatus({ type: 'error', text: 'Lỗi kiểm tra email. Vui lòng thử lại.' });
+                                  setEmailCheckStatus({ type: 'error', get text() { return ui('m94c738a5d4'); } });
                                 }
                               }}
                               className="px-3 py-1.5 bg-slate-100 border border-slate-200 text-slate-700 font-bold text-[0.625rem] rounded-xl hover:bg-slate-200 transition-colors shrink-0"
                             >
-                              Kiểm tra
-                            </button>
+                              {ui('m6449afb133')}</button>
                           )}
                         </div>
                         
@@ -804,18 +798,17 @@ export default function MemberSection({
                                     });
                                     const inviteData = await inviteRes.json();
                                     if (inviteData.success) {
-                                      setEmailCheckStatus({ type: 'success', text: 'Đã gửi email mời đăng ký thành công!' });
+                                      setEmailCheckStatus({ type: 'success', get text() { return ui('m1d5a708525'); } });
                                     } else {
                                       setEmailCheckStatus({ type: 'error', text: 'Lỗi gửi email: ' + inviteData.error });
                                     }
                                   } catch (err) {
-                                    setEmailCheckStatus({ type: 'error', text: 'Lỗi gửi email.' });
+                                    setEmailCheckStatus({ type: 'error', get text() { return ui('m2fdb087309'); } });
                                   }
                                 }}
                                 className="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-lg text-[0.625rem] font-bold self-start"
                              >
-                               Gửi lời mời đăng ký
-                             </button>
+                               {ui('m7ab8bbea27')}</button>
                            </div>
                         )}
                         {emailCheckStatus && emailCheckStatus.type !== 'not_found' && (
@@ -825,9 +818,9 @@ export default function MemberSection({
                         )}
 
                         {isMemberEmailLocked ? (
-                          <p className="text-[0.5625rem] text-slate-500 font-medium leading-tight">Đã liên kết tài khoản. Không thể đổi email, chỉ đổi tên và thông tin khác.</p>
+                          <p className="text-[0.5625rem] text-slate-500 font-medium leading-tight">{ui('md9a4e136af')}</p>
                         ) : (
-                          !emailCheckStatus && <p className="text-[0.5625rem] text-slate-400 leading-tight">Nhập email để tìm thành viên đã đăng ký. Nếu chưa có, hệ thống sẽ gửi lời mời.</p>
+                          !emailCheckStatus && <p className="text-[0.5625rem] text-slate-400 leading-tight">{ui('m1bcab3d909')}</p>
                         )}
                       </div>
                       );
@@ -858,8 +851,7 @@ export default function MemberSection({
                       <div className="space-y-1 text-left bg-white/40 p-2 rounded-xl border border-slate-150">
                         <span className="text-[0.625rem] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                           <User className="h-3 w-3 text-emerald-500" />
-                          Ảnh đại diện (Tùy chọn)
-                        </span>
+                          {ui('md603adc79a')}</span>
                         <input
                           type="file"
                           id={`edit-avatar-upload-${member.id}`}
@@ -882,15 +874,14 @@ export default function MemberSection({
                                 referrerPolicy="no-referrer"
                                 className="w-8 h-8 object-cover rounded-full border border-emerald-100"
                               />
-                              <p className="text-[0.5625rem] text-emerald-650 truncate font-extrabold">Đã tải ảnh lên</p>
+                              <p className="text-[0.5625rem] text-emerald-650 truncate font-extrabold">{ui('m585bdd1b67')}</p>
                             </div>
                             <button
                               type="button"
                               onClick={() => setEditAvatar(null)}
                               className="p-1 px-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-[0.5625rem] font-extrabold transition-all shrink-0 cursor-pointer"
                             >
-                              Xóa
-                            </button>
+                              {ui('maa1d94fc16')}</button>
                           </div>
                         ) : (
                           <label
@@ -904,12 +895,12 @@ export default function MemberSection({
                             {loadingEditAvatar ? (
                               <div className="flex items-center gap-1 justify-center">
                                 <RefreshCw className="h-3 w-3 text-emerald-500 animate-spin" />
-                                <span className="text-[0.5625rem] text-emerald-650 font-bold">Đang tải...</span>
+                                <span className="text-[0.5625rem] text-emerald-650 font-bold">{ui('m3d8a48b7d8')}</span>
                               </div>
                             ) : (
                               <div className="flex items-center gap-1 justify-center">
                                 <UploadCloud className="h-3.5 w-3.5 text-slate-400" />
-                                <span className="text-[0.5625rem] font-extrabold text-slate-600">Thay đổi ảnh đại diện</span>
+                                <span className="text-[0.5625rem] font-extrabold text-slate-600">{ui('m6914f6a2f0')}</span>
                               </div>
                             )}
                           </label>
@@ -925,16 +916,14 @@ export default function MemberSection({
                         onClick={handleCancelEdit}
                         className="p-1 px-2.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 text-[0.625rem] font-bold cursor-pointer transition-all"
                       >
-                        Bỏ qua
-                      </button>
+                        {ui('m861dafdead')}</button>
                       <button
                         type="button"
                         onClick={() => handleSaveEdit(member.id)}
                         className="p-1 px-2.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-[0.625rem] font-bold cursor-pointer transition-all flex items-center gap-1"
                       >
                         <Check className="w-3.5 h-3.5 text-white" />
-                        Lưu
-                      </button>
+                        {ui('ma306970e8b')}</button>
                     </div>
                   </div>
                 );
@@ -969,12 +958,12 @@ export default function MemberSection({
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   navigator.clipboard.writeText(member.accessCode || "");
-                                  alert(`Đã copy mã truy cập của ${member.name}: ${member.accessCode}`);
+                                  alert(ui('mfc005fdf72', { v0: member.name, v1: member.accessCode }));
                                 }}
                                 className="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-mono text-[0.5625rem] font-extrabold border border-emerald-100 rounded-md px-1.5 py-0.5 cursor-pointer flex items-center gap-1 active:scale-95 transition-all shrink-0"
-                                title="Bấm để copy mã đăng nhập thành viên"
+                                title={ui('m7b66d73a4d')}
                               >
-                                <span>Mã: {member.accessCode}</span>
+                                <span>{ui('mcf7fc82f92')}{member.accessCode}</span>
                                 <Copy className="w-2.5 h-2.5 shrink-0 text-emerald-500" />
                               </button>
                               <button
@@ -983,20 +972,20 @@ export default function MemberSection({
                                   e.stopPropagation();
                                   const joinUrl = `${window.location.origin}/join/${member.accessCode}`;
                                   navigator.clipboard.writeText(joinUrl);
-                                  alert(`Đã copy Link tham gia của ${member.name}! Gửi link này cho bạn bè để tự động đăng nhập.`);
+                                  alert(ui('m7fa2a77492', { v0: member.name }));
                                 }}
                                 className="bg-indigo-600 hover:bg-indigo-700 text-white font-sans text-[0.5625rem] font-bold border border-indigo-500 rounded-md px-1.5 py-0.5 cursor-pointer flex items-center gap-1 shadow-sm active:scale-95 transition-all shrink-0"
-                                title="Bấm để copy link mời bạn bè tự động đăng nhập"
+                                title={ui('mfd4dd206ef')}
                               >
                                 <Copy className="w-2.5 h-2.5 shrink-0" />
-                                <span>Copy link tham gia</span>
+                                <span>{ui('mb1e3fee852')}</span>
                               </button>
                             </div>
                           )}
                           <p className="text-[0.625rem] text-slate-400 font-medium truncate">
                             {isPayerOrDebtor
-                              ? `Đã chi: ${new Intl.NumberFormat("vi-VN").format(Math.round(bal?.paid || 0))}đ`
-                              : "Chưa tham gia hoạt động"}
+                              ? ui('mbe180c3750', { v0: new Intl.NumberFormat(getLocale()).format(Math.round(bal?.paid || 0)) })
+                              : ui('mfb389685a9')}
                           </p>
                         </div>
                       </div>
@@ -1005,7 +994,7 @@ export default function MemberSection({
 
                   <div className="flex items-center gap-1.5 shrink-0 justify-end ml-1">
                     <div className="text-right text-xs font-mono mr-1.5 whitespace-nowrap shrink-0">
-                      {bal ? formatBalance(bal.netBalance) : <span className="text-slate-400 whitespace-nowrap">0đ</span>}
+                      {bal ? formatBalance(bal.netBalance) : <span className="text-slate-400 whitespace-nowrap">{ui('m4ccb02fc39')}</span>}
                     </div>
                     
                     {/* Action buttons (Delete only, edit moved beside name) */}
@@ -1014,7 +1003,7 @@ export default function MemberSection({
                         <button
                           type="button"
                           onClick={() => handleRemove(member.id)}
-                          title={`Xóa ${member.name}`}
+                          title={ui('ma0a7bcf5bc', { v0: member.name })}
                           className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer flex items-center justify-center shrink-0"
                         >
                           <Trash2 className="h-3.5 w-3.5" />

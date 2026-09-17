@@ -39,24 +39,12 @@ Mọi thông tin chi tiết về Kiến trúc, Database Schema, Luồng Camera A
 Trước khi thực hiện công việc, AI cần kiểm tra `PROJECT_BRAIN.md` để đảm bảo nắm trọn vẹn bối cảnh dự án mà không cần hỏi lại người dùng.
 
 ## LỊCH SỬ NHẬN THỨC CỦA AGENT
-- **16/09/2026 (Khắc phục triệt để lỗi Supabase bị khóa sau 7 ngày qua Vercel Cron & Tối ưu Keep-Alive)**:
-  - **Mục tiêu**: Khắc phục triệt để sự cố Supabase Free Tier tự động bị tạm dừng (Paused) sau 7 ngày không phát sinh dữ liệu/truy vấn.
-  - **Thực hiện**:
-    - **Cấu hình Vercel Cron (`vercel.json`)**: Bổ sung cron tự động chạy hàng ngày lúc 04:00 UTC (11:00 AM VN) gửi request đến `/api/keep-alive` trên Vercel. Chạy độc lập, vĩnh viễn và không bị ảnh hưởng bởi chính sách tạm dừng sau 60 ngày của GitHub Actions.
-    - **Tối ưu Endpoint Keep-Alive (`api/api-app.ts`)**: Cải tiến truy vấn sang `.select("id").limit(1)` thực tế trên bảng `groups` hoặc `leaders`, kích hoạt trực tiếp I/O database engine và duy trì trạng thái ACTIVE cho Supabase.
-    - **Cập nhật GitHub Actions (`.github/workflows/supabase-keep-alive.yml`)**: Tăng tần suất chạy thành hàng ngày (`0 4 * * *`) làm kênh dự phòng.
-- **16/09/2026 (Hoàn thiện & Đồng bộ Từ điển Song ngữ i18n & TypeScript Type Safety)**:
-  - **Mục tiêu**: Khắc phục các lỗi thiếu translation key trong từ điển `src/utils/i18n.ts` được gọi từ `ExpenseForm.tsx` và `SettleUpSection.tsx`.
-  - **Thực hiện**:
-    - Bổ sung đầy đủ 10 cặp key trong cả 2 từ điển `vi` và `en`: `save_expense_changes`, `submit_expense`, `statement_banner_title`, `statement_banner_desc`, `view_statement_btn`, `direct_debt_offset`, `settle_up_title`, `all_settled_title`, `all_settled_desc`, `confirm_payment_btn`.
-    - Kiểm tra linter và TypeScript compiler (`tsc --noEmit`) đạt 100% sạch lỗi, build ứng dụng thành công.
-- **16/09/2026 (Bổ sung Đa Ngôn Ngữ Tiếng Anh & Hỗ Trợ Đa Tiền Tệ Toàn Cầu)**:
-  - **Mục tiêu**: Bổ sung chuyển đổi ngôn ngữ Tiếng Việt & Tiếng Anh và hỗ trợ đa tiền tệ (VND, USD, EUR, JPY, KRW, THB, SGD) cho nhóm chi tiêu.
-  - **Thực hiện**:
-    - Xây dựng `src/utils/i18n.ts`: hook `useTranslation`, `SUPPORTED_CURRENCIES` và `formatCurrencyAmount`.
-    - Modal Tạo nhóm (`CreateGroupModal.tsx`) & Cài đặt nhóm (`SmartHeader.tsx`): Cho phép chọn đơn vị tiền tệ cho từng nhóm.
-    - Drawer Thông tin cá nhân (`SmartHeader.tsx`): Bổ sung nút chuyển đổi Tiếng Việt ↔ English 1-chạm.
-    - Đồng bộ hiển thị định dạng tiền tệ trên toàn bộ ứng dụng (`ExpenseList.tsx`, `SettleUpSection.tsx`, `FundHistoryList.tsx`, `CloseCycleSection.tsx`, `PersonalStatementModal.tsx`, `StatsSection.tsx`).
+- **17/09/2026 (Đa ngôn ngữ và ngoại tệ)**:
+  - UI dùng `src/i18n/core.ts`, `uiMessages.ts` và `I18nProvider`; hỗ trợ `vi`, `en`, `zh-CN`, mặc định VI. Không ghi chuỗi dịch vào các marker kế toán `[Nộp Quỹ]`, `[Nhận Quỹ]` hoặc thay tên/nội dung người dùng.
+  - Các cấu hình UI ở cấp module dùng getter khi lấy chuỗi dịch, tránh giữ ngôn ngữ cũ. Các `useMemo` tạo nội dung dịch phải phụ thuộc `language`.
+  - `Expense.amount` và `customSplit` vẫn là VND. `Expense.fx` chỉ là snapshot ngoại tệ; không tính lại tỷ giá khi đổi ngôn ngữ hoặc tải khoản chi cũ.
+  - Tỷ giá tham khảo qua `/api/fx/rates`, cache 1 giờ; lỗi phải cho nhập thủ công, không tự đoán tỷ giá. VietQR khóa số tiền và OCR dùng VND.
+  - Chạy `npm run lint`, `npm run test`, `npm run build` khi đổi i18n hoặc tiền tệ.
 - **03/09/2026 (Loại bỏ AI Khớp Lệnh Tự Động & Chuẩn hóa Đối Soát Biên Lai Chuyển Khoản)**:
   - **Mục tiêu**: Khắc phục triệt để lỗi biên lai chuyển khoản (ví dụ: hoàn tiền 2.000.000đ cho Panh) bị AI tự động duyệt dẫn đến xung đột ghi đè state làm mất khoản chi tiêu khấu trừ công nợ, đồng thời loại bỏ rủi ro AI tự duyệt ngoài ý muốn.
   - **Thực hiện (`src/components/SettleUpSection.tsx`)**:
@@ -440,3 +428,27 @@ Trước khi thực hiện công việc, AI cần kiểm tra `PROJECT_BRAIN.md` 
 
 
 
+
+- **16/09/2026 (Khắc phục triệt để lỗi Supabase bị khóa sau 7 ngày qua Vercel Cron & Tối ưu Keep-Alive)**:
+  - **Mục tiêu**: Khắc phục triệt để sự cố Supabase Free Tier tự động bị tạm dừng (Paused) sau 7 ngày không phát sinh dữ liệu/truy vấn.
+  - **Thực hiện**:
+    - **Cấu hình Vercel Cron (`vercel.json`)**: Bổ sung cron tự động chạy hàng ngày lúc 04:00 UTC (11:00 AM VN) gửi request đến `/api/keep-alive` trên Vercel. Chạy độc lập, vĩnh viễn và không bị ảnh hưởng bởi chính sách tạm dừng sau 60 ngày của GitHub Actions.
+    - **Tối ưu Endpoint Keep-Alive (`api/api-app.ts`)**: Cải tiến truy vấn sang `.select("id").limit(1)` thực tế trên bảng `groups` hoặc `leaders`, kích hoạt trực tiếp I/O database engine và duy trì trạng thái ACTIVE cho Supabase.
+    - **Cập nhật GitHub Actions (`.github/workflows/supabase-keep-alive.yml`)**: Tăng tần suất chạy thành hàng ngày (`0 4 * * *`) làm kênh dự phòng.
+- **16/09/2026 (Hoàn thiện & Đồng bộ Từ điển Song ngữ i18n & TypeScript Type Safety)**:
+  - **Mục tiêu**: Khắc phục các lỗi thiếu translation key trong từ điển `src/utils/i18n.ts` được gọi từ `ExpenseForm.tsx` và `SettleUpSection.tsx`.
+  - **Thực hiện**:
+    - Bổ sung đầy đủ 10 cặp key trong cả 2 từ điển `vi` và `en`: `save_expense_changes`, `submit_expense`, `statement_banner_title`, `statement_banner_desc`, `view_statement_btn`, `direct_debt_offset`, `settle_up_title`, `all_settled_title`, `all_settled_desc`, `confirm_payment_btn`.
+    - Kiểm tra linter và TypeScript compiler (`tsc --noEmit`) đạt 100% sạch lỗi, build ứng dụng thành công.
+- **16/09/2026 (Bổ sung Đa Ngôn Ngữ Tiếng Anh & Hỗ Trợ Đa Tiền Tệ Toàn Cầu)**:
+  - **Mục tiêu**: Bổ sung chuyển đổi ngôn ngữ Tiếng Việt & Tiếng Anh và hỗ trợ đa tiền tệ (VND, USD, EUR, JPY, KRW, THB, SGD) cho nhóm chi tiêu.
+  - **Thực hiện**:
+    - Xây dựng `src/utils/i18n.ts`: hook `useTranslation`, `SUPPORTED_CURRENCIES` và `formatCurrencyAmount`.
+    - Modal Tạo nhóm (`CreateGroupModal.tsx`) & Cài đặt nhóm (`SmartHeader.tsx`): Cho phép chọn đơn vị tiền tệ cho từng nhóm.
+    - Drawer Thông tin cá nhân (`SmartHeader.tsx`): Bổ sung nút chuyển đổi Tiếng Việt ↔ English 1-chạm.
+    - Đồng bộ hiển thị định dạng tiền tệ trên toàn bộ ứng dụng (`ExpenseList.tsx`, `SettleUpSection.tsx`, `FundHistoryList.tsx`, `CloseCycleSection.tsx`, `PersonalStatementModal.tsx`, `StatsSection.tsx`).
+
+Integration: retained the 2026-09-17 keep-alive fixes; the complete VI/EN/zh-CN provider and VND-backed FX entry supersede the earlier partial i18n/group-currency display implementation. Existing raw expense amounts are not reinterpreted or migrated.
+
+### C2C review corrections
+Manual rates now use grouping-aware parsing consistently; provider/stored numeric quotes retain full precision. Quote calendar dates display in UTC; plan expiry dates display in Vietnam time. Statement watermark timestamps use the active display locale. Regression suite: 11 tests.

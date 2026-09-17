@@ -1,4 +1,10 @@
+import { formatDisplayDateTime } from './utils/dateUtils';
+import { errorMessage as localizeError } from './i18n/core';
+import { getLocale } from './i18n/core';
+import { ui, t } from './i18n/core';
 import React, { useState, useEffect } from "react";
+import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { useI18n } from './i18n/I18nProvider';
 // @ts-ignore
 import html2pdf from "html2pdf.js";
 import { Group, Member, Expense, PendingReceipt, Feedback, getPlanLabel } from "./types";
@@ -28,7 +34,6 @@ import DuHiOnboarding from "./components/DuHiOnboarding";
 import { CreateGroupModal } from "./components/CreateGroupModal";
 import { OfflineModal } from "./components/OfflineModal";
 import { supabase } from "./lib/supabaseClient";
-import { Currency, formatCurrencyAmount, useTranslation } from "./utils/i18n";
 
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -79,6 +84,7 @@ import { InstallAppBanner } from "./components/InstallAppBanner";
 import confetti from "canvas-confetti";
 
 export default function App() {
+  useI18n();
   const [, setBanksLoaded] = useState(0);
 
   useEffect(() => {
@@ -106,7 +112,7 @@ export default function App() {
   
   const confirmOfflineMode = (e: React.FormEvent) => {
     e.preventDefault();
-    const guestName = offlineGuestName.trim() || "Bạn (Khách)";
+    const guestName = offlineGuestName.trim() || ui('md383a8558f');
     
     setShowOfflineModal(false);
     setTryOfflineModeObj(true);
@@ -280,12 +286,12 @@ export default function App() {
 
         if (window.location.hash.includes("access_token") || window.location.search.includes("type=")) {
           showAlert(
-            "🎉 Xác Thực Email Thành Công!",
-            `Tài khoản [ ${cleanEmail} ] của bạn đã được xác minh thành công qua Supabase Auth! Bạn đã đăng nhập và sẵn sàng quản lý nhóm.`
+            ui('m4f0279c666'),
+            ui('m2086f231c6', { v0: cleanEmail })
           );
           setToastMsg({
-            title: "Xác thực thành công 🎉",
-            desc: `Đã xác minh email ${cleanEmail}`,
+            get title() { return ui('m864a2c2cf8'); },
+            desc: ui('m2ac4234cb1', { v0: cleanEmail }),
             type: "success"
           });
           window.history.replaceState({}, document.title, window.location.pathname);
@@ -313,11 +319,11 @@ export default function App() {
         const res = await fetch(`/api/groups?ownerId=${user.uid}&email=${encodeURIComponent(user.email || "")}`);
         if (!res.ok) {
            const errData = await res.json().catch(() => ({}));
-           throw new Error(errData.error || "Gặp lỗi khi truy xuất nhóm.");
+           throw new Error(errData.error || ui('md7ec5b83c5'));
         }
         const contentType = res.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
-          throw new Error("Dữ liệu phản hồi phục vụ từ máy chủ không phải JSON hợp lệ.");
+          throw new Error(ui('m1906200a98'));
         }
         
         const data = await res.json();
@@ -365,7 +371,7 @@ export default function App() {
                 origin: { y: 0.6 },
                 colors: ['#10b981', '#3b82f6', '#f59e0b']
               });
-              showAlert("Nâng cấp thành công! 🎉", `Nhóm ${payload.new.name || ""} đã được nâng cấp lên gói ${payload.new.plan}!`);
+              showAlert(ui('m9c82dd18f0'), ui('md00a9ba390', { v0: payload.new.name || "", v1: payload.new.plan }));
             }
             
             fetchGroups();
@@ -427,8 +433,8 @@ export default function App() {
   const handleRequestCreateGroup = () => {
     if (tryOfflineMode) {
       showAlert(
-        "Giới hạn Chế độ dùng thử 1 lần ⚡",
-        "Chế độ xài 1 lần chỉ hỗ trợ duy nhất 1 nhóm dùng thử. Vui lòng đăng nhập hoặc tạo tài khoản Thủ quỹ để khởi tạo nhiều nhóm không giới hạn!"
+        ui('mcd0074d548'),
+        ui('m5c6d4571ec')
       );
       return;
     }
@@ -513,13 +519,13 @@ export default function App() {
 
   const handleSendOtp = async () => {
     if (!authEmail || !authEmail.trim()) {
-      showAlert("Thiếu Email", "Vui lòng nhập địa chỉ Email của bạn.");
+      showAlert(ui('ma8e93dddeb'), ui('m36c6237108'));
       return;
     }
     const cleanEmail = authEmail.trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(cleanEmail)) {
-      showAlert("Email không hợp lệ", "Định dạng Email không chính xác. Vui lòng kiểm tra lại.");
+      showAlert(ui('me3d38be3c7'), ui('m5797a4db85'));
       return;
     }
 
@@ -540,11 +546,11 @@ export default function App() {
       setIsOtpSending(false);
 
       if (!res.ok) {
-        setAuthErrorMsg(data.error || "Gặp sự cố khi gửi mã OTP.");
-        showAlert("❌ Gửi Mã OTP Thất Bại", data.error || "Gặp sự cố khi gửi mã OTP.");
+        setAuthErrorMsg(localizeError(data.error, ui('m93181c4c2b')));
+        showAlert(ui('me1db07a8d8'), localizeError(data.error, ui('m93181c4c2b')));
         setToastMsg({
-          title: "Gửi mã thất bại",
-          desc: data.error || "Gặp sự cố khi gửi mã OTP.",
+          get title() { return ui('m6c502d90f3'); },
+          desc: localizeError(data.error, ui('m93181c4c2b')),
           type: "error"
         });
         if (data.cooldownRemaining) {
@@ -558,20 +564,20 @@ export default function App() {
       setAuthOtpCode("");
 
       showAlert(
-        "📧 Mã OTP Đã Được Gửi!",
-        `Mã xác minh 6 chữ số đã được gửi tới [ ${cleanEmail} ]. Vui lòng kiểm tra Thư đến (hoặc thư Rác/Spam) của bạn.`
+        ui('mcdc26da9fb'),
+        ui('mb39582098a', { v0: cleanEmail })
       );
       setToastMsg({
-        title: "Đã gửi mã OTP 🎉",
-        desc: `Mã xác nhận đã gửi về hộp thư ${cleanEmail}`,
+        get title() { return ui('m1ea7522870'); },
+        desc: ui('mdfc5bad4ac', { v0: cleanEmail }),
         type: "success"
       });
     } catch (err: any) {
       setIsOtpSending(false);
-      setAuthErrorMsg("Lỗi kết nối máy chủ. Vui lòng thử lại.");
-      showAlert("❌ Lỗi Mạng", "Gặp lỗi kết nối khi gửi mã xác minh OTP.");
+      setAuthErrorMsg(ui('m520ece5021'));
+      showAlert(ui('m7a197f4237'), ui('m633b5ff655'));
       setToastMsg({
-        title: "Lỗi kết nối",
+        get title() { return ui('mf3103ad102'); },
         desc: "Không thể kết nối máy chủ để gửi mã xác thực.",
         type: "error"
       });
@@ -580,24 +586,24 @@ export default function App() {
 
   const handleLeaderAuth = async (email: string, password: string, displayName?: string, action: "login" | "register" = "login") => {
     if (!email.trim() || !password.trim()) {
-      showAlert("Thiếu thông tin", "Vui lòng nhập Email và Mật khẩu.");
+      showAlert(ui('m70b9b03643'), ui('m270a0d6f3a'));
       return;
     }
     const cleanEmail = email.trim();
     const cleanPassword = password.trim();
 
     if (cleanPassword.length < 4) {
-      showAlert("Mật khẩu không hợp lệ", "Mật khẩu bảo mật phải chứa từ 4 ký tự trở lên.");
+      showAlert(ui('mfb3f3e97de'), ui('mb581f4360c'));
       return;
     }
 
     if (action === "register") {
       if (!authOtpSent) {
-        showAlert("Chưa gửi mã OTP", "Vui lòng bấm 'Nhận mã xác thực Email' để nhận mã OTP trước khi đăng ký.");
+        showAlert(ui('m34623b81b2'), ui('m807fc641e8'));
         return;
       }
       if (!authOtpCode || authOtpCode.trim().length < 6) {
-        showAlert("Thiếu mã OTP", "Vui lòng nhập đủ 6 chữ số mã xác minh OTP gửi về Email.");
+        showAlert(ui('m976220bbd1'), ui('m3ac8b8cfd3'));
         return;
       }
     }
@@ -620,11 +626,11 @@ export default function App() {
       setAuthInProg(false);
 
       if (!res.ok) {
-        const errorText = data.error || (action === "register" ? "Đăng ký thất bại. Vui lòng kiểm tra lại thông tin." : "Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại!");
+        const errorText = localizeError(data.error, (action === "register" ? ui('ma84db1c179') : ui('m4fc8e57986')));
         setAuthErrorMsg(errorText);
-        showAlert(action === "register" ? "❌ Đăng Ký Thất Bại" : "❌ Đăng Nhập Thất Bại", errorText);
+        showAlert(action === "register" ? ui('m905da524b7') : ui('mab8b3138c1'), errorText);
         setToastMsg({
-          title: action === "register" ? "Đăng ký thất bại" : "Đăng nhập thất bại",
+          title: action === "register" ? ui('me7ab9de2b8') : ui('mfb63ae220b'),
           desc: errorText,
           type: "error"
         });
@@ -652,10 +658,10 @@ export default function App() {
           setShowOnboarding(true);
         }
 
-        showAlert("🎉 Xác Thực OTP Thành Công!", `Tài khoản [ ${cleanEmail} ] đã được xác minh và đăng ký thành công! Chào mừng Thủ quỹ ${data.user?.displayName || cleanEmail} đến với SplitMate.`);
+        showAlert(ui('m2b4def5542'), ui('maadc4430b7', { v0: cleanEmail, v1: data.user?.displayName || cleanEmail }));
         setToastMsg({
-          title: "Xác thực OTP thành công 🎉",
-          desc: `Tài khoản ${cleanEmail} đã sẵn sàng sử dụng.`,
+          get title() { return ui('me06d9a1fc5'); },
+          desc: ui('m1cd22ef6ba', { v0: cleanEmail }),
           type: "success"
         });
         return;
@@ -675,20 +681,20 @@ export default function App() {
         setShowOnboarding(true);
       }
 
-      showAlert("🎉 Đăng Nhập Thành Công!", `Chào mừng Thủ quỹ [ ${data.user.displayName} ] trở lại!`);
+      showAlert(ui('m9746865cb6'), ui('m3f8627be8f', { v0: data.user.displayName }));
       setToastMsg({
-        title: "Đăng nhập thành công 🎉",
-        desc: `Chào mừng ${data.user.displayName} trở lại!`,
+        get title() { return ui('mbeedda74be'); },
+        desc: ui('m8c4be4b093', { v0: data.user.displayName }),
         type: "success"
       });
     } catch (err: any) {
       setAuthInProg(false);
       console.error("Leader authentication error:", err);
-      const networkErr = "Gặp lỗi kết nối với máy chủ. Vui lòng kiểm tra lại đường truyền mạng.";
+      const networkErr = ui('m09e4fac3c3');
       setAuthErrorMsg(networkErr);
-      showAlert("❌ Lỗi Kết Nối Máy Chủ", networkErr);
+      showAlert(ui('mf4629d97cc'), networkErr);
       setToastMsg({
-        title: "Lỗi kết nối",
+        get title() { return ui('mf3103ad102'); },
         desc: networkErr,
         type: "error"
       });
@@ -697,7 +703,7 @@ export default function App() {
 
   const handleForgotPassword = async (email: string) => {
     if (!email || !email.trim()) {
-      showAlert("Thiếu email", "Vui lòng nhập địa chỉ Email đăng ký tài khoản Thủ quỹ.");
+      showAlert(ui('mee1d9ce393'), ui('m81e5760446'));
       return;
     }
     const cleanEmail = email.trim();
@@ -712,20 +718,20 @@ export default function App() {
       setIsForgotSubmitting(false);
 
       if (!res.ok) {
-        showAlert("Lỗi khôi phục", data.error || "Gặp sự cố khi gửi thông tin mật khẩu.");
+        showAlert(ui('m87f2cc8d42'), localizeError(data.error, ui('m659f678e07')));
         return;
       }
 
       if (data.isMock) {
         // Mock mode (No SMTP configured) - return password on screen so testing works instantly
         showAlert(
-          "Hỗ trợ Thử nghiệm",
-          `Hệ thống không tìm thấy tài khoản SMTP cấu hình.\nMật khẩu Thủ quỹ của bạn là: [ ${data.password} ]\n\n(Tip: Để gửi email thực tế, hãy điền đầy đủ biến môi trường HOST, SMTP_USER, SMTP_PASS trên Vercel của bạn).`
+          ui('m837049b0ae'),
+          t('testRecovery', { password: data.password })
         );
       } else {
         showAlert(
-          "Gửi thành công",
-          "Thông tin đăng nhập và mật khẩu bảo mật hiện tại đã được gửi về email của bạn. Vui lòng kiểm tra mục Thư đến (Inbox) hoặc Thư rác (Spam)."
+          ui('mfea16f3e68'),
+          ui('md3bbfa610c')
         );
       }
       setShowForgotPasswordModal(false);
@@ -733,21 +739,21 @@ export default function App() {
     } catch (err: any) {
       setIsForgotSubmitting(false);
       console.error("Forgot password error:", err);
-      showAlert("Lỗi kết nối", "Không thể liên lạc với máy chủ lúc này. Vui lòng thử lại sau.");
+      showAlert(ui('mf3103ad102'), ui('mdcced0ec0a'));
     }
   };
 
   const handleChangePassword = async () => {
     if (!currentPassword.trim() || !newPassword.trim() || !confirmNewPassword.trim()) {
-      showAlert("Thiếu dữ liệu", "Vui lòng điền đầy đủ thông tin Mật khẩu hiện tại và Mật khẩu mới.");
+      showAlert(ui('me87085e960'), ui('m029f8841c6'));
       return;
     }
     if (newPassword !== confirmNewPassword) {
-      showAlert("Nhập lại không khớp", "Mật khẩu mới và Nhập lại mật khẩu mới không khớp nhau.");
+      showAlert(ui('m0525d0d744'), ui('mc9861345f6'));
       return;
     }
     if (newPassword.length < 4) {
-      showAlert("Độ dài tối thiểu", "Mật khẩu mới tối thiểu phải từ 4 ký tự trở lên.");
+      showAlert(ui('m984e73d3c6'), ui('m9882a456b0'));
       return;
     }
 
@@ -766,11 +772,11 @@ export default function App() {
       setIsChangeSubmitting(false);
 
       if (!res.ok) {
-        showAlert("Lỗi đổi mật khẩu", data.error || "Mật khẩu cũ không chính xác hoặc không hợp lệ.");
+        showAlert(ui('mb7b1717321'), localizeError(data.error, ui('ma9c29b3a08')));
         return;
       }
 
-      showAlert("Thành công 🎉", "Đổi mật khẩu tài khoản Thủ quỹ thành công.");
+      showAlert(ui('m97227b9a99'), ui('ma9de25e4d4'));
       setShowChangePasswordModal(false);
       setCurrentPassword("");
       setNewPassword("");
@@ -778,7 +784,7 @@ export default function App() {
     } catch (err: any) {
       setIsChangeSubmitting(false);
       console.error("Change password error:", err);
-      showAlert("Lỗi kết nối", "Gặp lỗi kết nối khi đổi mật khẩu.");
+      showAlert(ui('mf3103ad102'), ui('mb7857c3e97'));
     }
   };
 
@@ -805,7 +811,7 @@ export default function App() {
       setGroups(MOCK_GROUPS);
       setSelectedGroupId(MOCK_GROUPS[0].id);
 
-      showAlert("Đã đăng xuất", "Hệ thống đã dọn dẹp sạch toàn bộ phiên làm việc của bạn.");
+      showAlert(ui('m0a391d8aa8'), ui('m325e535597'));
     } catch (error) {
       console.error("Logout error:", error);
     }
@@ -813,9 +819,9 @@ export default function App() {
 
   const handleMemberCodeLogin = async (code: string) => {
     if (!code.trim()) {
-      const errText = "Vui lòng nhập mã đăng nhập nhóm 6 ký tự.";
+      const errText = ui('m71091600d8');
       setMemberCodeErrorMsg(errText);
-      showAlert("Nhập mã", errText);
+      showAlert(ui('m7ad20e8808'), errText);
       return;
     }
     const cleanCode = code.trim().toUpperCase();
@@ -841,7 +847,7 @@ export default function App() {
             setGroups([g]);
             setSelectedGroupId(g.id);
             setMemberCodeErrorMsg("");
-            showAlert("Chào mừng", `Đăng nhập thành công vào nhóm ngoại tuyến "${g.name}"!`);
+            showAlert(ui('m2aa472c317'), ui('md7577ca852', { v0: g.name }));
             return;
           }
         }
@@ -858,9 +864,9 @@ export default function App() {
       const data = await res.json();
       if (!res.ok) {
         console.log("Member login failed data:", data);
-        const errText = data.error || "Mã truy cập nhóm 6 ký tự không chính xác hoặc không tồn tại.";
+        const errText = localizeError(data.error, ui('md95be31a11'));
         setMemberCodeErrorMsg(errText);
-        showAlert("Đăng nhập thất bại", errText);
+        showAlert(ui('mfb63ae220b'), errText);
         return;
       }
 
@@ -879,12 +885,12 @@ export default function App() {
       setSelectedGroupId(data.group.id);
       setMemberCodeErrorMsg("");
 
-      showAlert("Chào mừng Thành viên", `Đăng nhập thành công vào nhóm "${data.group.name}"!`);
+      showAlert(ui('md12e38a46f'), ui('m6db93f2b33', { v0: data.group.name }));
     } catch (error) {
       console.error("Member login error:", error);
-      const networkErr = "Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng.";
+      const networkErr = ui('m2e101fc449');
       setMemberCodeErrorMsg(networkErr);
-      showAlert("Lỗi kết nối", networkErr);
+      showAlert(ui('mf3103ad102'), networkErr);
     }
   };
 
@@ -1074,10 +1080,8 @@ export default function App() {
   };
 
   // New Group input controls
-  const { lang, setLang, t } = useTranslation();
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
-  const [newGroupCurrency, setNewGroupCurrency] = useState<Currency>("VND");
   const [newGroupSuccess, setNewGroupSuccess] = useState(false);
 
   // Listen for open-create-group custom event
@@ -1202,8 +1206,8 @@ export default function App() {
     e.preventDefault();
     if (tryOfflineMode) {
       showAlert(
-        "Giới hạn Chế độ dùng thử 1 lần ⚡",
-        "Chế độ xài 1 lần chỉ hỗ trợ duy nhất 1 nhóm dùng thử. Vui lòng đăng nhập hoặc tạo tài khoản Thủ quỹ để khởi tạo nhiều nhóm không giới hạn!"
+        ui('mcd0074d548'),
+        ui('m5c6d4571ec')
       );
       setIsCreatingGroup(false);
       return;
@@ -1212,7 +1216,7 @@ export default function App() {
     if (!name) return;
 
     // Find the most recent name used by this owner
-    let recentName = user?.displayName || "Bạn (Trưởng nhóm)";
+    let recentName = user?.displayName || ui('m2f6dde052a');
     let recentEmail = user?.email || undefined;
     if (user && groups.length > 0) {
       const ownedGroups = groups.filter(g => g.ownerId === user.uid);
@@ -1238,7 +1242,6 @@ export default function App() {
     const newGroup: Group = {
       id: "g_" + Date.now(),
       name,
-      currency: newGroupCurrency || "VND",
       createdAt: new Date().toISOString().split("T")[0],
       members: [
         { 
@@ -1267,13 +1270,13 @@ export default function App() {
          });
          if (!res.ok) {
            const errData = await res.json().catch(() => ({}));
-           throw new Error(errData.error || "Gặp lỗi lưu giữ dữ liệu từ máy chủ.");
+           throw new Error(errData.error || ui('m7819a0594b'));
          }
          const data = await res.json();
          setGroups((prev) => [...prev, data.group]);
       } catch (err: any) {
         console.error("API group creation error:", err);
-        showAlert("Lưu Ngoại Tuyến (Lỗi Máy Chủ)", `Đồng bộ thất bại, nhóm sẽ được lưu trên trình duyệt của bạn: ${err.message || err}`);
+        showAlert(ui('m544756f744'), ui('mefd59d2c41', { v0: localizeError(err.message, err) }));
         setGroups((prev) => [...prev, newGroup]);
       }
     } else {
@@ -1282,7 +1285,6 @@ export default function App() {
     
     setSelectedGroupId(newGroup.id);
     setNewGroupName("");
-    setNewGroupCurrency("VND");
     setIsCreatingGroup(false);
     setNewGroupSuccess(true);
     setTimeout(() => setNewGroupSuccess(false), 2500);
@@ -1296,7 +1298,7 @@ export default function App() {
     const isSettled = txs.length === 0;
 
     if (!isSettled) {
-      showAlert("Chưa thể xóa", "Nhóm cần sòng phẳng (không còn khoản nợ nào) trước khi xóa.");
+      showAlert(ui('mdf4e37a748'), ui('m02f6e098a8'));
       return;
     }
 
@@ -1321,7 +1323,7 @@ export default function App() {
           }
         } catch (err: any) {
           console.error(err);
-          showAlert("Lỗi xóa nhóm", err.message || "Gặp lỗi khi xóa nhóm.");
+          showAlert(ui('mfa0697dd77'), localizeError(err.message, ui('me98731c73b')));
         }
       } else {
         setGroups(remaining);
@@ -1332,8 +1334,8 @@ export default function App() {
     };
 
     askConfirm(
-      "Xác nhận xóa nhóm",
-      `Bạn có chắc chắn muốn xóa vĩnh viễn nhóm "${targetGroup.name}" không? Thao tác này không thể hoàn tác.`,
+      ui('m47af0d95b9'),
+      ui('m20a23f4172', { v0: targetGroup.name }),
       () => {
         performDeletion();
       }
@@ -1343,7 +1345,7 @@ export default function App() {
   const handleSaveGroupName = async () => {
     if (!activeGroup) return;
     if (!isAdmin) {
-      showAlert("Không có quyền", "Chỉ Trưởng nhóm mới có quyền chỉnh sửa tên và ảnh nhóm.");
+      showAlert(ui('m1c6ba8de8b'), ui('m9b04e471fb'));
       setIsEditingGroupName(false);
       return;
     }
@@ -1359,13 +1361,13 @@ export default function App() {
       setIsEditingGroupName(false);
     } catch (err) {
       console.error(err);
-      showAlert("Lỗi sửa nhóm", "Không thể cập nhật thông tin nhóm.");
+      showAlert(ui('md1e7f5d1d0'), ui('mbe987adf8f'));
     }
   };
 
   const handleGroupImageSelect = async (file: File) => {
     if (!file.type.startsWith("image/")) {
-      showAlert("Lỗi", "Chỉ hỗ trợ tải lên file hình ảnh.");
+      showAlert(ui('md290780737'), ui('m0fbb61b38b'));
       return;
     }
 
@@ -1389,19 +1391,19 @@ export default function App() {
       if (data.success && data.url) {
         setTempGroupImage(data.url);
       } else {
-        throw new Error(data.error || "Lỗi upload");
+        throw new Error(localizeError(data.error, ui('mfbe7344aca')));
       }
     } catch (err) {
       console.error("Lỗi xử lý ảnh nhóm:", err);
-      showAlert("Lỗi", "Không thể tải ảnh nhóm lên. Vui lòng thử lại.");
+      showAlert(ui('md290780737'), ui('ma178902969'));
     }
   };
 
   // Reset current Application Database
   const handleResetToPresets = () => {
     askConfirm(
-      "Đặt lại mẫu",
-      "Hành động này sẽ xóa dữ liệu hiện tại của bạn và đặt lại các nhóm mẫu. Tiếp tục?",
+      ui('m5a113c57cd'),
+      ui('m8746481334'),
       async () => {
         if (user) {
           try {
@@ -1430,8 +1432,8 @@ export default function App() {
   // Clear current active group transactions
   const handleClearActiveGroupData = async () => {
     askConfirm(
-      "Xóa sạch chi tiêu",
-      "Xóa toàn bộ các chi tiêu đã ghi nhận trong nhóm này? (Danh sách thành viên không đổi)",
+      ui('m5c4dc7fe4f'),
+      ui('m3fc184da7d'),
       async () => {
         const updated = {
           ...activeGroup,
@@ -1446,8 +1448,8 @@ export default function App() {
   const handleLoadVungTauTestData = async () => {
     if (!activeGroup) return;
     askConfirm(
-      "Nạp dữ liệu thử nghiệm Vũng Tàu",
-      "Hệ thống sẽ đặt lại nhóm thành 10 thành viên mẫu và nạp 45 hóa đơn/giao dịch thực tế của chuyến đi Vũng Tàu để bạn thử nghiệm tất cả các tính năng (tính nợ, nộp quỹ, xuất báo cáo). Tiếp tục?",
+      ui('m174eab3805'),
+      ui('m5b4b1c66f5'),
       async () => {
         const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
         const populatedMembers = TEST_MEMBERS.map((m) => {
@@ -1468,7 +1470,7 @@ export default function App() {
           expenses: TEST_EXPENSES
         };
         await updateGroupOnDbAndState(updated);
-        showAlert("Thành công", "Đã nạp 10 thành viên và 45 hóa đơn chuyến đi Vũng Tàu! Hãy kiểm tra các tính năng của nhóm.");
+        showAlert(ui('m9a7d703709'), ui('mac53f91ae0'));
       }
     );
   };
@@ -1482,8 +1484,8 @@ export default function App() {
     
     if (activeGroup.members.length >= limit) {
       setToastMsg({
-        title: "Vượt quá giới hạn thành viên",
-        desc: `Gói ${plan} chỉ cho phép tối đa ${limit} thành viên. Vui lòng nâng cấp để thêm nhiều hơn.`,
+        get title() { return ui('m274518ff7a'); },
+        desc: ui('md0ecce0165', { v0: plan, v1: limit }),
         type: "error"
       });
       return;
@@ -1515,8 +1517,8 @@ export default function App() {
 
     if (!isSettled) {
       showAlert(
-        "Chưa thể xóa thành viên",
-        "Chỉ có thể xóa thành viên khi nhóm đã quyết toán sòng phẳng (không còn dư nợ) hoặc đã được chốt sổ."
+        ui('m5d2f43458e'),
+        ui('m963af27a7f')
       );
       return;
     }
@@ -1569,7 +1571,7 @@ export default function App() {
     const expenseCount = (activeGroup?.expenses || []).length;
 
     if (tryOfflineMode && expenseCount >= 10) {
-      showAlert("Vượt giới hạn Chế độ xài 1 lần", "Chế độ xài 1 lần hỗ trợ tối đa 10 hóa đơn. Vui lòng Tạo tài khoản / Đăng nhập Thủ quỹ để lưu trữ vĩnh viễn và nâng cấp nhóm!");
+      showAlert(ui('m071e443846'), ui('m4403061ffa'));
       return;
     }
 
@@ -1590,7 +1592,7 @@ export default function App() {
   const handleBatchAddExpenses = async (newExpenses: Expense[]) => {
     const currentExpenses = activeGroup.expenses || [];
     if (tryOfflineMode && currentExpenses.length + newExpenses.length > 10) {
-      showAlert("Vượt giới hạn Chế độ 1 lần", "Chế độ dùng 1 lần (dùng thử) hỗ trợ tối đa 10 hóa đơn. Vui lòng Đăng nhập / Đăng ký tài khoản để sử dụng không giới hạn.");
+      showAlert(ui('m8bfb741bc5'), ui('m47d711a63c'));
       return;
     }
 
@@ -1610,7 +1612,7 @@ export default function App() {
 
   const handleDeleteExpense = async (expenseId: string) => {
     if (!isAdmin) {
-      showAlert("Quyền xóa", "Chỉ Trưởng nhóm/Thủ quỹ mới được quyền xóa khoản chi.");
+      showAlert(ui('mdf9a1edb35'), ui('m25b44f3fad'));
       return;
     }
     const expenseToDelete = (activeGroup.expenses || []).find((e) => e.id === expenseId);
@@ -1675,7 +1677,7 @@ export default function App() {
 
   const handleEditMember = async (updatedMember: Member) => {
     if (!isAdmin && viewingMemberId !== updatedMember.id) {
-      showAlert("Quyền chỉnh sửa", "Bạn chỉ có quyền tự chỉnh sửa thông tin của chính mình.");
+      showAlert(ui('m6766eff226'), ui('m2c8671fda6'));
       return;
     }
     if (tryOfflineMode) {
@@ -1687,7 +1689,7 @@ export default function App() {
         members: updatedMembers,
       };
       await updateGroupOnDbAndState(updatedGroup);
-      showAlert("Thành công", "Đã cập nhật thông tin thành công!");
+      showAlert(ui('m9a7d703709'), ui('m4c28e2a045'));
       return;
     }
     try {
@@ -1734,13 +1736,13 @@ export default function App() {
            localStorage.setItem("splitmate_custom_leader_user", JSON.stringify(updatedUser));
         }
 
-        showAlert("Thành công", "Đã cập nhật thông tin thành công và đồng bộ với tất cả các nhóm của bạn.");
+        showAlert(ui('m9a7d703709'), ui('m42d60125d8'));
       } else {
-        showAlert("Thất bại", data.error || "Không thể cập nhật.");
+        showAlert(ui('m471434ca39'), localizeError(data.error, ui('m128784033d')));
       }
     } catch (err) {
       console.error("Update bank info error:", err);
-      showAlert("Lỗi kết nối", "Vui lòng thử lại sau.");
+      showAlert(ui('mf3103ad102'), ui('m5958088d72'));
     }
   };
 
@@ -1796,7 +1798,7 @@ export default function App() {
     element.style.color = "#1e293b";
     
     const targetExpenses = Array.isArray(archiveExpenses) ? archiveExpenses : expenses;
-    const cycleTitle = (typeof archiveCycleName === "string" && archiveCycleName) || activeGroup.currentCycleName || "Kỳ Hiện Tại";
+    const cycleTitle = (typeof archiveCycleName === "string" && archiveCycleName) || activeGroup.currentCycleName || ui('m8f99d17c4b');
     
     const balances = calculateBalances(members, targetExpenses);
     const debtsData = balances
@@ -1804,7 +1806,7 @@ export default function App() {
         const mem = members.find((m) => m.id === b.memberId)?.name || b.memberId;
         return {
           name: mem,
-          status: b.netBalance > 0 ? "Nhận về" : (b.netBalance < 0 ? "Cần trả" : "Hoàn tất"),
+          status: b.netBalance > 0 ? ui('m03deb4b7a1') : (b.netBalance < 0 ? ui('me99fb4bcb0') : ui('mc66efcf181')),
           amount: Math.round(Math.abs(b.netBalance)),
         };
       })
@@ -1854,23 +1856,23 @@ export default function App() {
 
       qrHtml = `
         <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); text-align: center; padding: 20px 16px;">
-          <h2 style="color: #0f172a; font-size: 15px; font-weight: 700; margin: 0 0 14px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; text-transform: uppercase;">MÃ QR THANH TOÁN (NỘP QUỸ CHUNG)</h2>
+          <h2 style="color: #0f172a; font-size: 15px; font-weight: 700; margin: 0 0 14px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; text-transform: uppercase;">${ui('m8b79fce01d')}</h2>
           <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding-top: 4px;">
             ${qrImgUrl ? `<img src="${qrImgUrl}" alt="QR code" style="width: 180px; height: 180px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px; background: #fff;" />` : ""}
             <div style="text-align: center;">
               <p style="margin: 4px 0; color: #010101; font-size: 14px; font-weight: 700;">
-                Tài khoản nhận: <span style="color: #4338ca;">${activeGroup.fundType === "momo" ? "Ví MoMo" : (activeGroup.fundBankName || "Ngân hàng")}</span>
+                ${ui('me82031c955')} <span style="color: #4338ca;">${activeGroup.fundType === "momo" ? ui('mac3482da66') : (activeGroup.fundBankName || ui('m69ba2e4467'))}</span>
               </p>
               <p style="margin: 4px 0; color: #475569; font-size: 13px; font-weight: 600;">
-                Số tài khoản / SĐT: <strong style="color: #0f172a; font-family: monospace;">${activeGroup.fundPhone || activeGroup.bankAccount || ""}</strong>
+                ${ui('m370de03220')} <strong style="color: #0f172a; font-family: monospace;">${activeGroup.fundPhone || activeGroup.bankAccount || ""}</strong>
               </p>
               ${activeGroup.fundName || activeGroup.bankAccountName ? `
                 <p style="margin: 4px 0; color: #475569; font-size: 13px; font-weight: 600;">
-                  Tên thụ hưởng: <strong style="color: #0f172a; text-transform: uppercase;">${activeGroup.fundName || activeGroup.bankAccountName}</strong>
+                  ${ui('ma395ed9df7')} <strong style="color: #0f172a; text-transform: uppercase;">${activeGroup.fundName || activeGroup.bankAccountName}</strong>
                 </p>
               ` : ""}
               <p style="margin: 8px 0 0 0; color: #059669; font-size: 12px; font-weight: 700; background-color: #ecfdf5; padding: 4px 12px; border-radius: 9999px; display: inline-block;">
-                Quét mã QR trên để nộp tiền sòng phẳng vào Quỹ Chung
+                ${ui('m09fd513824')}
               </p>
             </div>
           </div>
@@ -1924,17 +1926,17 @@ export default function App() {
             <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); width: calc(50% - 16px); max-width: 320px; box-sizing: border-box; page-break-inside: avoid; break-inside: avoid; font-size: 13px;">
               <div style="margin-bottom: 4px;">
                 <div style="font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 2px;">
-                  <span style="color: #e11d48;">${d.debtorName}</span> ➔ <span style="color: #059669;">Quỹ Nhóm</span>
+                  <span style="color: #e11d48;">${d.debtorName}</span> ➔ <span style="color: #059669;">${ui('m3f56f2dd08')}</span>
                 </div>
                 <div style="font-size: 15px; font-weight: 900; color: #03B875; font-family: monospace;">
-                  ${d.amount.toLocaleString('vi-VN')} đ
+                  ${d.amount.toLocaleString(getLocale())} ${ui('mc5f95801df')}
                 </div>
               </div>
               <div style="display: block; text-align: center; margin: 4px 0;">
                 <img src="${base64QrUrl}" crossorigin="anonymous" alt="QR ${d.debtorName}" style="width: 140px; height: 140px; object-fit: contain; margin: 0 auto; display: block;" />
               </div>
               <div style="font-size: 11px; color: #0369a1; font-weight: 700; background-color: #f0f9ff; border: 1px solid #bae6fd; padding: 4px 8px; border-radius: 8px; width: 100%; box-sizing: border-box;">
-                ✨ Tự động điền <strong>${d.amount.toLocaleString('vi-VN')}đ</strong> khi quét
+                ${ui('mecc090e6da')} <strong>${d.amount.toLocaleString(getLocale())}${ui('mc5f95801df')}</strong> ${ui('m7d636bd63c')}
               </div>
             </div>
           `;
@@ -1952,7 +1954,7 @@ export default function App() {
             <div style="page-break-before: always; break-before: page; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
               <div style="background: #ecfdf5; padding: 12px 16px; border-bottom: 1px solid #a7f3d0; display: flex; justify-content: space-between; align-items: center;">
                 <h2 style="color: #065f46; font-size: 14px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">
-                  ⚡ MÃ QR NỘP QUỸ / TẤT TOÁN NỢ (TỰ ĐỘNG ĐIỀN SỐ TIỀN)
+                  ${ui('m649f0e2a6e')}
                 </h2>
                 <span style="font-size: 11px; background: #03B875; color: #ffffff; font-weight: 700; padding: 3px 10px; border-radius: 9999px;">
                   ${getPlanLabel(activeGroup.plan)}
@@ -1999,14 +2001,14 @@ export default function App() {
                       <span style="color: #e11d48;">${debtorName}</span> ➔ <span style="color: #059669;">${creditorName}</span>
                     </div>
                     <div style="font-size: 15px; font-weight: 900; color: #03B875; font-family: monospace;">
-                      ${amount.toLocaleString('vi-VN')} đ
+                      ${amount.toLocaleString(getLocale())} ${ui('mc5f95801df')}
                     </div>
                   </div>
                   <div style="display: block; text-align: center; margin: 4px 0;">
                     <img src="${base64QrUrl}" crossorigin="anonymous" alt="QR ${debtorName}" style="width: 140px; height: 140px; object-fit: contain; margin: 0 auto; display: block;" />
                   </div>
                   <div style="font-size: 11px; color: #0369a1; font-weight: 700; background-color: #f0f9ff; border: 1px solid #bae6fd; padding: 4px 8px; border-radius: 8px; width: 100%; box-sizing: border-box;">
-                    ✨ Tự động điền <strong>${amount.toLocaleString('vi-VN')}đ</strong> khi quét
+                    ${ui('mecc090e6da')} <strong>${amount.toLocaleString(getLocale())}${ui('mc5f95801df')}</strong> ${ui('m7d636bd63c')}
                   </div>
                 </div>
               `;
@@ -2027,7 +2029,7 @@ export default function App() {
               <div style="page-break-before: always; break-before: page; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
                 <div style="background: #ecfdf5; padding: 12px 16px; border-bottom: 1px solid #a7f3d0; display: flex; justify-content: space-between; align-items: center;">
                   <h2 style="color: #065f46; font-size: 14px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">
-                    ⚡ MÃ QR TRẢ NỢ CỤ THỂ (TỰ ĐỘNG ĐIỀN SỐ TIỀN)
+                    ${ui('me70eb39f62')}
                   </h2>
                   <span style="font-size: 11px; background: #03B875; color: #ffffff; font-weight: 700; padding: 3px 10px; border-radius: 9999px;">
                     ${getPlanLabel(activeGroup.plan)}
@@ -2059,14 +2061,14 @@ export default function App() {
       const fundTransactions = sortedExpenses.filter(exp => exp.id.startsWith("settle_"));
       
       const getMemberEmojiName = (id: string) => {
-        if (id.startsWith("g_")) return "🏦 Quỹ chung";
+        if (id.startsWith("g_")) return ui('m8a5333a376');
         const m = members.find((mem) => mem.id === id);
-        return m ? `${m.emoji || "👤"} ${m.name}` : "Thành viên";
+        return m ? `${m.emoji || "👤"} ${m.name}` : ui('mcd264c4a8f');
       };
 
       const getParticipantsString = (ids: string[]) => {
-        if (!ids || ids.length === 0) return "Cả nhóm";
-        if (ids.length === members.length) return "Cả nhóm";
+        if (!ids || ids.length === 0) return ui('m165ec1609e');
+        if (ids.length === members.length) return ui('m165ec1609e');
         return ids.map(id => {
           const m = members.find(mem => mem.id === id);
           return m ? m.name : "";
@@ -2079,22 +2081,22 @@ export default function App() {
           <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); page-break-before: auto;">
             <div style="background: #f8fafc; padding: 16px 20px; border-bottom: 1px solid #e2e8f0;">
               <h2 style="color: #0f172a; font-size: 16px; font-weight: 700; margin: 0; text-transform: uppercase;">
-                Lịch sử chi tiêu ${isVip ? "cơ bản" : "chi tiết"} (${spendingExpenses.length} hóa đơn)
+                ${ui('mda1cec8eef')} ${isVip ? ui('mae7f6ef2d8') : ui('m57fb86fc5c')} (${spendingExpenses.length} ${ui('mc7d269a19a')}
               </h2>
             </div>
             <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
               <thead>
                 <tr style="background-color: #f1f5f9; text-transform: uppercase; font-size: 10px; color: #64748b;">
-                  <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0; width: 80px;">Ngày</th>
-                  <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0;">Nội dung</th>
-                  <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0; width: 120px;">Người trả</th>
-                  ${isPremium ? `<th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0; width: 150px;">Người tham gia</th>` : ""}
-                  <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0; text-align: right; width: 100px;">Số tiền</th>
+                  <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0; width: 80px;">${ui('m368c457574')}</th>
+                  <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0;">${ui('mabdf05335d')}</th>
+                  <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0; width: 120px;">${ui('m04077a1510')}</th>
+                  ${isPremium ? `<th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0; width: 150px;">${ui('m775e03a675')}</th>` : ""}
+                  <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0; text-align: right; width: 100px;">${ui('md5261b2d21')}</th>
                 </tr>
               </thead>
               <tbody>
                 ${spendingExpenses.map((exp, i) => {
-                  const formattedDate = exp.date ? new Date(exp.date).toLocaleDateString('vi-VN') : "-";
+                  const formattedDate = exp.date ? new Date(exp.date).toLocaleDateString(getLocale()) : "-";
                   const rowBg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
                   const textColor = '#1e293b';
                   return `
@@ -2104,7 +2106,7 @@ export default function App() {
                       <td style="padding: 10px 16px; border-bottom: 1px solid #f1f5f9;">${getMemberEmojiName(exp.payerId)}</td>
                       ${isPremium ? `<td style="padding: 10px 16px; border-bottom: 1px solid #f1f5f9; font-size: 11px; color: #64748b; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${getParticipantsString(exp.participantIds)}">${getParticipantsString(exp.participantIds)}</td>` : ""}
                       <td style="padding: 10px 16px; text-align: right; border-bottom: 1px solid #f1f5f9; font-weight: 700; font-family: monospace; font-size: 13px; white-space: nowrap;">
-                        ${Math.round(exp.amount).toLocaleString('vi-VN')} đ
+                        ${Math.round(exp.amount).toLocaleString(getLocale())} ${ui('mc5f95801df')}
                       </td>
                     </tr>
                   `;
@@ -2120,20 +2122,20 @@ export default function App() {
         fundHtml = `
           <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); page-break-before: auto;">
             <div style="background: #f8fafc; padding: 16px 20px; border-bottom: 1px solid #e2e8f0;">
-              <h2 style="color: #0f172a; font-size: 16px; font-weight: 700; margin: 0; text-transform: uppercase;">Lịch sử giao dịch Quỹ Nhóm (${fundTransactions.length} giao dịch)</h2>
+              <h2 style="color: #0f172a; font-size: 16px; font-weight: 700; margin: 0; text-transform: uppercase;">${ui('m92b31113e2')}${fundTransactions.length} ${ui('m8b791a8154')}</h2>
             </div>
             <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
               <thead>
                 <tr style="background-color: #f1f5f9; text-transform: uppercase; font-size: 10px; color: #64748b;">
-                  <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0; width: 80px;">Ngày</th>
-                  <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0;">Nội dung</th>
-                  <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0; width: 120px;">Người trả</th>
-                  <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0; text-align: right; width: 100px;">Số tiền</th>
+                  <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0; width: 80px;">${ui('m368c457574')}</th>
+                  <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0;">${ui('mabdf05335d')}</th>
+                  <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0; width: 120px;">${ui('m04077a1510')}</th>
+                  <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0; text-align: right; width: 100px;">${ui('md5261b2d21')}</th>
                 </tr>
               </thead>
               <tbody>
                 ${fundTransactions.map((exp, i) => {
-                  const formattedDate = exp.date ? new Date(exp.date).toLocaleDateString('vi-VN') : "-";
+                  const formattedDate = exp.date ? new Date(exp.date).toLocaleDateString(getLocale()) : "-";
                   const rowBg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
                   const textColor = '#059669';
                   return `
@@ -2142,7 +2144,7 @@ export default function App() {
                       <td style="padding: 10px 16px; border-bottom: 1px solid #f1f5f9; font-weight: 500;">${exp.description}</td>
                       <td style="padding: 10px 16px; border-bottom: 1px solid #f1f5f9;">${getMemberEmojiName(exp.payerId)}</td>
                       <td style="padding: 10px 16px; text-align: right; border-bottom: 1px solid #f1f5f9; font-weight: 700; font-family: monospace; font-size: 13px; white-space: nowrap;">
-                        ${Math.round(exp.amount).toLocaleString('vi-VN')} đ
+                        ${Math.round(exp.amount).toLocaleString(getLocale())} ${ui('mc5f95801df')}
                       </td>
                     </tr>
                   `;
@@ -2160,18 +2162,18 @@ export default function App() {
         const expensesWithImages = spendingExpenses.filter(exp => exp.receiptImage);
         if (expensesWithImages.length > 0) {
           const imagesPromises = expensesWithImages.map(async (exp) => {
-            const formattedDate = exp.date ? new Date(exp.date).toLocaleDateString('vi-VN') : "-";
+            const formattedDate = exp.date ? new Date(exp.date).toLocaleDateString(getLocale()) : "-";
             const b64Image = await convertUrlToBase64(exp.receiptImage!);
             return `
               <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 10px; page-break-inside: avoid;">
                 <div style="border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
                   <h4 style="margin: 0 0 4px 0; color: #1e1b4b; font-size: 13px; font-weight: 700;">${exp.description}</h4>
                   <div style="font-size: 11px; color: #475569; display: flex; justify-content: space-between;">
-                    <span>Ngày: <strong>${formattedDate}</strong></span>
-                    <span>Người chi: <strong>${getMemberEmojiName(exp.payerId)}</strong></span>
+                    <span>${ui('m312fb1f0f1')} <strong>${formattedDate}</strong></span>
+                    <span>${ui('m611c27763e')} <strong>${getMemberEmojiName(exp.payerId)}</strong></span>
                   </div>
                   <div style="font-size: 12px; color: #4f46e5; font-weight: 800; margin-top: 4px; text-align: right;">
-                    Số tiền: ${Math.round(exp.amount).toLocaleString('vi-VN')} đ
+                    ${ui('m47c404e23f')} ${Math.round(exp.amount).toLocaleString(getLocale())} ${ui('mc5f95801df')}
                   </div>
                 </div>
                 <div style="flex: 1; display: flex; align-items: center; justify-content: center; background: #f8fafc; border-radius: 8px; overflow: hidden; min-height: 180px; max-height: 250px; border: 1px solid #f1f5f9;">
@@ -2185,7 +2187,7 @@ export default function App() {
             <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; margin-top: 32px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); page-break-before: always;">
               <div style="background: #4f46e5; padding: 16px 20px; border-bottom: 1px solid #e2e8f0;">
                 <h2 style="color: #ffffff; font-size: 15px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">
-                  📂 PHỤ LỤC MINH CHỨNG HÓA ĐƠN GỐC (HỘI LÀNG)
+                  ${ui('md29ed6f8cc')}
                 </h2>
               </div>
               <div style="padding: 24px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; background: #faf5ff;">
@@ -2200,10 +2202,10 @@ export default function App() {
     element.innerHTML = `
       <div style="font-family: system-ui, -apple-system, sans-serif; color: #1e293b; max-width: 750px; margin: 0 auto; background: #ffffff; padding: 10px;">
         <div style="text-align: center; margin-bottom: 24px;">
-          <h1 style="color: #0f172a; font-size: 24px; font-weight: 800; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.5px;">BÁO CÁO CHI TIÊU CHUNG</h1>
-          <p style="color: #64748b; font-size: 14px; margin: 0;">Nhóm: <strong style="color: #4338ca;">${activeGroup.name}</strong> (${cycleTitle})</p>
+          <h1 style="color: #0f172a; font-size: 24px; font-weight: 800; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.5px;">${ui('me25c1961ea')}</h1>
+          <p style="color: #64748b; font-size: 14px; margin: 0;">${ui('m0a7ebe7f71')} <strong style="color: #4338ca;">${activeGroup.name}</strong> (${cycleTitle})</p>
           <p style="margin: 4px 0 0 0; color: #4f46e5; font-size: 12px; font-weight: 700; background-color: #f5f3ff; padding: 2px 10px; border-radius: 9999px; display: inline-block;">
-            Gói dịch vụ: ${getPlanLabel(activeGroup.plan)}
+            ${ui('m02f03bc96c')} ${getPlanLabel(activeGroup.plan)}
           </p>
         </div>
         
@@ -2211,14 +2213,14 @@ export default function App() {
         
         <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); page-break-inside: avoid;">
           <div style="background: #f8fafc; padding: 16px 20px; border-bottom: 1px solid #e2e8f0;">
-            <h2 style="color: #0f172a; font-size: 16px; font-weight: 700; margin: 0; text-transform: uppercase;">Tổng Kết Công Nợ</h2>
+            <h2 style="color: #0f172a; font-size: 16px; font-weight: 700; margin: 0; text-transform: uppercase;">${ui('maff93a3d83')}</h2>
           </div>
           <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
             <thead>
               <tr style="background-color: #f1f5f9; text-transform: uppercase; font-size: 11px; color: #64748b;">
-                <th style="padding: 10px 20px; text-align: left; border-bottom: 1px solid #e2e8f0;">Thành viên</th>
-                <th style="padding: 10px 20px; text-align: left; border-bottom: 1px solid #e2e8f0;">Trạng thái</th>
-                <th style="padding: 10px 20px; text-align: right; border-bottom: 1px solid #e2e8f0;">Số tiền nợ/nhận (VND)</th>
+                <th style="padding: 10px 20px; text-align: left; border-bottom: 1px solid #e2e8f0;">${ui('mcd264c4a8f')}</th>
+                <th style="padding: 10px 20px; text-align: left; border-bottom: 1px solid #e2e8f0;">${ui('me03c1401e3')}</th>
+                <th style="padding: 10px 20px; text-align: right; border-bottom: 1px solid #e2e8f0;">${ui('mb6a0f0e198')}</th>
               </tr>
             </thead>
             <tbody>
@@ -2233,10 +2235,10 @@ export default function App() {
                     </span>
                   </td>
                   <td style="padding: 12px 20px; text-align: right; border-bottom: 1px solid #f1f5f9; font-weight: 700; font-family: monospace; font-size: 14px;">
-                    ${Math.round(d.amount).toLocaleString('vi-VN')} đ
+                    ${Math.round(d.amount).toLocaleString(getLocale())} ${ui('mc5f95801df')}
                   </td>
                 </tr>
-              `).join('') : `<tr><td colspan="3" style="padding: 24px; text-align: center; color: #94a3b8; font-style: italic;">Không có khoản nợ nào</td></tr>`}
+              `).join('') : `<tr><td colspan="3" style="padding: 24px; text-align: center; color: #94a3b8; font-style: italic;">${ui('m98517a7acf')}</td></tr>`}
             </tbody>
           </table>
         </div>
@@ -2248,7 +2250,7 @@ export default function App() {
         ${appendixHtml}
 
         <div style="margin-top: 24px; text-align: center; color: #94a3b8; font-size: 11px; border-top: 1px dashed #e2e8f0; padding-top: 16px;">
-          <p>Báo cáo được xuất tự động từ ứng dụng <strong>Splitmate</strong> vào ngày ${new Date().toLocaleDateString('vi-VN')} lúc ${new Date().toLocaleTimeString('vi-VN')}</p>
+          <p>${ui('md4831beec4')} <strong>Splitmate</strong> ${ui('m7702e99856')} ${new Date().toLocaleDateString(getLocale())} ${ui('mc2ace851a7')} ${new Date().toLocaleTimeString(getLocale())}</p>
         </div>
       </div>
     `;
@@ -2317,8 +2319,8 @@ export default function App() {
           <div style="width: 42px; height: 42px; border: 4px solid #e0e7ff; border-top-color: #4f46e5; border-radius: 50%; animation: pdfSpin 0.8s linear infinite;"></div>
           <style>@keyframes pdfSpin { to { transform: rotate(360deg); } }</style>
           <div>
-            <h3 style="margin: 0 0 6px 0; color: #0f172a; font-size: 17px; font-weight: 800;">Đang chuẩn bị file chia sẻ</h3>
-            <p style="margin: 0; color: #64748b; font-size: 13px; font-weight: 500;">Vui lòng chờ trong giây lát...</p>
+            <h3 style="margin: 0 0 6px 0; color: #0f172a; font-size: 17px; font-weight: 800;">${ui('m97125c14c4')}</h3>
+            <p style="margin: 0; color: #64748b; font-size: 13px; font-weight: 500;">${ui('m6f1d0922db')}</p>
           </div>
         </div>
       `;
@@ -2398,12 +2400,12 @@ export default function App() {
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
           navigator.share({
             files: [file],
-            title: `Báo Cáo Nhóm ${activeGroup.name}`,
-            text: "Đây là file báo cáo tổng kết chi tiêu của nhóm."
+            title: ui('m5b45c32f7d', { v0: activeGroup.name }),
+            get text() { return ui('mba53f72509'); }
           }).catch((error) => console.log('Chia sẻ bị hủy:', error));
         } else {
           // If share API is not supported
-          alert("Trình duyệt không hỗ trợ chia sẻ file trực tiếp. File sẽ được tải xuống.");
+          alert(ui('m0c8869fe4e'));
           const url = URL.createObjectURL(pdfBlob);
           const a = document.createElement("a");
           a.href = url;
@@ -2417,7 +2419,7 @@ export default function App() {
           loadingDiv.parentNode.removeChild(loadingDiv);
         }
         window.scrollTo(originalScrollX, originalScrollY);
-        alert("Đã xảy ra lỗi khi tạo file để chia sẻ.");
+        alert(ui('mf28a1810c5'));
       });
       
     } catch (error) {
@@ -2426,7 +2428,7 @@ export default function App() {
         loadingDiv.parentNode.removeChild(loadingDiv);
       }
       window.scrollTo(originalScrollX, originalScrollY);
-      alert("Đã xảy ra lỗi khi tạo file để chia sẻ.");
+      alert(ui('mf28a1810c5'));
     }
   };
 
@@ -2455,8 +2457,8 @@ export default function App() {
           <div style="width: 42px; height: 42px; border: 4px solid #e0e7ff; border-top-color: #4f46e5; border-radius: 50%; animation: pdfSpin 0.8s linear infinite;"></div>
           <style>@keyframes pdfSpin { to { transform: rotate(360deg); } }</style>
           <div>
-            <h3 style="margin: 0 0 6px 0; color: #0f172a; font-size: 17px; font-weight: 800;">Đang tạo Báo cáo PDF</h3>
-            <p style="margin: 0; color: #64748b; font-size: 13px; font-weight: 500;">Vui lòng chờ trong giây lát...</p>
+            <h3 style="margin: 0 0 6px 0; color: #0f172a; font-size: 17px; font-weight: 800;">${ui('mbbbcc98fa3')}</h3>
+            <p style="margin: 0; color: #64748b; font-size: 13px; font-weight: 500;">${ui('m6f1d0922db')}</p>
           </div>
         </div>
       `;
@@ -2536,7 +2538,7 @@ export default function App() {
           loadingDiv.parentNode.removeChild(loadingDiv);
         }
         window.scrollTo(originalScrollX, originalScrollY);
-        alert("Đã xảy ra lỗi khi xuất PDF.");
+        alert(ui('m98f07ea775'));
       });
       
     } catch (error) {
@@ -2545,7 +2547,7 @@ export default function App() {
         loadingDiv.parentNode.removeChild(loadingDiv);
       }
       window.scrollTo(originalScrollX, originalScrollY);
-      alert("Đã xảy ra lỗi khi xuất PDF.");
+      alert(ui('m98f07ea775'));
     }
   };
 
@@ -2561,7 +2563,7 @@ export default function App() {
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
           <p className="text-sm font-semibold tracking-wide text-slate-300">
-            {user ? "Đang đồng bộ dữ liệu nhóm của bạn từ đám mây..." : "Đang khởi động hệ thống chia tiền SplitMate..."}
+            {user ? ui('m140b249f4d') : ui('ma1103b4924')}
           </p>
         </div>
       </div>
@@ -2574,7 +2576,7 @@ export default function App() {
       <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans relative overflow-x-hidden pb-12">
         <FaqPage
           isAdmin={isAdmin}
-          currentUser={user ? { name: user.displayName, email: user.email } : (memberAccessCodeUser ? { name: getMember(viewingMemberId || "")?.name || "Thành viên" } : null)}
+          currentUser={user ? { name: user.displayName, email: user.email } : (memberAccessCodeUser ? { name: getMember(viewingMemberId || "")?.name || ui('mcd264c4a8f') } : null)}
           onBack={() => setShowFaqPage(false)}
         />
       </div>
@@ -2586,6 +2588,7 @@ export default function App() {
   if (!user && !memberAccessCodeUser && !tryOfflineMode) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex items-center justify-center font-sans p-0 sm:p-6 md:p-8 relative overflow-hidden selection:bg-[#03B875]/20 selection:text-[#03B875]">
+        <div className="fixed right-3 top-3 z-50"><LanguageSwitcher /></div>
         {/* Decorative background blurs */}
         <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-[#03B875]/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-[#03B875]/5 rounded-full blur-3xl pointer-events-none" />
@@ -2608,7 +2611,7 @@ export default function App() {
                     type="button"
                     onClick={() => setShowFaqPage(true)}
                     className="w-9 h-9 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-500 border border-slate-100 transition-colors cursor-pointer"
-                    title="Hỏi đáp & FAQ"
+                    title={ui('mbd36ef7eda')}
                   >
                     <HelpCircle className="w-4.5 h-4.5 text-slate-400 hover:text-[#03B875]" />
                   </button>
@@ -2621,8 +2624,7 @@ export default function App() {
                   </div>
                   <h1 className="font-black text-2xl text-[#0F172A] tracking-tight">SplitMate</h1>
                   <p className="text-[13px] text-slate-500 mt-2 max-w-[260px] leading-relaxed font-medium">
-                    Chia tiền sòng phẳng, giữ vững tình bè bạn!
-                  </p>
+                    {ui('m3f301109f3')}</p>
                 </div>
 
                 {/* Flat Minimalist Illustration */}
@@ -2661,13 +2663,12 @@ export default function App() {
                     onClick={() => setAuthScreen("auth")}
                     className="w-full bg-[#03B875] hover:bg-[#029a62] text-white text-sm font-bold py-3.5 px-4 rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-md shadow-[#03B875]/15 font-sans"
                   >
-                    🚪 Đăng nhập / Đăng ký
-                  </button>
+                    {ui('ma52c35d1b8')}</button>
 
                   {/* Divider */}
                   <div className="flex items-center gap-2 py-1">
                     <div className="flex-1 h-px bg-slate-100" />
-                    <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">HOẶC DÀNH CHO THÀNH VIÊN CHI TIÊU</span>
+                    <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">{ui('mf90c148332')}</span>
                     <div className="flex-1 h-px bg-slate-100" />
                   </div>
 
@@ -2685,14 +2686,14 @@ export default function App() {
                         required
                         maxLength={6}
                         onChange={() => setMemberCodeErrorMsg("")}
-                        placeholder="Nhập mã nhóm 6 ký tự được cấp..."
+                        placeholder={ui('m1dcbcbc16e')}
                         className="w-full bg-transparent text-xs py-3 pl-4 pr-12 text-slate-800 font-bold outline-none placeholder:text-slate-400 font-mono tracking-widest text-left"
                       />
                       <button
                         type="submit"
                         disabled={authInProg}
                         className="absolute right-1.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl bg-[#03B875] text-white flex items-center justify-center hover:bg-[#029a62] transition-all active:scale-95 cursor-pointer"
-                        title="Xác nhận vào nhóm"
+                        title={ui('m9ce40ab9c6')}
                       >
                         <ArrowRight className="w-4 h-4" />
                       </button>
@@ -2712,14 +2713,13 @@ export default function App() {
                       onClick={() => handleSetTryOffline(true)}
                       className="w-full bg-amber-50 hover:bg-amber-100/80 text-amber-800 border border-amber-200/40 text-xs font-bold py-3 px-4 rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
                     >
-                      ⚡ Chế độ xài 1 lần (Tối đa 10 hóa đơn) ➔
-                    </button>
+                      {ui('m53a6b55e63')}</button>
                   </div>
                 </div>
 
                 {/* Footer */}
                 <div className="text-center text-[10px] text-slate-400 mt-6 pt-1">
-                  <p>© 2026 SplitMate App • Bảo mật & Riêng tư</p>
+                  <p>{ui('m03c76b06d5')}</p>
                 </div>
               </motion.div>
             ) : (
@@ -2738,7 +2738,7 @@ export default function App() {
                       type="button"
                       onClick={() => setAuthScreen("welcome")}
                       className="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200/70 flex items-center justify-center text-slate-700 border border-slate-200/60 transition-colors cursor-pointer"
-                      title="Quay lại"
+                      title={ui('m8a09e03d20')}
                     >
                       <ArrowLeft className="w-5 h-5" />
                     </button>
@@ -2746,7 +2746,7 @@ export default function App() {
                       type="button"
                       onClick={() => setShowFaqPage(true)}
                       className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200/70 flex items-center justify-center text-slate-500 border border-slate-200/60 transition-colors cursor-pointer"
-                      title="Hỏi đáp & FAQ"
+                      title={ui('mbd36ef7eda')}
                     >
                       <HelpCircle className="w-5 h-5 text-slate-400" />
                     </button>
@@ -2754,8 +2754,8 @@ export default function App() {
 
                   {/* Header Title */}
                   <div className="space-y-1 mb-5">
-                    <h2 className="text-2xl sm:text-3xl font-black text-[#0F172A] tracking-tight">Bắt đầu thôi!</h2>
-                    <p className="text-sm text-slate-500 font-medium">Hãy đăng nhập hoặc tạo tài khoản Thủ quỹ.</p>
+                    <h2 className="text-2xl sm:text-3xl font-black text-[#0F172A] tracking-tight">{ui('m73b4617761')}</h2>
+                    <p className="text-sm text-slate-500 font-medium">{ui('m6a0568df43')}</p>
                   </div>
 
                   {/* Segment Control Tab Switcher */}
@@ -2772,8 +2772,7 @@ export default function App() {
                         activeAuthTab === "login" ? "text-white" : "text-slate-500 hover:text-slate-800"
                       }`}
                     >
-                      Đăng nhập
-                    </button>
+                      {ui('m1d5caf099f')}</button>
                     <button
                       type="button"
                       onClick={() => {
@@ -2784,8 +2783,7 @@ export default function App() {
                         activeAuthTab === "register" ? "text-white" : "text-slate-500 hover:text-slate-800"
                       }`}
                     >
-                      Đăng ký
-                    </button>
+                      {ui('md07fbd12f4')}</button>
                     <motion.div
                       className="absolute top-1.5 bottom-1.5 left-1.5 w-[calc(50%-6px)] bg-[#03B875] rounded-xl shadow-md shadow-[#03B875]/20"
                       animate={{
@@ -2816,8 +2814,7 @@ export default function App() {
                     {activeAuthTab === "register" && (
                       <div className="space-y-1.5">
                         <label className="text-xs font-black uppercase tracking-wider block ml-1 text-slate-500">
-                          Tên hiển thị (Thủ quỹ)
-                        </label>
+                          {ui('m55e1a43512')}</label>
                         <input
                           type="text"
                           required
@@ -2826,7 +2823,7 @@ export default function App() {
                             setAuthDisplayName(e.target.value);
                             setAuthErrorMsg("");
                           }}
-                          placeholder="Ví dụ: Minh Thủ Quỹ..."
+                          placeholder={ui('me351b11788')}
                           className="w-full h-13 bg-slate-50 border border-slate-200/80 text-sm py-3 px-4 rounded-2xl text-slate-900 outline-none focus:border-[#03B875] focus:bg-white transition-all placeholder:text-slate-400 font-semibold text-left shadow-2xs"
                         />
                       </div>
@@ -2834,8 +2831,7 @@ export default function App() {
 
                     <div className="space-y-1.5">
                       <label className="text-xs font-black uppercase tracking-wider block ml-1 text-slate-500">
-                        Địa chỉ Email
-                      </label>
+                        {ui('me87b7214ff')}</label>
                       <input
                         type="email"
                         required
@@ -2855,8 +2851,7 @@ export default function App() {
                     <div className="space-y-1.5">
                       <div className="flex justify-between items-center ml-1">
                         <label className="text-xs font-black uppercase tracking-wider block text-slate-500">
-                          Mật khẩu bảo mật
-                        </label>
+                          {ui('m9d7ce7de08')}</label>
                         {activeAuthTab === "login" && (
                           <button
                             type="button"
@@ -2867,8 +2862,7 @@ export default function App() {
                             }}
                             className="text-xs font-bold text-[#03B875] hover:text-[#029a62] transition-colors cursor-pointer"
                           >
-                            Quên mật khẩu?
-                          </button>
+                            {ui('m1630fc027a')}</button>
                         )}
                       </div>
                       <div className="relative">
@@ -2880,7 +2874,7 @@ export default function App() {
                             setAuthPassword(e.target.value);
                             setAuthErrorMsg("");
                           }}
-                          placeholder="Tối thiểu từ 4 ký tự trở lên"
+                          placeholder={ui('m8c89566f41')}
                           className="w-full h-13 bg-slate-50 border border-slate-200/80 text-sm py-3 pl-4 pr-11 rounded-2xl text-slate-900 outline-none focus:border-[#03B875] focus:bg-white transition-all placeholder:text-slate-400 font-semibold text-left shadow-2xs"
                         />
                         <button
@@ -2903,9 +2897,8 @@ export default function App() {
                         <div className="flex justify-between items-center ml-1">
                           <label className="text-xs font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
                             <KeyRound className="w-4 h-4 text-[#03B875]" />
-                            Mã xác minh OTP (6 chữ số)
-                          </label>
-                          <span className="text-[11px] text-[#03B875] font-extrabold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Đã gửi mã</span>
+                            {ui('mb9b45cdba8')}</label>
+                          <span className="text-[11px] text-[#03B875] font-extrabold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">{ui('mc18de1ca7c')}</span>
                         </div>
 
                         <div className="relative">
@@ -2918,7 +2911,7 @@ export default function App() {
                               setAuthOtpCode(e.target.value.replace(/\D/g, ""));
                               setAuthErrorMsg("");
                             }}
-                            placeholder="Nhập 6 chữ số..."
+                            placeholder={ui('mf54f4d4010')}
                             className="w-full h-13 bg-emerald-50/60 border border-emerald-300 text-center text-xl font-mono tracking-[0.4em] font-extrabold py-3 px-4 rounded-2xl text-emerald-950 outline-none focus:border-[#03B875] focus:bg-white transition-all shadow-2xs"
                           />
                         </div>
@@ -2930,7 +2923,7 @@ export default function App() {
                             onClick={handleSendOtp}
                             className="text-[#03B875] hover:text-[#029a62] disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center gap-1"
                           >
-                            {isOtpSending ? "Đang gửi lại..." : otpCooldown > 0 ? `Gửi lại mã (${otpCooldown}s)` : "Gửi lại mã OTP"}
+                            {isOtpSending ? ui('m91e16117d5') : otpCooldown > 0 ? ui('m37e0e83eb6', { v0: otpCooldown }) : ui('mee6c8c6d1b')}
                           </button>
 
                           <button
@@ -2942,8 +2935,7 @@ export default function App() {
                             }}
                             className="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                           >
-                            Đổi Email khác
-                          </button>
+                            {ui('m0c35026485')}</button>
                         </div>
                       </div>
                     )}
@@ -2970,21 +2962,20 @@ export default function App() {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                           </svg>
-                          {isOtpSending ? "Đang gửi mã OTP..." : "Đang xác thực bảo mật..."}
+                          {isOtpSending ? ui('m51a4447e11') : ui('m55f54a19e0')}
                         </>
                       ) : activeAuthTab === "register" ? (
                         !authOtpSent ? (
-                          "Nhận Mã OTP Xác Thực Email ➔"
+                          ui('mc516bc669d')
                         ) : (
-                          "Xác Nhận OTP & Hoàn Tất Đăng Ký ➔"
+                          ui('m0f649def91')
                         )
                       ) : (
-                        "Đăng Nhập Thủ Quỹ ➔"
+                        ui('mc792dcb2f8')
                       )}
                     </button>
                     <p className="text-xs text-slate-400 text-center font-medium leading-relaxed px-2">
-                      Bằng cách đăng nhập, bạn đồng ý với các điều khoản sử dụng & chính sách bảo mật của SplitMate.
-                    </p>
+                      {ui('m9717a78607')}</p>
                   </div>
                 </form>
               </motion.div>
@@ -3064,8 +3055,7 @@ export default function App() {
       <div className="hidden md:flex flex-col flex-1">
         {/* Top Notification Stripe */}
         <div className="bg-slate-900 text-slate-300 py-2 px-4 text-center text-xs border-b border-slate-800/80 font-medium font-sans mb-2.5">
-        🎯 Giải pháp tối ưu hóa chia tiền nhóm cho các chuyến du lịch, buổi ăn uống, hoạt động tập thể
-      </div>
+        {ui('m85aef29ace')}</div>
 
       {/* Cloud & Member Sync Panel/Banner */}
       {user ? (
@@ -3083,11 +3073,9 @@ export default function App() {
               <div className="text-center sm:text-left">
                 <p className="text-xs font-black flex items-center justify-center sm:justify-start gap-1 text-emerald-300 tracking-wider">
                   <Crown className="w-4 h-4 text-amber-400 shrink-0 fill-amber-400" />
-                  CHẾ ĐỘ THỦ QUỸ CLOUD (GMAIL HOẠT ĐỘNG)
-                </p>
+                  {ui('m57037d9f88')}</p>
                 <p className="text-[10.5px] text-emerald-200 mt-0.5">
-                  Thủ quỹ: <strong className="text-emerald-100">{user.displayName || user.email}</strong> • Toàn bộ thành viên và các chi phí đang tự động cập nhật thời gian thực
-                </p>
+                  {ui('m85c449f033')}<strong className="text-emerald-100">{user.displayName || user.email}</strong> {ui('mfa4393cfd0')}</p>
               </div>
             </div>
             
@@ -3097,14 +3085,12 @@ export default function App() {
                 className="bg-emerald-900/60 hover:bg-emerald-850/80 border border-emerald-800/80 hover:border-emerald-700/80 text-emerald-100 py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95 flex items-center gap-1.5"
               >
                 <KeyRound className="w-3.5 h-3.5 text-emerald-400" />
-                Đổi mật khẩu
-              </button>
+                {ui('md4e1de2330')}</button>
               <button
                 onClick={handleLogout}
                 className="bg-emerald-800 hover:bg-emerald-705 border border-emerald-700 hover:border-emerald-600 text-emerald-50 py-1.5 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
               >
-                Đăng xuất Thủ quỹ
-              </button>
+                {ui('m97a1414953')}</button>
             </div>
           </div>
         </div>
@@ -3118,12 +3104,11 @@ export default function App() {
               </div>
               <div className="text-center sm:text-left">
                 <p className="text-xs font-black text-teal-300 tracking-wider uppercase flex items-center justify-center sm:justify-start gap-1">
-                  <span>Chế độ thành viên: {getMember(viewingMemberId || "")?.name || "Thành viên"}</span>
-                  <span className="bg-teal-500/20 text-teal-300 text-[0.5625rem] font-bold py-0.5 px-1.5 border border-teal-500/30 rounded">MÃ: {memberAccessCodeUser.code}</span>
+                  <span>{ui('mdbaa3c8c0b')}{getMember(viewingMemberId || "")?.name || ui('mcd264c4a8f')}</span>
+                  <span className="bg-teal-500/20 text-teal-300 text-[0.5625rem] font-bold py-0.5 px-1.5 border border-teal-500/30 rounded">{ui('mb425fc74ba')}{memberAccessCodeUser.code}</span>
                 </p>
                 <p className="text-[10.5px] text-slate-350 mt-0.5">
-                  Nhóm hiện tại: <strong className="text-white">{activeGroup?.name || "Bất định"}</strong> • Bạn có quyền tự điền STK nhận tiền cá nhân & nộp bằng chứng chuyển khoản.
-                </p>
+                  {ui('mddb7c4ed85')}<strong className="text-white">{activeGroup?.name || ui('m4cf91fea91')}</strong> {ui('m0e27a37901')}</p>
               </div>
             </div>
             
@@ -3131,8 +3116,7 @@ export default function App() {
               onClick={handleLogout}
               className="bg-teal-900 hover:bg-teal-800 border border-teal-800 hover:border-teal-700 text-teal-100 py-1.5 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
             >
-              Rời khỏi nhóm
-            </button>
+              {ui('m2fe2f8213d')}</button>
           </div>
         </div>
       ) : (
@@ -3144,10 +3128,9 @@ export default function App() {
                 <HelpCircle className="w-4 h-4 text-amber-400" />
               </div>
               <div className="text-left">
-                <p className="text-xs font-black text-amber-500 tracking-wider uppercase">Chế độ xài 1 lần (Dữ liệu lưu tạm thời)</p>
+                <p className="text-xs font-black text-amber-500 tracking-wider uppercase">{ui('mab8f8a6cd9')}</p>
                 <p className="text-[10.5px] text-slate-355 mt-0.5">
-                  Dữ liệu đang được lưu trữ tạm thời trên trình duyệt của bạn.
-                </p>
+                  {ui('me958a841d1')}</p>
               </div>
             </div>
             
@@ -3155,8 +3138,7 @@ export default function App() {
               onClick={() => handleSetTryOffline(false)}
               className="bg-emerald-600 hover:bg-emerald-500 border border-emerald-500 hover:border-emerald-400 text-white py-1.5 px-4 rounded-xl text-xs font-black transition-all cursor-pointer shadow-xs active:scale-95 uppercase"
             >
-              Quay lại Đăng nhập
-            </button>
+              {ui('m2d7f1d6dca')}</button>
           </div>
         </div>
       )}
@@ -3175,26 +3157,26 @@ export default function App() {
                 SplitMate
               </h1>
               <p className="text-[0.6875rem] text-slate-400 mt-0.5 tracking-wide">
-                Chia Tiền Nhóm Thông Minh & Chốt Sổ Trả Nợ Tối Ưu
-              </p>
+                {ui('m01a0d3975d')}</p>
             </div>
           </div>
 
           {/* Group and Action control panel */}
           <div className="flex flex-wrap items-center gap-3">
+            <LanguageSwitcher />
             
             {groups.length > 0 && (
               <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 p-1.5 rounded-xl">
-                <span className="text-xs text-slate-500 font-bold px-1.5 hidden sm:inline">Nhóm:</span>
+                <span className="text-xs text-slate-500 font-bold px-1.5 hidden sm:inline">{ui('m0a7ebe7f71')}</span>
                 <select
-                  aria-label="Chọn nhóm hoạt động"
+                  aria-label={ui('mbbcd987ff8')}
                   value={selectedGroupId}
                   onChange={(e) => setSelectedGroupId(e.target.value)}
                   className="bg-transparent text-xs font-bold text-slate-700 focus:outline-none pr-6 pl-1 cursor-pointer"
                 >
                   {groups.map((g) => {
                     const isOwner = user && g.ownerId === user.uid;
-                    const roleText = isOwner ? "Thủ quỹ" : "Thành viên";
+                    const roleText = isOwner ? ui('m114e15a095') : ui('mcd264c4a8f');
                     return (
                       <option key={g.id} value={g.id}>
                         {g.name} [{getPlanLabel(g.plan, tryOfflineMode)}]
@@ -3209,7 +3191,7 @@ export default function App() {
                     onClick={() => {
                       window.dispatchEvent(new CustomEvent("open-group-settings"));
                     }}
-                    title="Cấu hình & Cài đặt quỹ nhóm"
+                    title={ui('mdf6812e65d')}
                     className="p-1.5 rounded-lg transition-colors hover:bg-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer"
                   >
                     <Settings className="h-4 w-4" />
@@ -3223,7 +3205,7 @@ export default function App() {
                     onClick={() => {
                       handleDeleteGroup(selectedGroupId);
                     }}
-                    title={activeIsSettled ? "Xóa nhóm này" : "Nhóm chưa sòng phẳng"}
+                    title={activeIsSettled ? ui('mae22ff302b') : ui('ma82abb6976')}
                     className={`p-1 rounded-lg transition-colors ${
                       activeIsSettled 
                         ? "cursor-pointer hover:bg-rose-50 text-slate-400 hover:text-rose-500" 
@@ -3244,7 +3226,7 @@ export default function App() {
                   className="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-xs font-bold py-2.5 px-3.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  <span>Tạo nhóm mới</span>
+                  <span>{ui('m629e3e093d')}</span>
                 </button>
               )}
 
@@ -3253,7 +3235,7 @@ export default function App() {
                   type="button"
                   onClick={() => {
                     if (!selectedGroupId) {
-                      showAlert("Thông báo", "Vui lòng chọn một nhóm trước khi nâng cấp.");
+                      showAlert(ui('m5d6af377c2'), ui('m6ecd05f5d8'));
                       return;
                     }
                     setShowUpgradeModal(true);
@@ -3261,7 +3243,7 @@ export default function App() {
                   className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-2.5 px-3.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer shadow-md shadow-amber-200"
                 >
                   <Crown className="h-3.5 w-3.5 fill-white" />
-                  <span>Nâng cấp ngay</span>
+                  <span>{ui('m58081fcdb2')}</span>
                 </button>
               )}
 
@@ -3271,7 +3253,7 @@ export default function App() {
                 className="bg-amber-50 hover:bg-amber-100 border border-amber-200/50 text-amber-700 text-xs font-bold py-2.5 px-3.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
               >
                 <HelpCircle className="h-3.5 h-3.5 shrink-0" />
-                <span>Hỏi đáp & FAQ</span>
+                <span>{ui('mbd36ef7eda')}</span>
               </button>
             </div>
 
@@ -3289,10 +3271,9 @@ export default function App() {
               <Sparkles className="w-16 h-16 text-emerald-600 animate-pulse" />
             </div>
             <div className="max-w-md space-y-2">
-              <h2 className="text-2xl font-black text-slate-800 tracking-tight">Chưa có nhóm nào được tạo</h2>
+              <h2 className="text-2xl font-black text-slate-800 tracking-tight">{ui('m0b1c654e65')}</h2>
               <p className="text-slate-500 text-sm leading-relaxed">
-                Để bắt đầu, hãy tạo nhóm đầu tiên của bạn. Ví dụ: Chuyến du lịch hè, Tiền điện nhà chung, hay Nhóm ăn nhậu cuối tuần.
-              </p>
+                {ui('m9f32f5f2c7')}</p>
             </div>
             <button 
               onClick={(e) => {
@@ -3303,7 +3284,7 @@ export default function App() {
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 px-8 rounded-2xl shadow-xl shadow-emerald-100 transition-all active:scale-95 flex items-center gap-2"
             >
               <Plus className="w-5 h-5" />
-              <span>Tạo nhóm đầu tiên của bạn</span>
+              <span>{ui('m861658c3b6')}</span>
             </button>
           </div>
         ) : (
@@ -3321,24 +3302,24 @@ export default function App() {
               {isAdmin ? <FolderLock className="w-5.5 h-5.5" /> : <UserCheck className="w-5.5 h-5.5" />}
             </div>
             <div>
-              <p className="text-[0.625rem] font-extrabold text-slate-400 uppercase tracking-widest leading-none">Chế độ người dùng</p>
+              <p className="text-[0.625rem] font-extrabold text-slate-400 uppercase tracking-widest leading-none">{ui('m7a021db493')}</p>
               <h2 className="font-extrabold text-[0.9375rem] sm:text-sm text-slate-800 mt-1.5 leading-none flex items-center gap-1.5 flex-wrap">
                 {isAdmin ? (
                   <>
-                    <span className="text-emerald-600">👑 Trưởng nhóm / Thủ quỹ</span>
-                    <span className="text-[0.5625rem] bg-emerald-55 border border-emerald-150 text-emerald-700 px-2 py-0.5 rounded-md font-extrabold uppercase">Toàn quyền</span>
+                    <span className="text-emerald-600">{ui('ma2b4195817')}</span>
+                    <span className="text-[0.5625rem] bg-emerald-55 border border-emerald-150 text-emerald-700 px-2 py-0.5 rounded-md font-extrabold uppercase">{ui('m050caa745b')}</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-teal-600 font-bold">👥 Thành viên</span>
-                    <span className="text-[0.5625rem] bg-teal-100/50 border border-teal-200 text-teal-700 px-2 py-0.5 rounded-md font-extrabold uppercase">Chỉ xem & tự quản lý STK</span>
+                    <span className="text-teal-600 font-bold">{ui('m739b06e939')}</span>
+                    <span className="text-[0.5625rem] bg-teal-100/50 border border-teal-200 text-teal-700 px-2 py-0.5 rounded-md font-extrabold uppercase">{ui('m60a298da74')}</span>
                   </>
                 )}
               </h2>
               <p className="text-[0.8125rem] sm:text-[0.6875rem] text-slate-500 mt-1.5 md:mt-1.5 leading-normal font-medium px-[10px] sm:px-0">
                 {isAdmin 
-                  ? "Bạn có toàn quyền thêm/xóa thành viên, ghi chi tiêu, chỉnh sửa quỹ chung và trực tiếp phê duyệt quyết toán." 
-                  : `Bạn đang truy cập dưới chế độ Thành viên. Có quyền tự chỉnh sửa SĐT/STK cá nhân & nộp ảnh chụp biên lai.`}
+                  ? ui('m344bf21e5e')
+                  : ui('m6d29bf6f10')}
               </p>
               {isAdmin && activeGroup && (
                 <div id="member-permission-container" className="mt-2.5 flex items-center">
@@ -3358,8 +3339,7 @@ export default function App() {
                     />
                     <div className="relative w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 shrink-0"></div>
                     <span className="ms-3 text-[0.6875rem] font-black text-slate-650 uppercase tracking-wider select-none">
-                      Cấp quyền thành viên được thêm / sửa khoản chi chung
-                    </span>
+                      {ui('mad431b2912')}</span>
                   </label>
                 </div>
               )}
@@ -3369,9 +3349,9 @@ export default function App() {
           <div className="flex items-center gap-2.5 flex-wrap pl-2 md:pl-0">
             {groups.length > 0 && !isAdmin && viewingMemberId && (
               <div className="flex items-center gap-1 bg-teal-50 border border-teal-200 py-2.5 px-4 rounded-xl mb-5 text-xs font-extrabold text-teal-800">
-                <span className="uppercase tracking-wider">Thành viên:</span>
+                <span className="uppercase tracking-wider">{ui('m6df5c75083')}</span>
                 <span className="text-xs font-black text-teal-950 pl-0.5">
-                  {members.find(m => m.id === viewingMemberId)?.name || "Thành viên"}
+                  {members.find(m => m.id === viewingMemberId)?.name || ui('mcd264c4a8f')}
                 </span>
               </div>
             )}
@@ -3388,7 +3368,7 @@ export default function App() {
                   }}
                   className="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-extrabold py-2 px-3.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
                 >
-                  <span>Chuyển sang Chế Độ Thành Viên (Xem)</span>
+                  <span>{ui('m276c74a405')}</span>
                 </button>
 
                 {user?.email === "splitmate.admin@gmail.com" && (
@@ -3398,7 +3378,7 @@ export default function App() {
                     className="bg-amber-500 hover:bg-amber-600 border border-amber-600/10 text-white text-xs font-extrabold py-2 px-3.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-sm shadow-amber-500/10"
                   >
                     <Database className="w-3.5 h-3.5" />
-                    <span>🧪 Nạp 45 Hóa Đơn Thử Nghiệm (Trip Vũng Tàu)</span>
+                    <span>{ui('m60ea8b8da6')}</span>
                   </button>
                 )}
 
@@ -3409,7 +3389,7 @@ export default function App() {
                     className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-extrabold py-2 px-3.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    <span>Xóa sạch chi tiêu</span>
+                    <span>{ui('m5c4dc7fe4f')}</span>
                   </button>
                 )}
               </div>
@@ -3422,13 +3402,13 @@ export default function App() {
                   setViewingMemberId(undefined);
                   setIsAdmin(true);
                   if (!user) {
-                    showAlert("Yêu cầu Đăng nhập", "Vui lòng đăng nhập hoặc đăng ký tài khoản Thủ quỹ tại cổng bảo mật để tiếp tục.");
+                    showAlert(ui('m93f5f406b8'), ui('md960fde80f'));
                   }
                 }}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold py-2.5 px-4 rounded-xl transition-all shadow-sm shadow-emerald-600/10 cursor-pointer flex items-center gap-1.5 mb-5"
               >
                 <FolderLock className="w-4 h-4" />
-                <span>{user ? "Trở lại Chế độ Trưởng nhóm" : "Đăng nhập Trưởng nhóm"}</span>
+                <span>{user ? ui('m47c710ea93') : ui('m139baa548d')}</span>
               </button>
             ) : null}
           </div>
@@ -3442,18 +3422,18 @@ export default function App() {
             <div className="flex justify-between items-start gap-3 relative z-10">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-emerald-100">
-                  Tổng chi tiêu cả nhóm ({activeGroup?.name || "Nhóm trống"})
+                  {ui('md228d4735f')}{activeGroup?.name || ui('m2bff612520')})
                 </span>
-                <p className="text-xs text-emerald-200/80 mt-0.5">Khởi tạo ngày: {activeGroup?.createdAt ? formatDateTime(activeGroup.createdAt) : "..."}</p>
+                <p className="text-xs text-emerald-200/80 mt-0.5">{ui('mbd84db8770')}{activeGroup?.createdAt ? formatDisplayDateTime(activeGroup.createdAt) : "..."}</p>
               </div>
               <span className={`px-2.5 py-1 ${expenses.length > 0 ? "bg-white/20 text-white border border-white/20" : "bg-white/10 text-emerald-100"} rounded-full text-[0.625rem] font-bold uppercase shrink-0`}>
-                {expenses.length > 0 ? `${expenses.length} hoạt động` : "Sẵn sàng chia"}
+                {expenses.length > 0 ? ui('mbcf74dfd25', { v0: expenses.length }) : ui('m964b4be42a')}
               </span>
             </div>
 
             <div className="my-5 flex items-baseline gap-2 relative z-10">
               <span className="text-4xl sm:text-5xl font-black text-white leading-none tracking-tight">
-                {new Intl.NumberFormat("vi-VN").format(Math.round(totals))}
+                {new Intl.NumberFormat(getLocale()).format(Math.round(totals))}
               </span>
               <span className="text-lg font-extrabold text-emerald-200">VND</span>
             </div>
@@ -3461,9 +3441,9 @@ export default function App() {
             {/* Inner Bento Stats cards */}
             <div className="grid grid-cols-2 gap-4 relative z-10">
               <div className="bg-white/10 rounded-2xl p-4 border border-white/10 transition-all hover:bg-white/15">
-                <p className="text-[0.875rem] text-emerald-100 mb-1 font-semibold whitespace-nowrap overflow-hidden text-ellipsis">Thành viên tham gia</p>
+                <p className="text-[0.875rem] text-emerald-100 mb-1 font-semibold whitespace-nowrap overflow-hidden text-ellipsis">{ui('m448ae61e1f')}</p>
                 <div className="flex flex-col gap-1.5 mt-1.5">
-                  <p className="text-lg font-black text-white leading-none">{members.length} người</p>
+                  <p className="text-lg font-black text-white leading-none">{members.length} {ui('m0021a30f3e')}</p>
                   <div className="flex -space-x-1.5 md:-space-x-2 overflow-hidden">
                     {members.slice(0, 3).map((m) => (
                       <span key={m.id} title={m.name} className="w-5 h-5 md:w-7 md:h-7 rounded-full bg-white/20 text-[0.625rem] md:text-sm flex items-center justify-center border border-white/20 shadow-xs overflow-hidden shrink-0">
@@ -3480,10 +3460,9 @@ export default function App() {
               </div>
               
               <div className="bg-white/10 rounded-2xl p-4 border border-white/10 transition-all hover:bg-white/15">
-                <p className="text-[0.875rem] text-emerald-100 mb-1 font-semibold whitespace-nowrap overflow-hidden text-ellipsis">Số hóa đơn</p>
+                <p className="text-[0.875rem] text-emerald-100 mb-1 font-semibold whitespace-nowrap overflow-hidden text-ellipsis">{ui('md4ced838e6')}</p>
                 <p className="text-lg font-black text-white">
-                  {expenses.length} hóa đơn
-                </p>
+                  {expenses.length} {ui('m139ebca73d')}</p>
               </div>
             </div>
           </div>
@@ -3492,8 +3471,8 @@ export default function App() {
           <div className="col-span-12 lg:col-span-4 bg-emerald-950 rounded-3xl p-6 text-white flex flex-col justify-between shadow-sm">
             <div>
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-sm font-bold uppercase tracking-wide text-emerald-200">Nhóm của bạn</h3>
-                <span className="text-[0.625rem] bg-white/15 px-2 py-0.5 rounded-full font-semibold">Tích cực</span>
+                <h3 className="text-sm font-bold uppercase tracking-wide text-emerald-200">{ui('m82b31c9a40')}</h3>
+                <span className="text-[0.625rem] bg-white/15 px-2 py-0.5 rounded-full font-semibold">{ui('m9c71f9e815')}</span>
               </div>
               
               <div className="space-y-1.5 max-h-[10rem] overflow-y-auto pr-1">
@@ -3530,21 +3509,20 @@ export default function App() {
                           </span>
                           {user && (
                             <span className="text-[8px] bg-white/10 px-1.5 py-0.5 rounded text-emerald-300 font-bold shrink-0">
-                              {g.ownerId === user.uid ? "Thủ quỹ" : "Thành viên"}
+                              {g.ownerId === user.uid ? ui('m114e15a095') : ui('mcd264c4a8f')}
                             </span>
                           )}
                           {tryOfflineMode && (g.id === "g1" || g.id === "g2") && (
                             <span className="shrink-0 px-1 py-0.5 rounded text-[0.5rem] font-black bg-amber-500 text-amber-950 border border-amber-500/30 uppercase tracking-widest leading-none">
-                              Nhóm mẫu
-                            </span>
+                              {ui('mb8099c9559')}</span>
                           )}
                         </div>
                         <p className="text-[0.625rem] text-emerald-200 flex justify-between items-center mt-0.5">
-                          <span>{groupMembers.length} thành viên</span>
+                          <span>{groupMembers.length} {ui('m1c9742eddd')}</span>
                           <span className={`px-1.5 py-0.2 rounded text-[0.5rem] font-bold tracking-wide ${
                             isSettled ? "bg-emerald-500/25 text-emerald-300 border border-emerald-500/20" : "bg-slate-500/25 text-slate-350 border border-white/5"
                           }`}>
-                            {isSettled ? "Sòng phẳng" : "Chưa sòng"}
+                            {isSettled ? ui('m9b39c1b164') : ui('mfe468c65f9')}
                           </span>
                         </p>
                       </div>
@@ -3562,10 +3540,10 @@ export default function App() {
                               ? "bg-rose-600 hover:bg-rose-700 shadow-rose-950/40 border-rose-500/35 cursor-pointer hover:scale-[1.03] active:scale-95" 
                               : "bg-slate-800/50 grayscale-[50%] border-white/5 opacity-80 cursor-not-allowed"
                           }`}
-                          title={isSettled ? "Xóa nhóm này" : "Nhóm chưa sòng phẳng - Không thể xóa"}
+                          title={isSettled ? ui('mae22ff302b') : ui('m5c00995361')}
                         >
                           <Trash2 className="h-3 w-3" />
-                          <span>Xóa nhóm</span>
+                          <span>{ui('ma4564eb2e2')}</span>
                         </button>
                       )}
                     </div>
@@ -3577,8 +3555,7 @@ export default function App() {
                 <div className="mt-3 bg-white/5 rounded-xl p-2.5 border border-white/10 flex items-start gap-2 animate-pulse">
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1 shrink-0" />
                   <p className="text-[0.5625rem] text-emerald-200 font-medium leading-relaxed italic">
-                    Lưu ý: Để xóa một nhóm, nhóm đó phải sòng phẳng (không còn nợ).
-                  </p>
+                    {ui('mb242a71510')}</p>
                 </div>
               )}
             </div>
@@ -3587,7 +3564,7 @@ export default function App() {
               {tryOfflineMode && activeGroup?.members.length === 1 && (
                 <div className="bg-emerald-900/60 border border-emerald-500/30 p-3 rounded-xl text-emerald-100 text-[0.625rem] leading-relaxed relative overflow-hidden">
                   <div className="absolute inset-0 bg-linear-to-r from-amber-500/10 to-transparent"></div>
-                  <strong className="text-white relative z-10 flex items-center gap-1.5 mb-1.5"><Sparkles className="w-3.5 h-3.5 text-amber-400" /> Hướng dẫn nhanh</strong>
+                  <strong className="text-white relative z-10 flex items-center gap-1.5 mb-1.5"><Sparkles className="w-3.5 h-3.5 text-amber-400" /> {ui('m9cfc80c742')}</strong>
                   <div className="relative z-10 space-y-1 mt-1">
                     <button
                       type="button"
@@ -3595,7 +3572,7 @@ export default function App() {
                       className="w-full text-left p-1.5 rounded-lg bg-white/5 hover:bg-white/15 transition-all text-emerald-100 flex items-start gap-1.5 border border-transparent hover:border-white/10 cursor-pointer text-[0.625rem]"
                     >
                       <span className="font-extrabold text-amber-400 shrink-0">1.</span>
-                      <span>Vào tab <b className="text-white underline decoration-amber-400 decoration-2 underline-offset-2">Quản lý</b> để thêm bạn bè.</span>
+                      <span>{ui('m15195523f7')}<b className="text-white underline decoration-amber-400 decoration-2 underline-offset-2">{ui('m320c0d21d7')}</b> {ui('mc9d0c6363e')}</span>
                     </button>
                     <button
                       type="button"
@@ -3603,7 +3580,7 @@ export default function App() {
                       className="w-full text-left p-1.5 rounded-lg bg-white/5 hover:bg-white/15 transition-all text-emerald-100 flex items-start gap-1.5 border border-transparent hover:border-white/10 cursor-pointer text-[0.625rem]"
                     >
                       <span className="font-extrabold text-amber-400 shrink-0">2.</span>
-                      <span>Vào tab <b className="text-white underline decoration-amber-400 decoration-2 underline-offset-2">Chi tiêu</b> để quét/nhập hóa đơn.</span>
+                      <span>{ui('m15195523f7')}<b className="text-white underline decoration-amber-400 decoration-2 underline-offset-2">{ui('m60c96376c1')}</b> {ui('me56ec7e136')}</span>
                     </button>
                     <button
                       type="button"
@@ -3611,7 +3588,7 @@ export default function App() {
                       className="w-full text-left p-1.5 rounded-lg bg-white/5 hover:bg-white/15 transition-all text-emerald-100 flex items-start gap-1.5 border border-transparent hover:border-white/10 cursor-pointer text-[0.625rem]"
                     >
                       <span className="font-extrabold text-amber-400 shrink-0">3.</span>
-                      <span>Vào tab <b className="text-white underline decoration-amber-400 decoration-2 underline-offset-2">Trả nợ</b> để kết toán & xuất báo cáo PDF.</span>
+                      <span>{ui('m15195523f7')}<b className="text-white underline decoration-amber-400 decoration-2 underline-offset-2">{ui('maa2564fd2b')}</b> {ui('mc1093d22a9')}</span>
                     </button>
                   </div>
                 </div>
@@ -3626,7 +3603,7 @@ export default function App() {
                     className="text-xs bg-white text-emerald-900 hover:bg-emerald-50 font-extrabold py-2 px-3.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    <span>Thêm nhóm mới</span>
+                    <span>{ui('m81c37bb782')}</span>
                   </button>
                 </div>
               )}
@@ -3638,7 +3615,7 @@ export default function App() {
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs">
           <div className="text-left py-1 px-2 shrink-0">
             <h2 className="text-sm font-extrabold text-slate-800 tracking-tight flex items-center gap-2 flex-wrap">
-              <span>🚀 Bảng điều khiển:</span>
+              <span>{ui('mbf4b17c2ea')}</span>
               {isEditingGroupName ? (
                 <form
                   onSubmit={(e) => {
@@ -3652,7 +3629,7 @@ export default function App() {
                     value={tempGroupName}
                     onChange={(e) => setTempGroupName(e.target.value)}
                     className="bg-slate-50 border border-emerald-500 rounded-lg text-xs font-bold text-slate-700 px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-emerald-500 w-full sm:max-w-[12.5rem]"
-                    placeholder="Tên nhóm..."
+                    placeholder={ui('med612ae6a3')}
                   />
                   <input
                     type="file"
@@ -3667,7 +3644,7 @@ export default function App() {
                   />
                   <label htmlFor="group-image-upload" className="cursor-pointer bg-slate-50 border border-emerald-500 rounded-lg text-xs font-bold text-slate-700 px-2.5 py-1.5 flex items-center gap-1.5 hover:bg-slate-100 whitespace-nowrap">
                     <Upload className="w-4 h-4 shrink-0" />
-                    <span>Chọn ảnh</span>
+                    <span>{ui('m524d805417')}</span>
                   </label>
                   {tempGroupImage && (
                     <img src={tempGroupImage} alt="Preview" className="w-8 h-8 rounded-full object-cover" />
@@ -3675,7 +3652,7 @@ export default function App() {
                   <button
                     type="submit"
                     className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
-                    title="Lưu"
+                    title={ui('ma306970e8b')}
                   >
                     <Check className="h-4 w-4" />
                   </button>
@@ -3683,7 +3660,7 @@ export default function App() {
                     type="button"
                     onClick={() => setIsEditingGroupName(false)}
                     className="p-1 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                    title="Hủy"
+                    title={ui('m34ca764caf')}
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -3700,7 +3677,7 @@ export default function App() {
                         setIsEditingGroupName(true);
                       }}
                       className="p-1 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-slate-50 transition-all cursor-pointer"
-                      title="Sửa tên nhóm"
+                      title={ui('m857b6a151f')}
                     >
                       <Edit2 className="h-3.5 w-3.5" />
                     </button>
@@ -3722,8 +3699,8 @@ export default function App() {
                 }`}
               >
                 <Activity className={`h-4 w-4 shrink-0 transition-colors ${activeTab === 'bills' ? 'text-emerald-600' : 'text-slate-400'}`} />
-                <span className="whitespace-nowrap text-xs hidden sm:inline">{t("tab_expenses")}</span>
-                <span className="whitespace-nowrap text-[0.625rem] sm:hidden truncate px-1">{t("tab_expenses_short")}</span>
+                <span className="whitespace-nowrap text-xs hidden sm:inline">{ui('meef766f84b')}</span>
+                <span className="whitespace-nowrap text-[0.625rem] sm:hidden truncate px-1">{ui('m60c96376c1')}</span>
               </button>
               <button
                 type="button"
@@ -3735,8 +3712,8 @@ export default function App() {
                 }`}
               >
                 <ArrowLeftRight className={`h-4 w-4 shrink-0 transition-colors ${activeTab === 'settle' ? 'text-emerald-600' : 'text-slate-400'}`} />
-                <span className="whitespace-nowrap text-xs hidden sm:inline">{t("tab_settle")}</span>
-                <span className="whitespace-nowrap text-[0.625rem] sm:hidden truncate px-1">{t("tab_settle_short")}</span>
+                <span className="whitespace-nowrap text-xs hidden sm:inline">{ui('mff5345d174')}</span>
+                <span className="whitespace-nowrap text-[0.625rem] sm:hidden truncate px-1">{ui('maa2564fd2b')}</span>
               </button>
               <button
                 type="button"
@@ -3748,8 +3725,8 @@ export default function App() {
                 }`}
               >
                 <FolderLock className={`h-4 w-4 shrink-0 transition-colors ${activeTab === 'participation' ? 'text-emerald-600' : 'text-slate-400'}`} />
-                <span className="whitespace-nowrap text-xs hidden sm:inline">{t("tab_participation")}</span>
-                <span className="whitespace-nowrap text-[0.625rem] sm:hidden truncate px-1">{t("tab_participation_short")}</span>
+                <span className="whitespace-nowrap text-xs hidden sm:inline">{ui('m4348d30932')}</span>
+                <span className="whitespace-nowrap text-[0.625rem] sm:hidden truncate px-1">{ui('m8cd7101975')}</span>
               </button>
             </div>
 
@@ -3758,20 +3735,20 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleShareReport}
-                  title={lang === 'vi' ? "Chia sẻ báo cáo PDF (Zalo, Messenger...)" : "Share PDF Report"}
+                  title={ui('ma0a64ae243')}
                   className="p-2.5 border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 flex-1 min-w-[4.375rem] sm:flex-none"
                 >
                   <Share2 className="h-4 w-4 shrink-0" />
-                  <span className="text-[0.625rem] sm:text-xs font-bold whitespace-nowrap">{t("share_report")}</span>
+                  <span className="text-[0.625rem] sm:text-xs font-bold whitespace-nowrap">{ui('m1cb9508032')}</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleExportPDF}
-                  title={lang === 'vi' ? "Tải báo cáo PDF" : "Download PDF Report"}
+                  title={ui('mad88ac010d')}
                   className="p-2.5 border border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 flex-1 min-w-[4.375rem] sm:flex-none"
                 >
                   <Download className="h-4 w-4 shrink-0" />
-                  <span className="text-[0.625rem] sm:text-xs font-bold whitespace-nowrap">{t("export_pdf")}</span>
+                  <span className="text-[0.625rem] sm:text-xs font-bold whitespace-nowrap">{ui('mafd8cd46a2')}</span>
                 </button>
               </div>
             )}
@@ -3821,11 +3798,11 @@ export default function App() {
                       <FolderLock className="h-6 w-6" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-800 text-sm">Chế độ Xem Biên Lai</h4>
+                      <h4 className="font-bold text-slate-800 text-sm">{ui('mf2ab20ef97')}</h4>
                       <p className="text-xs text-slate-500 mt-1 max-w-sm leading-normal">
                         {(!isAdmin && activeGroup?.allowMemberAddExpense === false) 
-                          ? "Trưởng nhóm / Thủ quỹ đã tắt quyền tự do thêm mới / sửa / xóa các khoản chi chung dành cho các thành viên."
-                          : "Để thêm khoản chi chung, xin vui lòng Đăng nhập Trưởng nhóm hoặc chọn đúng Thành viên có quyền."}
+                          ? ui('m130e8544b6')
+                          : ui('m4e2c078be3')}
                       </p>
                     </div>
                   </div>
@@ -3855,8 +3832,8 @@ export default function App() {
                   members={members}
                   onDeleteExpense={(expenseId) => {
                     askConfirm(
-                      "Xác nhận xóa",
-                      "Bạn có chắc chắn muốn xóa khoản chi này không?",
+                      ui('m386f8ff3a8'),
+                      ui('m63e9db9057'),
                       () => handleDeleteExpense(expenseId)
                     );
                   }}
@@ -3920,13 +3897,13 @@ export default function App() {
                           const data = await res.json();
                           if (res.ok) {
                             setGroups([data.group]);
-                            showAlert("Đã gửi minh chứng", "Minh chứng chuyển khoản của bạn đã được gửi thành công!");
+                            showAlert(ui('m18cf9cb114'), ui('mf9744a8db2'));
                           } else {
-                            showAlert("Gửi thất bại", data.error || "Không thể nộp minh chứng.");
+                            showAlert(ui('m4ce781318e'), localizeError(data.error, ui('m7ef6a3151f')));
                           }
                         } catch (err) {
                           console.error(err);
-                          showAlert("Lỗi hệ thống", "Có lỗi xảy ra khi nộp minh chứng chuyển khoản.");
+                          showAlert(ui('mb3af2fa4d2'), ui('m73e0ba0fc4'));
                         }
                       } else {
                         setGroups((prev) =>
@@ -3941,7 +3918,6 @@ export default function App() {
                     expenses={expenses}
                     members={members}
                     onDeleteExpense={handleDeleteExpense}
-                    currency={activeGroup?.currency || "VND"}
                   />
                 )}
               </div>
@@ -3953,7 +3929,6 @@ export default function App() {
                     members={members}
                     expenses={expenses}
                     debtOffsets={activeGroup?.debtOffsets}
-                    currency={activeGroup?.currency || "VND"}
                   />
                 </div>
               )}
@@ -4121,16 +4096,15 @@ export default function App() {
               
               <div className="relative z-10 space-y-1">
                 <p className="text-[10px] font-black tracking-widest text-emerald-100/85 uppercase">
-                  SỐ DƯ RÒNG CỦA BẠN
-                </p>
+                  {ui('mfae1bf601f')}</p>
                 <h2 className="text-3xl font-black tracking-tight font-sans">
-                  {netBalance >= 0 ? "+" : "-"} {new Intl.NumberFormat("vi-VN").format(Math.round(Math.abs(netBalance)))} <span className="text-sm font-bold">đ</span>
+                  {netBalance >= 0 ? "+" : "-"} {new Intl.NumberFormat(getLocale()).format(Math.round(Math.abs(netBalance)))} <span className="text-sm font-bold">{ui('mc5f95801df')}</span>
                 </h2>
                 
                 {/* Dynamic Badge */}
                 <div className="pt-1">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white shadow-3xs">
-                    {netBalance > 1000 ? "👑 Bạn là đại gia bao nuôi cả nhóm!" : netBalance < -1000 ? "Hãy tích cực đóng nợ nha 💸" : "Số dư cân bằng sòng phẳng 🌱"}
+                    {netBalance > 1000 ? ui('mdb428f6e62') : netBalance < -1000 ? ui('m465aeeba7a') : ui('m5ef9edcb19')}
                   </span>
                 </div>
               </div>
@@ -4139,18 +4113,15 @@ export default function App() {
               <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/10 relative z-10">
                 <div className="bg-white/15 backdrop-blur-md border border-white/25 p-3.5 rounded-2xl text-left transition-all duration-200 hover:bg-white/20 shadow-sm shadow-black/5">
                   <p className="text-[9px] font-black text-emerald-100 uppercase tracking-wider flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-[#4ADE80] rounded-full animate-pulse inline-block" /> Được nhận
-                  </p>
+                    <span className="w-1.5 h-1.5 bg-[#4ADE80] rounded-full animate-pulse inline-block" /> {ui('m31c971e3f8')}</p>
                   <p className="text-base font-black mt-1 text-white tracking-tight">
-                    {new Intl.NumberFormat("vi-VN").format(Math.round(totalOwedToMe))}đ
-                  </p>
+                    {new Intl.NumberFormat(getLocale()).format(Math.round(totalOwedToMe))}{ui('mc5f95801df')}</p>
                 </div>
                 <div className="bg-white/15 backdrop-blur-md border border-white/25 p-3.5 rounded-2xl text-left transition-all duration-200 hover:bg-white/20 shadow-sm shadow-black/5">
                   <p className="text-[9px] font-black text-emerald-100 uppercase tracking-wider flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-[#38BDF8] rounded-full animate-pulse inline-block" /> Hóa đơn tham gia
-                  </p>
+                    <span className="w-1.5 h-1.5 bg-[#38BDF8] rounded-full animate-pulse inline-block" /> {ui('mff26ad5ec4')}</p>
                   <p className="text-base font-black mt-1 text-white tracking-tight">
-                    {totalInvolvedExpenses} <span className="text-xs font-bold text-emerald-100/95">bill</span>
+                    {totalInvolvedExpenses} <span className="text-xs font-bold text-emerald-100/95">{ui('mc692d6a105')}</span>
                   </p>
                 </div>
               </div>
@@ -4163,7 +4134,7 @@ export default function App() {
                 <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
                 <input
                   type="text"
-                  placeholder="Tìm kiếm nhóm chi tiêu..."
+                  placeholder={ui('mbbfda535ae')}
                   value={groupSearchQuery}
                   onChange={(e) => setGroupSearchQuery(e.target.value)}
                   className="w-full bg-transparent text-xs font-semibold text-slate-700 placeholder-slate-400 outline-none border-none p-0 focus:ring-0"
@@ -4181,9 +4152,9 @@ export default function App() {
               {/* Pill Filters */}
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
                 {[
-                  { key: "all", label: "Tất cả" },
-                  { key: "general", label: "Chi tiêu chung" },
-                  { key: "travel", label: "Du lịch" }
+                  { key: "all", get label() { return ui('mf7a578dcbd'); } },
+                  { key: "general", get label() { return ui('m2a3b749188'); } },
+                  { key: "travel", get label() { return ui('m2a3d7fdd7e'); } }
                 ].map((filter) => {
                   const isSelected = groupFilter === filter.key;
                   return (
@@ -4211,12 +4182,10 @@ export default function App() {
                 </div>
                 <div className="space-y-1 max-w-sm mx-auto">
                   <span className="inline-block px-3 py-0.5 rounded-full text-[10px] font-black bg-[#03B875] text-white uppercase tracking-wider mb-1 shadow-2xs">
-                    👉 BƯỚC 1: TẠO NHÓM CỦA BẠN
-                  </span>
-                  <h4 className="font-extrabold text-[#0F172A] text-xs sm:text-sm">Tạo nhóm đầu tiên để bắt đầu!</h4>
+                    {ui('m6843c3c915')}</span>
+                  <h4 className="font-extrabold text-[#0F172A] text-xs sm:text-sm">{ui('m148bea7cc3')}</h4>
                   <p className="text-[11px] text-slate-600 leading-relaxed">
-                    Hãy tạo nhóm riêng cho chuyến đi, tiệc tùng hoặc tập thể của bạn để quản lý chi tiêu sòng phẳng.
-                  </p>
+                    {ui('mf18a2baf66')}</p>
                 </div>
                 <div className="pt-1">
                   <button
@@ -4225,7 +4194,7 @@ export default function App() {
                     className="inline-flex items-center gap-1.5 bg-[#03B875] hover:bg-[#02935d] text-white font-extrabold text-xs px-5 py-2.5 rounded-xl transition-all shadow-md shadow-[#03B875]/25 active:scale-95 cursor-pointer uppercase tracking-wider"
                   >
                     <Plus className="w-4 h-4 text-white shrink-0" />
-                    <span>Bấm Tạo Nhóm Ngay</span>
+                    <span>{ui('ma4fdbfe38c')}</span>
                   </button>
                 </div>
               </div>
@@ -4236,15 +4205,14 @@ export default function App() {
               <div className="flex justify-between items-center mb-1">
                 <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                   <Users className="w-4 h-4 text-[#00B276]" />
-                  Nhóm của bạn ({groups.length})
+                  {ui('m73875c30a5')}{groups.length})
                 </span>
               </div>
 
               <div className="space-y-3">
                 {groups.length === 0 ? (
                   <div className="p-8 text-center bg-white rounded-2xl text-slate-400 text-xs shadow-xs border border-slate-100">
-                    Chưa có nhóm nào được tạo.
-                  </div>
+                    {ui('m698dad3919')}</div>
                 ) : (() => {
                   // Filter groups
                   const filteredGroups = groups.filter((g) => {
@@ -4261,8 +4229,7 @@ export default function App() {
                   if (filteredGroups.length === 0) {
                     return (
                       <div className="p-8 text-center bg-white rounded-2xl text-slate-400 text-xs shadow-xs border border-slate-100">
-                        Không tìm thấy nhóm phù hợp với từ khóa và bộ lọc.
-                      </div>
+                        {ui('m92b7ef34e6')}</div>
                     );
                   }
 
@@ -4300,23 +4267,23 @@ export default function App() {
                             {netVal > 0.1 ? (
                               <div>
                                 <p className="text-lg font-black text-[#03B875] tracking-tight">
-                                  +{new Intl.NumberFormat("vi-VN").format(Math.round(netVal))} <span className="text-xs font-bold">đ</span>
+                                  +{new Intl.NumberFormat(getLocale()).format(Math.round(netVal))} <span className="text-xs font-bold">{ui('mc5f95801df')}</span>
                                 </p>
-                                <p className="text-[10px] text-[#03B875] font-extrabold tracking-wide uppercase mt-0.5">được nhận</p>
+                                <p className="text-[10px] text-[#03B875] font-extrabold tracking-wide uppercase mt-0.5">{ui('m3cae78dc04')}</p>
                               </div>
                             ) : netVal < -0.1 ? (
                               <div>
                                 <p className="text-lg font-black text-rose-500 tracking-tight">
-                                  -{new Intl.NumberFormat("vi-VN").format(Math.round(Math.abs(netVal)))} <span className="text-xs font-bold">đ</span>
+                                  -{new Intl.NumberFormat(getLocale()).format(Math.round(Math.abs(netVal)))} <span className="text-xs font-bold">{ui('mc5f95801df')}</span>
                                 </p>
-                                <p className="text-[10px] text-rose-400 font-extrabold tracking-wide uppercase mt-0.5">cần đóng</p>
+                                <p className="text-[10px] text-rose-400 font-extrabold tracking-wide uppercase mt-0.5">{ui('mf9b4b13fb2')}</p>
                               </div>
                             ) : (
                               <div>
                                 <p className="text-lg font-black text-slate-400 tracking-tight">
-                                  0 <span className="text-xs font-bold">đ</span>
+                                  0 <span className="text-xs font-bold">{ui('mc5f95801df')}</span>
                                 </p>
-                                <p className="text-[10px] text-slate-400 font-extrabold tracking-wide uppercase mt-0.5">hòa gốc</p>
+                                <p className="text-[10px] text-slate-400 font-extrabold tracking-wide uppercase mt-0.5">{ui('m6df583b4a8')}</p>
                               </div>
                             )}
                           </div>
@@ -4396,30 +4363,24 @@ export default function App() {
                             {/* Plan Badge */}
                             {g.plan === "TRY_OFFLINE" || (tryOfflineMode && g.id === selectedGroupId) ? (
                               <span className="inline-flex items-center gap-0.5 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-amber-50 text-amber-800 border border-amber-200 shadow-3xs">
-                                ⚡ Xài 1 lần
-                              </span>
+                                {ui('maf62b2f09d')}</span>
                             ) : (g.plan === "HOI_LANG" || g.plan === "PREMIUM") ? (
                               <span className="inline-flex items-center gap-0.5 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-[#FFFDF0] text-amber-600 border border-amber-100 shadow-3xs">
-                                👑 Gói Hội Làng
-                              </span>
+                                {ui('m12a40b0f8f')}</span>
                             ) : (g.plan === "BE_BAN" || g.plan === "VIP") ? (
                               <span className="inline-flex items-center gap-0.5 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-[#F0F9FF] text-sky-600 border border-sky-100 shadow-3xs">
-                                ⭐ Gói Bè Bạn
-                              </span>
+                                {ui('m8cb1f3d1e3')}</span>
                             ) : g.plan === "DU_HI_30" ? (
                               <span className="inline-flex items-center gap-0.5 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-blue-50 text-blue-600 border border-blue-100 shadow-3xs">
-                                🚗 Gói Du Hí
-                              </span>
+                                {ui('m0851d81e2b')}</span>
                             ) : (
                               <span className="inline-flex items-center gap-0.5 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-slate-50 text-slate-500 border border-slate-100 shadow-3xs">
-                                🌱 Gói Free
-                              </span>
+                                {ui('macc8f1ca0f')}</span>
                             )}
 
                             {/* Member count Badge */}
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-slate-50 text-slate-500 border border-slate-100 shadow-3xs">
-                              👥 {(g.members || []).length} thành viên
-                            </span>
+                              👥 {(g.members || []).length} {ui('m1c9742eddd')}</span>
                           </div>
                         </div>
                       </div>
@@ -4435,7 +4396,7 @@ export default function App() {
               whileTap={{ scale: 0.95 }}
               onClick={handleRequestCreateGroup}
               className="fixed bottom-24 right-4 w-14 h-14 rounded-full bg-[#00B276] hover:bg-[#009A65] text-white flex items-center justify-center shadow-[0_8px_25px_rgba(0,178,118,0.35)] cursor-pointer z-40"
-              title="Tạo nhóm mới"
+              title={ui('m629e3e093d')}
             >
               <Plus className="w-7 h-7" />
             </motion.button>
@@ -4450,7 +4411,7 @@ export default function App() {
                   <button onClick={() => setActiveTab("home")} className="text-white p-1">
                     <ArrowLeftRight className="h-5 w-5 min-[390px]:h-6 min-[390px]:w-6 rotate-180" />
                   </button>
-                  <span className="font-extrabold text-sm min-[390px]:text-base tracking-tight">Chi tiết chi tiêu</span>
+                  <span className="font-extrabold text-sm min-[390px]:text-base tracking-tight">{ui('m7b341c8b1b')}</span>
                   <div className="w-5 h-5 min-[390px]:w-6 min-[390px]:h-6" />
                 </div>
                 
@@ -4477,8 +4438,8 @@ export default function App() {
                     members={members}
                     onDeleteExpense={(expenseId) => {
                       askConfirm(
-                        "Xác nhận xóa",
-                        "Bạn có chắc chắn muốn xóa khoản chi này không?",
+                        ui('m386f8ff3a8'),
+                        ui('m63e9db9057'),
                         () => handleDeleteExpense(expenseId)
                       );
                     }}
@@ -4518,10 +4479,9 @@ export default function App() {
                     }}
                     className="text-emerald-100 font-bold text-xs min-[390px]:text-sm"
                   >
-                    Hủy
-                  </button>
+                    {ui('m34ca764caf')}</button>
                   <span className="font-extrabold text-sm min-[390px]:text-base tracking-tight uppercase">
-                    {addExpenseSubTab === "scan" ? "Quét hóa đơn bằng AI" : (editingExpense ? "Cập nhật chi phí" : "Thêm chi phí mới")}
+                    {addExpenseSubTab === "scan" ? ui('m2dddfe9b86') : (editingExpense ? ui('mf7a7a57e07') : ui('m44cb0ef735'))}
                   </span>
                   <div className="w-5" />
                 </div>
@@ -4536,10 +4496,9 @@ export default function App() {
                             <Info className="h-3.5 w-3.5" />
                           </div>
                           <div className="space-y-0.5">
-                            <h4 className="text-[11px] font-extrabold text-emerald-950">Chế độ xài 1 lần (Dùng thử)</h4>
+                            <h4 className="text-[11px] font-extrabold text-emerald-950">{ui('m7848b06d8f')}</h4>
                             <p className="text-[10px] text-emerald-700 leading-normal">
-                              Hệ thống hỗ trợ lưu tối đa <strong>10 hóa đơn</strong>. Hiện tại nhóm của bạn đã có <strong>{allExpenses.length}/10</strong> hóa đơn.
-                            </p>
+                              {ui('m13251b536e')}<strong>{ui('m22dab9c958')}</strong>{ui('mec6d75d769')}<strong>{allExpenses.length}/10</strong> {ui('m3884bd621c')}</p>
                           </div>
                         </div>
                       ) : allExpenses.length === 9 ? (
@@ -4548,10 +4507,9 @@ export default function App() {
                             <AlertCircle className="h-3.5 w-3.5" />
                           </div>
                           <div className="space-y-0.5">
-                            <h4 className="text-[11px] font-extrabold text-amber-950">⚠️ Sắp đạt giới hạn 10 hóa đơn!</h4>
+                            <h4 className="text-[11px] font-extrabold text-amber-950">{ui('mae9cbad6bf')}</h4>
                             <p className="text-[10px] text-amber-800 leading-normal font-medium">
-                              Bạn đã thêm <strong>9/10</strong> hóa đơn. Bạn <strong>chỉ còn có thể thêm đúng 1 hóa đơn nữa thôi</strong> ở chế độ xài 1 lần này!
-                            </p>
+                              {ui('m9b7c7ea806')}<strong>9/10</strong> {ui('m69508c91ca')}<strong>{ui('m32ae7c102f')}</strong> {ui('m2931b95605')}</p>
                           </div>
                         </div>
                       ) : (
@@ -4560,10 +4518,9 @@ export default function App() {
                             <AlertTriangle className="h-3.5 w-3.5" />
                           </div>
                           <div className="space-y-0.5">
-                            <h4 className="text-[11px] font-extrabold text-rose-950">🚫 Đã đạt giới hạn tối đa 10 hóa đơn!</h4>
+                            <h4 className="text-[11px] font-extrabold text-rose-950">{ui('mb1d09989ac')}</h4>
                             <p className="text-[10px] text-rose-800 leading-normal font-semibold">
-                              Bạn đã đạt giới hạn <strong>10/10</strong> hóa đơn ở chế độ xài 1 lần. Vui lòng đăng nhập hoặc đăng ký tài khoản Trưởng nhóm để sử dụng không giới hạn (miễn phí).
-                            </p>
+                              {ui('m66976f9eeb')}<strong>10/10</strong> {ui('m09a7e48150')}</p>
                           </div>
                         </div>
                       )}
@@ -4589,8 +4546,7 @@ export default function App() {
                         <div className="absolute top-4 left-0 right-0 flex flex-col items-center justify-center space-y-1.5 z-20 pointer-events-none px-4 text-center">
                           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-600/90 text-white text-[10.5px] font-black uppercase tracking-wider backdrop-blur-md shadow-md border border-emerald-400/20">
                             <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
-                            QUÉT CHỮ & QR ĐA NĂNG ✨
-                          </span>
+                            {ui('m548191e4e8')}</span>
                           {/* <h3 className="text-white font-extrabold text-sm drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] tracking-tight">
                             Bóc tách hóa đơn AI hoặc Quét mã VietQR 1-Chạm
                           </h3> */}
@@ -4613,8 +4569,7 @@ export default function App() {
                       {/* Tip message */}
                       <div className="p-2 bg-slate-100 rounded-2xl w-full border border-slate-200/50 shrink-0 mt-2">
                         <span className="text-[9px] min-[375px]:text-[10px] text-slate-500 leading-normal block text-center font-medium">
-                          💡 <strong>Mẹo nhỏ:</strong> Để đạt hiệu năng bóc tách tốt nhất, hãy giữ máy ảnh vuông góc, lấy nét rõ chữ và đủ ánh sáng nhé!
-                        </span>
+                          💡 <strong>{ui('m1ac4f1856b')}</strong> {ui('mb5fb36984d')}</span>
                       </div>
                     </div>
                   ) : (
@@ -4687,31 +4642,31 @@ export default function App() {
                     <button onClick={() => setActiveTab("home")} className="text-white p-1">
                       <ArrowLeftRight className="h-5 w-5 min-[390px]:h-6 min-[390px]:w-6 rotate-180" />
                     </button>
-                    <span className="font-extrabold text-sm min-[390px]:text-base tracking-tight">Trả nợ & Quyết toán</span>
+                    <span className="font-extrabold text-sm min-[390px]:text-base tracking-tight">{ui('mff5345d174')}</span>
                     <div className="w-5 h-5 min-[390px]:w-6 min-[390px]:h-6" />
                   </div>
 
                   <div className="px-3.5 min-[390px]:px-4.5 pt-4 min-[390px]:pt-5 pb-4 flex-1 space-y-4 min-[390px]:space-y-5">
                     {/* Settle view top overview cards */}
                     <div className="bg-white border border-slate-200/60 p-4.5 min-[390px]:p-5 rounded-3xl shadow-sm text-slate-800">
-                      <p className="text-[0.625rem] min-[390px]:text-xs font-black text-slate-400 uppercase tracking-widest text-center">TỔNG QUAN PHÂN BỔ</p>
+                      <p className="text-[0.625rem] min-[390px]:text-xs font-black text-slate-400 uppercase tracking-widest text-center">{ui('m5461fbc9f7')}</p>
                       <div className="grid grid-cols-2 gap-4 mt-3">
                         <div className="text-center border-r border-slate-100 pr-1">
-                          <p className="text-[0.625rem] min-[390px]:text-xs font-bold text-slate-400">Tổng chi tiêu</p>
-                          <p className="text-base min-[390px]:text-lg font-black text-slate-800 mt-1">{new Intl.NumberFormat("vi-VN").format(Math.round(totals))}đ</p>
+                          <p className="text-[0.625rem] min-[390px]:text-xs font-bold text-slate-400">{ui('m7817b94196')}</p>
+                          <p className="text-base min-[390px]:text-lg font-black text-slate-800 mt-1">{new Intl.NumberFormat(getLocale()).format(Math.round(totals))}{ui('mc5f95801df')}</p>
                         </div>
                         <div className="text-center pl-1">
-                          <p className="text-[0.625rem] min-[390px]:text-xs font-bold text-slate-400">Bình quân/Người</p>
+                          <p className="text-[0.625rem] min-[390px]:text-xs font-bold text-slate-400">{ui('ma4be956e19')}</p>
                           <p className="text-base min-[390px]:text-lg font-black text-emerald-600 mt-1">
-                            {members.length > 0 ? `${new Intl.NumberFormat("vi-VN").format(Math.round(totals / members.length))}đ` : "0đ"}
+                            {members.length > 0 ? ui('mf42237c13c', { v0: new Intl.NumberFormat(getLocale()).format(Math.round(totals / members.length)) }) : ui('m4ccb02fc39')}
                           </p>
                         </div>
                       </div>
 
                       {/* Display current fund balance here */}
                       <div className="mt-4 flex items-center justify-center bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 max-w-xs mx-auto">
-                        <span className="text-xs font-bold text-slate-500">Dư quỹ hiện tại:</span>
-                        <span className="text-sm font-black text-emerald-600 ml-1.5">{new Intl.NumberFormat("vi-VN").format(Math.round(actualFundBalance))} đ</span>
+                        <span className="text-xs font-bold text-slate-500">{ui('m047b1738dd')}</span>
+                        <span className="text-sm font-black text-emerald-600 ml-1.5">{new Intl.NumberFormat(getLocale()).format(Math.round(actualFundBalance))} {ui('mc5f95801df')}</span>
                       </div>
 
                       {/* Fun Awards on Mobile */}
@@ -4724,10 +4679,10 @@ export default function App() {
                               </div>
                               <div className="text-xs">
                                 <p className="text-amber-850 font-extrabold flex items-center gap-1">
-                                  Đại gia chi tiêu {topSpender.emoji}
+                                  {ui('m85ed68d8dc')}{topSpender.emoji}
                                 </p>
                                 <p className="text-slate-600 text-[0.6875rem] leading-tight mt-0.5">
-                                  <span className="font-bold text-slate-800">{topSpender.name}</span> chi nhiều nhất: <span className="font-bold text-amber-700">{new Intl.NumberFormat("vi-VN").format(Math.round(settleBalances.find(b => b.memberId === topSpender.id)?.paid || 0))}đ</span>
+                                  <span className="font-bold text-slate-800">{topSpender.name}</span> {ui('m7818aebf9a')}<span className="font-bold text-amber-700">{new Intl.NumberFormat(getLocale()).format(Math.round(settleBalances.find(b => b.memberId === topSpender.id)?.paid || 0))}{ui('mc5f95801df')}</span>
                                 </p>
                               </div>
                             </div>
@@ -4740,10 +4695,10 @@ export default function App() {
                               </div>
                               <div className="text-xs">
                                 <p className="text-rose-800 font-extrabold flex items-center gap-1">
-                                  Chơi nhiệt huyết {activeComer.emoji}
+                                  {ui('m92c970af11')}{activeComer.emoji}
                                 </p>
                                 <p className="text-slate-600 text-[0.6875rem] leading-tight mt-0.5">
-                                  <span className="font-bold text-slate-800">{activeComer.name}</span> dùng thực tế: <span className="font-bold text-rose-700">{new Intl.NumberFormat("vi-VN").format(Math.round(settleBalances.find(b => b.memberId === activeComer.id)?.share || 0))}đ</span>
+                                  <span className="font-bold text-slate-800">{activeComer.name}</span> {ui('m2e9089be1e')}<span className="font-bold text-rose-700">{new Intl.NumberFormat(getLocale()).format(Math.round(settleBalances.find(b => b.memberId === activeComer.id)?.share || 0))}{ui('mc5f95801df')}</span>
                                 </p>
                               </div>
                             </div>
@@ -4760,7 +4715,7 @@ export default function App() {
                             className="w-full p-3.5 hover:bg-[#02965f] text-white rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm font-black text-xs uppercase tracking-wide cursor-pointer active:scale-95"
                           >
                             <FileText className="h-4 w-4 shrink-0" />
-                            <span>Xuất Báo Cáo PDF</span>
+                            <span>{ui('m41bb915513')}</span>
                           </button>
                         </div>
                         
@@ -4811,13 +4766,13 @@ export default function App() {
                               const data = await res.json();
                               if (res.ok) {
                                 setGroups([data.group]);
-                                showAlert("Đã gửi minh chứng", "Minh chứng chuyển khoản của bạn đã được gửi thành công!");
+                                showAlert(ui('m18cf9cb114'), ui('mf9744a8db2'));
                               } else {
-                                showAlert("Gửi thất bại", data.error || "Không thể nộp minh chứng.");
+                                showAlert(ui('m4ce781318e'), localizeError(data.error, ui('m7ef6a3151f')));
                               }
                             } catch (err) {
                               console.error(err);
-                              showAlert("Lỗi hệ thống", "Có lỗi xảy ra khi nộp minh chứng chuyển khoản.");
+                              showAlert(ui('mb3af2fa4d2'), ui('m73e0ba0fc4'));
                             }
                           } else {
                             setGroups((prev) =>
@@ -4834,7 +4789,6 @@ export default function App() {
                         expenses={expenses}
                         members={members}
                         onDeleteExpense={handleDeleteExpense}
-                        currency={activeGroup?.currency || "VND"}
                       />
                     )}
 
@@ -4881,7 +4835,7 @@ export default function App() {
                     }`}
                   >
                     <Compass className={`h-5 w-5 max-[375px]:h-4.5 max-[375px]:w-4.5 min-[390px]:h-6 min-[390px]:w-6 ${activeTab === "home" ? "text-emerald-600 stroke-[2.5px]" : "text-slate-400"}`} />
-                    <span className="text-[0.625rem] max-[375px]:text-[9px] min-[390px]:text-xs font-bold">{t("tab_overview")}</span>
+                    <span className="text-[0.625rem] max-[375px]:text-[9px] min-[390px]:text-xs font-bold">{ui('m286a38e3d5')}</span>
                   </button>
 
                   <button
@@ -4894,8 +4848,7 @@ export default function App() {
                   >
                     <Activity className={`h-5 w-5 max-[375px]:h-4.5 max-[375px]:w-4.5 min-[390px]:h-6 min-[390px]:w-6 ${activeTab === "bills" ? "text-emerald-600 stroke-[2.5px]" : "text-slate-400"}`} />
                     <span className="text-[0.625rem] max-[375px]:text-[9px] min-[390px]:text-xs font-bold flex items-center gap-1">
-                      {t("tab_expenses_short")}
-                      {currentStep === 2 && (
+                      {ui('m60c96376c1')}{currentStep === 2 && (
                         <span className="relative flex h-2 w-2 shrink-0">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                           <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
@@ -4925,7 +4878,7 @@ export default function App() {
                         currentStep === 2
                           ? "text-amber-700 bg-amber-100 animate-pulse font-extrabold"
                           : "text-emerald-600 bg-emerald-50"
-                      }`}>{t("scan_bill")}</span>
+                      }`}>{ui('ma51edee9f1')}</span>
                     </button>
                   )}
 
@@ -4939,8 +4892,7 @@ export default function App() {
                   >
                     <ArrowLeftRight className={`h-5 w-5 max-[375px]:h-4.5 max-[375px]:w-4.5 min-[390px]:h-6 min-[390px]:w-6 ${activeTab === "settle" ? "text-emerald-600 stroke-[2.5px]" : "text-slate-400"}`} />
                     <span className="text-[0.625rem] max-[375px]:text-[9px] min-[390px]:text-xs font-bold flex items-center gap-1">
-                      {t("tab_settle_short")}
-                      {currentStep === 3 && (
+                      {ui('maa2564fd2b')}{currentStep === 3 && (
                         <span className="relative flex h-2 w-2 shrink-0">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                           <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
@@ -4959,8 +4911,7 @@ export default function App() {
                   >
                     <FolderLock className={`h-5 w-5 max-[375px]:h-4.5 max-[375px]:w-4.5 min-[390px]:h-6 min-[390px]:w-6 ${activeTab === "participation" ? "text-emerald-600 stroke-[2.5px]" : "text-slate-400"}`} />
                     <span className="text-[0.625rem] max-[375px]:text-[9px] min-[390px]:text-xs font-bold flex items-center gap-1">
-                      {t("tab_participation_short")}
-                    </span>
+                      {ui('m8cd7101975')}</span>
                   </button>
                 </div>
             ) : (
@@ -4973,7 +4924,7 @@ export default function App() {
                   }`}
                 >
                   <Compass className={`h-5.5 w-5.5 max-[375px]:h-5 max-[375px]:w-5 min-[390px]:h-6.5 min-[390px]:w-6.5 ${addExpenseSubTab === "scan" ? "text-emerald-600 stroke-[2.5px]" : "text-slate-400"}`} />
-                  <span className="text-[0.6875rem] max-[375px]:text-[10px] min-[390px]:text-xs font-bold">{t("scan_bill")}</span>
+                  <span className="text-[0.6875rem] max-[375px]:text-[10px] min-[390px]:text-xs font-bold">{ui('ma51edee9f1')}</span>
                 </button>
 
                 <button
@@ -4984,7 +4935,7 @@ export default function App() {
                   }`}
                 >
                   <Activity className={`h-5.5 w-5.5 max-[375px]:h-5 max-[375px]:w-5 min-[390px]:h-6.5 min-[390px]:w-6.5 ${addExpenseSubTab === "manual" ? "text-emerald-600 stroke-[2.5px]" : "text-slate-400"}`} />
-                  <span className="text-[0.6875rem] max-[375px]:text-[10px] min-[390px]:text-xs font-bold">{lang === 'vi' ? 'Nhập thủ công' : 'Manual Entry'}</span>
+                  <span className="text-[0.6875rem] max-[375px]:text-[10px] min-[390px]:text-xs font-bold">{ui('mb5f60265e7')}</span>
                 </button>
               </div>
             )}
@@ -5027,8 +4978,7 @@ export default function App() {
                     onClick={() => setConfirmState(null)}
                     className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-semibold rounded-2xl transition-all text-sm cursor-pointer"
                   >
-                    Hủy
-                  </button>
+                    {ui('m34ca764caf')}</button>
                   <button
                     type="button"
                     onClick={() => {
@@ -5036,8 +4986,7 @@ export default function App() {
                     }}
                     className="flex-1 px-4 py-3 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white font-semibold rounded-2xl shadow-lg shadow-rose-500/20 transition-all text-sm cursor-pointer"
                   >
-                    Xác nhận
-                  </button>
+                    {ui('md53daf2f46')}</button>
                 </div>
               </motion.div>
             </div>
@@ -5079,8 +5028,7 @@ export default function App() {
                     onClick={() => setAlertState(null)}
                     className="w-full px-4 py-3 bg-[#03B875] hover:bg-[#03B875]/90 active:scale-95 text-white font-semibold rounded-2xl shadow-lg shadow-emerald-500/20 transition-all text-sm text-center block cursor-pointer"
                   >
-                    Đồng ý
-                  </button>
+                    {ui('mf2d7bd4ace')}</button>
                 </div>
               </motion.div>
             </div>
@@ -5189,7 +5137,7 @@ export default function App() {
               origin: { y: 0.6 },
               colors: ['#10b981', '#3b82f6', '#f59e0b']
             });
-            showAlert("Tuyệt vời! 🚀", `Nhóm đã được nâng cấp lên gói ${newPlan} thành công.`);
+            showAlert(ui('m0f6a38b930'), ui('m6b4767043f', { v0: newPlan }));
           }}
           showAlert={showAlert}
           onRequestCreateGroup={handleRequestCreateGroup}
@@ -5201,8 +5149,6 @@ export default function App() {
           onClose={() => setIsCreatingGroup(false)}
           newGroupName={newGroupName}
           setNewGroupName={setNewGroupName}
-          newGroupCurrency={newGroupCurrency}
-          setNewGroupCurrency={setNewGroupCurrency}
           onSubmit={handleCreateGroup}
         />
 

@@ -1,3 +1,4 @@
+import { ui } from '../i18n/core';
 import React, { useRef, useEffect, useState } from 'react';
 import { Camera, AlertCircle, RefreshCw, QrCode, Sparkles } from 'lucide-react';
 import jsQR from 'jsqr';
@@ -16,7 +17,7 @@ export const LiveCamera = ({
   
   const startCamera = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setError('Trình duyệt của bạn không hỗ trợ camera.');
+      setError(ui('m4c5a7dee75'));
       return;
     }
     try {
@@ -34,9 +35,9 @@ export const LiveCamera = ({
     } catch (err) {
       console.error('Error accessing camera:', err);
       if (err instanceof DOMException && err.name === 'NotAllowedError') {
-        setError('Quyền truy cập máy ảnh bị từ chối.');
+        setError(ui('m6a17bafbfc'));
       } else {
-        setError('Không thể mở camera. Vui lòng cấp quyền truy cập máy ảnh hoặc tải lên hình ảnh thay thế.');
+        setError(ui('mf429cfbbb5'));
       }
     }
   };
@@ -148,7 +149,7 @@ export const LiveCamera = ({
       {!error && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-slate-950/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 shadow-lg text-white">
           <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-          <span className="text-[11px] font-black tracking-wide text-slate-100">Camera Quét AI & VietQR</span>
+          <span className="text-[11px] font-black tracking-wide text-slate-100">{ui('m37ad4dc0f3')}</span>
         </div>
       )}
 
@@ -158,7 +159,7 @@ export const LiveCamera = ({
             <AlertCircle className="w-5 h-5" />
           </div>
           <div className="space-y-1">
-            <p className="font-extrabold text-slate-100">Không thể mở máy ảnh</p>
+            <p className="font-extrabold text-slate-100">{ui('ma063f3aeb4')}</p>
           </div>
           <div className="flex flex-col gap-2 pt-1 w-full max-w-[160px] mx-auto">
             <button 
@@ -166,8 +167,7 @@ export const LiveCamera = ({
               className="flex items-center justify-center gap-1.5 text-white font-black text-xs bg-emerald-600 hover:bg-emerald-500 px-4 py-2.5 rounded-xl transition-all shadow-md active:scale-95"
             >
               <RefreshCw className="w-4 h-4" />
-              Thử lại camera
-            </button>
+              {ui('m5287a9a953')}</button>
           </div>
         </div>
       ) : (
@@ -200,7 +200,7 @@ export const LiveCamera = ({
             
             <div className="text-[10px] text-emerald-300 font-bold bg-slate-950/80 px-3 py-1 rounded-full border border-emerald-500/30 shadow-xs absolute -bottom-10 backdrop-blur-md flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-              <span>Đưa mã VietQR hoặc Hóa đơn vào khung hình</span>
+              <span>{ui('m76ee1875cf')}</span>
             </div>
           </div>
         </div>
@@ -212,7 +212,7 @@ export const LiveCamera = ({
             type="button"
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); takePhoto(); }}
             className="w-16 h-16 rounded-full bg-white/20 border-[3px] border-white flex items-center justify-center backdrop-blur-md active:scale-95 transition-all shadow-xl cursor-pointer hover:bg-white/30"
-            title="Chụp ảnh / Quét AI"
+            title={ui('me83a6b9b9f')}
           >
             <div className="w-11 h-11 rounded-full bg-white flex items-center justify-center shadow-inner">
               <Camera className="w-6 h-6 text-emerald-600" />

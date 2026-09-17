@@ -1,9 +1,12 @@
+import { formatDisplayDateTime } from '../utils/dateUtils';
+import { getLocale } from '../i18n/core';
+import { ui, t } from '../i18n/core';
 import React, { useState, useMemo } from "react";
+import { useI18n } from '../i18n/I18nProvider';
 import { motion, AnimatePresence } from "motion/react";
 import { Member, Expense, Group } from "../types";
 import { formatDateTime, patchOldTimestamp, parsePatchedTime } from "../utils/dateUtils";
 import { getMemberAvatar } from "../utils/avatar";
-import { formatCurrencyAmount } from "../utils/i18n";
 import { 
   X, 
   FileText, 
@@ -46,6 +49,7 @@ export default function PersonalStatementModal({
   isAdmin,
   children
 }: PersonalStatementModalProps) {
+  const { language } = useI18n();
   // Determine which user's statement we are viewing
   const defaultMemberId = useMemo(() => {
     if (viewingMemberId) return viewingMemberId;
@@ -77,7 +81,7 @@ export default function PersonalStatementModal({
 
   // Formatter helpers
   const formatMoney = (val: number) => {
-    return formatCurrencyAmount(val, activeGroup?.currency || "VND");
+    return new Intl.NumberFormat(getLocale()).format(Math.round(val)) + "đ";
   };
 
   const formatDate = (dateStr: string) => {
@@ -194,11 +198,11 @@ export default function PersonalStatementModal({
         if (isFrom) {
           // Member is the one whose debt was reduced/cleared
           netImpact = offset.amount;
-          description = `🤝 [Cấn Trừ] Cấn nợ thủ công (Người nhận: ${members.find(m => m.id === offset.toId)?.name})`;
+          description = t('offsetTo', { name: members.find(m => m.id === offset.toId)?.name || '' });
         } else if (isTo) {
           // Member is the one who received/took on debt/cleared surplus
           netImpact = -offset.amount;
-          description = `🤝 [Cấn Trừ] Cấn nợ thủ công (Cho: ${members.find(m => m.id === offset.fromId)?.name})`;
+          description = t('offsetFrom', { name: members.find(m => m.id === offset.fromId)?.name || '' });
         }
 
         items.push({
@@ -234,7 +238,7 @@ export default function PersonalStatementModal({
       };
       return getSortTime(b) - getSortTime(a);
     });
-  }, [expenses, selectedMemberId, activeGroup?.debtOffsets, members]);
+  }, [expenses, selectedMemberId, activeGroup?.debtOffsets, members, language]);
 
   // Find the most recent payment transaction to act as the Watermark limit
   const watermarkInfo = useMemo(() => {
@@ -246,7 +250,7 @@ export default function PersonalStatementModal({
       time: new Date(latestPayment.updated_at).getTime(),
       amount: latestPayment.amount,
       description: latestPayment.description,
-      formattedTime: formatDateTime(latestPayment.updated_at)
+      formattedTime: formatDisplayDateTime(latestPayment.updated_at)
     };
   }, [statementItems]);
 
@@ -281,7 +285,7 @@ export default function PersonalStatementModal({
                 <button
                   onClick={onClose}
                   className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center text-white cursor-pointer"
-                  aria-label="Đóng"
+                  aria-label={ui('md2b73ab2ad')}
                 >
                   <X className="w-4 h-4 stroke-[2.5]" />
                 </button>
@@ -292,8 +296,8 @@ export default function PersonalStatementModal({
                   <FileText className="h-5 w-5 text-teal-100" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-base tracking-tight">Sao kê công nợ cá nhân</h3>
-                  <p className="text-[10px] text-teal-100/80 font-medium">Báo cáo chi tiết biến động và các khoản đã chi trước</p>
+                  <h3 className="font-extrabold text-base tracking-tight">{ui('md4c815851b')}</h3>
+                  <p className="text-[10px] text-teal-100/80 font-medium">{ui('m52b440e18d')}</p>
                 </div>
               </div>
 
@@ -301,8 +305,7 @@ export default function PersonalStatementModal({
               {isAdmin ? (
                 <div className="relative">
                   <label className="text-[9px] font-black uppercase tracking-wider block ml-1 text-teal-100 mb-1">
-                    Xem sao kê của thành viên:
-                  </label>
+                    {ui('mf5dbbc987e')}</label>
                   <div className="relative">
                     <select
                       value={selectedMemberId}
@@ -332,7 +335,7 @@ export default function PersonalStatementModal({
                     <div>
                       <h4 className="font-extrabold text-xs text-white">{currentMember.name}</h4>
                       <p className="text-[9px] text-teal-100 font-semibold uppercase tracking-wider">
-                        Đăng nhập bằng mã: <span className="font-mono text-[10px] bg-white/20 px-1.5 py-0.5 rounded ml-1 font-bold">{currentMember.accessCode || "Email"}</span>
+                        {ui('mfbe09d869c')}<span className="font-mono text-[10px] bg-white/20 px-1.5 py-0.5 rounded ml-1 font-bold">{currentMember.accessCode || "Email"}</span>
                       </p>
                     </div>
                   </div>
@@ -342,7 +345,7 @@ export default function PersonalStatementModal({
               {/* Balance Summary Box */}
               <div className="bg-white rounded-2xl p-3.5 text-slate-800 shadow-sm border border-slate-100 flex items-center justify-between">
                 <div>
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Số dư công nợ hiện tại</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">{ui('m19f363c0e2')}</span>
                   <span className={`text-lg font-black font-mono tracking-tight block mt-0.5 ${
                     currentNetBalance > 0.1 ? "text-emerald-650" : currentNetBalance < -0.1 ? "text-rose-600" : "text-slate-600"
                   }`}>
@@ -350,7 +353,7 @@ export default function PersonalStatementModal({
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Trạng thái</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">{ui('me03c1401e3')}</span>
                   <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase mt-0.5 border ${
                     currentNetBalance > 0.1 
                       ? "bg-emerald-50 border-emerald-200 text-emerald-700" 
@@ -358,7 +361,7 @@ export default function PersonalStatementModal({
                         ? "bg-rose-50 border-rose-200 text-rose-700 animate-pulse" 
                         : "bg-slate-50 border-slate-200 text-slate-600"
                   }`}>
-                    {currentNetBalance > 0.1 ? "Thu về 📥" : currentNetBalance < -0.1 ? "Còn nợ 📤" : "Sòng phẳng ✅"}
+                    {currentNetBalance > 0.1 ? ui('m2bb40bb365') : currentNetBalance < -0.1 ? ui('m5fbd8b5cab') : ui('m774a531bf7')}
                   </span>
                 </div>
               </div>
@@ -375,7 +378,7 @@ export default function PersonalStatementModal({
                   }`}
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  Phần đã tham gia ({statementItems.length})
+                  {ui('m042b5b1a97')}{statementItems.length})
                 </button>
                 <button
                   type="button"
@@ -387,7 +390,7 @@ export default function PersonalStatementModal({
                   }`}
                 >
                   <CreditCard className="w-3.5 h-3.5" />
-                  Đã chi trước ({memberPaidExpenses.length})
+                  {ui('m76790c76cd')}{memberPaidExpenses.length})
                 </button>
               </div>
             </div>
@@ -402,10 +405,9 @@ export default function PersonalStatementModal({
                       <Clock className="w-6 h-6" />
                     </div>
                     <div>
-                      <p className="font-bold text-slate-700 text-xs">Chưa phát sinh biến động</p>
+                      <p className="font-bold text-slate-700 text-xs">{ui('mfeec049bf0')}</p>
                       <p className="text-[10px] text-slate-400 mt-0.5 leading-relaxed">
-                        Thành viên này chưa tham gia bất kỳ hóa đơn hoặc giao dịch thanh toán nào trong nhóm.
-                      </p>
+                        {ui('mee39e37163')}</p>
                     </div>
                   </div>
                 ) : (
@@ -428,7 +430,7 @@ export default function PersonalStatementModal({
                               </div>
                               <div className="relative flex items-center gap-1.5 bg-teal-50 border border-teal-200 rounded-full px-4 py-1.5 text-[10px] text-teal-800 font-extrabold uppercase tracking-wide shadow-xs shrink-0">
                                 <CheckCircle2 className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-                                <span>✅ ĐÃ ĐỐI SOÁT XONG ({formatMoney(item.amount)} lúc {watermarkInfo.formattedTime})</span>
+                                <span>{ui('m41f8a557b4')}{formatMoney(item.amount)} {ui('mc2ace851a7')}{watermarkInfo.formattedTime})</span>
                               </div>
                             </div>
                           )}
@@ -437,8 +439,7 @@ export default function PersonalStatementModal({
                           <div className={`bg-white rounded-2xl p-4 border border-slate-150 shadow-3xs hover:border-teal-500 hover:shadow-xs transition-all relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${opacityClass}`}>
                             {!isOlderThanPayment && item.editedBy && (
                               <div className="absolute top-0 right-0 bg-amber-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded-bl-md uppercase tracking-wider">
-                                Vừa cập nhật
-                              </div>
+                                {ui('m722bd92956')}</div>
                             )}
 
                             <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -471,25 +472,25 @@ export default function PersonalStatementModal({
                                   <span>•</span>
                                   <span className="flex items-center gap-1">
                                     <Clock className="w-3 h-3 text-slate-400" />
-                                    Cập nhật: {formatDateTime(item.updated_at)}
+                                    {ui('m1f2d4d35a3')}{formatDisplayDateTime(item.updated_at)}
                                   </span>
                                 </div>
 
                                 <div className="bg-slate-50/60 p-2 rounded-xl border border-slate-100 text-[10px] space-y-1 mt-1.5">
                                   <div className="flex justify-between items-center text-slate-500">
-                                    <span>Tổng tiền bill:</span>
+                                    <span>{ui('m248519a6f1')}</span>
                                     <span className="font-mono font-bold text-slate-700">{formatMoney(item.amount)}</span>
                                   </div>
                                   
                                   {!item.isPayment && (
                                     <>
                                       <div className="flex justify-between items-center text-slate-500">
-                                        <span>Bạn chi ra:</span>
-                                        <span className="font-mono font-bold text-slate-700">{item.isPayer ? `+${formatMoney(item.amount)}` : "0đ"}</span>
+                                        <span>{ui('mc0289112fd')}</span>
+                                        <span className="font-mono font-bold text-slate-700">{item.isPayer ? `+${formatMoney(item.amount)}` : ui('m4ccb02fc39')}</span>
                                       </div>
                                       <div className="flex justify-between items-center text-slate-500">
-                                        <span>Phần ăn của bạn:</span>
-                                        <span className="font-mono font-bold text-rose-600">{-item.share !== 0 ? `-${formatMoney(item.share)}` : "0đ"}</span>
+                                        <span>{ui('m839c55a495')}</span>
+                                        <span className="font-mono font-bold text-rose-600">{-item.share !== 0 ? `-${formatMoney(item.share)}` : ui('m4ccb02fc39')}</span>
                                       </div>
                                     </>
                                   )}
@@ -498,7 +499,7 @@ export default function PersonalStatementModal({
                             </div>
 
                             <div className="text-left sm:text-right shrink-0 border-t border-dashed border-slate-100 pt-2 sm:pt-0 sm:border-0">
-                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Biến động ròng</span>
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">{ui('m4f2ac2fed8')}</span>
                               <span className={`text-sm font-black font-mono mt-0.5 block ${
                                 isPositive ? "text-emerald-650" : "text-rose-600"
                               }`}>
@@ -508,13 +509,11 @@ export default function PersonalStatementModal({
                               {isOlderThanPayment ? (
                                 <span className="inline-flex items-center gap-0.5 bg-slate-100 text-slate-500 border border-slate-200 text-[8.5px] font-extrabold px-1.5 py-0.5 rounded-md mt-1 select-none">
                                   <CheckCircle2 className="w-2.5 h-2.5 text-slate-450 shrink-0" />
-                                  Đã sòng phẳng
-                                </span>
+                                  {ui('m549ebfbb94')}</span>
                               ) : (
                                 <span className="inline-flex items-center gap-0.5 bg-teal-50 border border-teal-100 text-teal-700 text-[8.5px] font-extrabold px-1.5 py-0.5 rounded-md mt-1 select-none">
                                   <Sparkles className="w-2.5 h-2.5 text-teal-600 shrink-0 animate-pulse" />
-                                  Chưa quyết toán
-                                </span>
+                                  {ui('m980db3d84b')}</span>
                               )}
                             </div>
                           </div>
@@ -536,16 +535,14 @@ export default function PersonalStatementModal({
                     </div>
                     <div>
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                        Tổng tiền đã chi trước
-                      </span>
+                        {ui('m051fcdd63c')}</span>
                       <span className="text-base font-black text-emerald-700">
                         {formatMoney(totalPaidOut)}
                       </span>
                     </div>
                   </div>
                   <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-200">
-                    {memberPaidExpenses.length} thẻ chi tiêu
-                  </span>
+                    {memberPaidExpenses.length} {ui('m6e058c8c15')}</span>
                 </div>
 
                 {memberPaidExpenses.length === 0 ? (
@@ -554,10 +551,9 @@ export default function PersonalStatementModal({
                       <Receipt className="w-6 h-6" />
                     </div>
                     <div>
-                      <p className="font-bold text-slate-700 text-xs">Chưa chi trước khoản nào</p>
+                      <p className="font-bold text-slate-700 text-xs">{ui('m2d7b072923')}</p>
                       <p className="text-[10px] text-slate-400 mt-0.5 leading-relaxed">
-                        Thành viên này chưa đứng ra thanh toán trực tiếp khoản chi tiêu nào cho nhóm.
-                      </p>
+                        {ui('m81823b8737')}</p>
                     </div>
                   </div>
                 ) : (
@@ -586,8 +582,7 @@ export default function PersonalStatementModal({
                                 <span>•</span>
                                 <span className="flex items-center gap-1 text-slate-500">
                                   <Users className="w-3 h-3 text-slate-400" />
-                                  {participantCount} người tham gia
-                                </span>
+                                  {participantCount} {ui('m941015276b')}</span>
                               </div>
                             </div>
                           </div>
@@ -597,8 +592,7 @@ export default function PersonalStatementModal({
                               {formatMoney(exp.amount)}
                             </span>
                             <span className="text-[9px] text-[#03B875] font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 inline-block mt-0.5">
-                              Đã trả trước 🟢
-                            </span>
+                              {ui('mce64d2035a')}</span>
                           </div>
                         </div>
                       );
@@ -623,16 +617,14 @@ export default function PersonalStatementModal({
                       <AlertCircle className="w-4 h-4 stroke-[2.5]" />
                     </div>
                     <p className="text-[10.5px] text-slate-600 leading-relaxed font-bold">
-                      <strong className="text-teal-700">Giải thích cơ chế:</strong> Các hóa đơn nằm trên vạch chốt là hóa đơn mới hoặc vừa bị sửa đổi tạo nên dư nợ hiện tại. Hóa đơn cũ đã đối soát sẽ tự động làm mờ 50%.
-                    </p>
+                      <strong className="text-teal-700">{ui('m8c915e39c0')}</strong> {ui('m4114de9993')}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setShowExplanation(false)}
                     className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl cursor-pointer shadow-sm select-none shrink-0"
                   >
-                    Đã hiểu
-                  </button>
+                    {ui('mf46981ba81')}</button>
                 </motion.div>
               )}
             </AnimatePresence>

@@ -1,4 +1,5 @@
 import express from "express";
+import { getRates } from './fx.js';
 import path from "path";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
@@ -1495,6 +1496,15 @@ function writeDb(groupsList: Group[]): boolean {
 
 // Cloud SQL PostgreSQL direct helper functions - Disabled in Firestore Mode
 const app = express();
+app.get('/api/fx/rates', async (_req, res) => {
+  try {
+    const quote = await getRates();
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.json(quote);
+  } catch {
+    res.status(503).json({ code: 'FX_UNAVAILABLE' });
+  }
+});
 
 // --- SECURITY SHIELD: CORS CONFIGURATION ---
 app.use((req, res, next) => {

@@ -1,3 +1,7 @@
+import { formatDisplayDate } from '../utils/dateUtils';
+import { errorMessage as localizeError } from '../i18n/core';
+import { getLocale } from '../i18n/core';
+import { ui } from '../i18n/core';
 import React, { useState, useEffect } from "react";
 import { Member, Expense, PendingReceipt } from "../types";
 import { compressImage } from "../utils/imageCompressor";
@@ -7,7 +11,8 @@ import { SUPPORTED_BANKS, generateBankDeepLink, VietQRData, parseVietQR, scanQrF
 import { BankAppSelectorModal } from "./BankAppSelectorModal";
 import { BankOption } from "../utils/banks";
 import { getMonthlyReceiptImageCount } from "../utils/receiptLimit";
-import { useTranslation, formatCurrencyAmount } from "../utils/i18n";
+import { CURRENCIES, SupportedCurrency, parseMoney, parseExchangeRate, convertToVnd, convertCustomSplit } from '../utils/money';
+import { useI18n } from '../i18n/I18nProvider';
 
 interface ExpenseFormProps {
   members: Member[];
@@ -32,12 +37,12 @@ interface ExpenseFormProps {
 }
 
 const CATEGORIES = [
-  { key: "food", name: "Ăn uống", emoji: "🍔" },
-  { key: "transport", name: "Xe cộ", emoji: "🚗" },
-  { key: "shopping", name: "Mua sắm", emoji: "🛍️" },
-  { key: "accommodation", name: "Chỗ ở", emoji: "🏨" },
-  { key: "entertainment", name: "Vui chơi", emoji: "🎉" },
-  { key: "other", name: "Khác", emoji: "💸" }
+  { key: "food", get name() { return ui('ma76a975787'); }, emoji: "🍔" },
+  { key: "transport", get name() { return ui('m7a1ea91c08'); }, emoji: "🚗" },
+  { key: "shopping", get name() { return ui('ma36d416185'); }, emoji: "🛍️" },
+  { key: "accommodation", get name() { return ui('m624eea31f5'); }, emoji: "🏨" },
+  { key: "entertainment", get name() { return ui('m675f351843'); }, emoji: "🎉" },
+  { key: "other", get name() { return ui('m5b8a28abf8'); }, emoji: "💸" }
 ];
 
 function removeVietnameseTones(str: string) {
@@ -69,7 +74,29 @@ export default function ExpenseForm({
   expenses = [],
   pendingReceipts = [],
 }: ExpenseFormProps) {
-  const { lang, t } = useTranslation();
+  const { t, locale } = useI18n();
+  const [currency, setCurrency] = useState<SupportedCurrency>('VND');
+  const [rateInput, setRateInput] = useState('');
+  const [rateWasTyped, setRateWasTyped] = useState(false);
+  const [quoteTime, setQuoteTime] = useState('');
+  const [quoteSource, setQuoteSource] = useState('manual');
+  const [rateLoading, setRateLoading] = useState(false);
+  const [rateFailed, setRateFailed] = useState(false);
+  const rateRequest = React.useRef(0);
+  const refreshRate = async (code: SupportedCurrency) => {
+    const request = ++rateRequest.current;
+    if (code === 'VND') { setRateLoading(false); setRateFailed(false); return; }
+    setRateLoading(true); setRateFailed(false);
+    try {
+      const response = await fetch('/api/fx/rates');
+      if (!response.ok) throw new Error('FX_UNAVAILABLE');
+      const quote = await response.json();
+      if (!Number.isFinite(quote.rates?.[code]) || quote.rates[code] <= 0) throw new Error('FX_UNAVAILABLE');
+      if (request !== rateRequest.current) return;
+      setRateWasTyped(false); setRateInput(String(quote.rates[code])); setQuoteTime(quote.quotedAt); setQuoteSource(quote.source);
+    } catch { if (request === rateRequest.current) setRateFailed(true); }
+    finally { if (request === rateRequest.current) setRateLoading(false); }
+  };
   const [description, setDescription] = useState("");
   const [amountStr, setAmountStr] = useState("");
   const [payerId, setPayerId] = useState("");
@@ -93,6 +120,9 @@ export default function ExpenseForm({
   }, [groupId, lastGroupId]);
   
   const [activeQr, setActiveQr] = useState<VietQRData | null>(null);
+  useEffect(() => {
+    if (activeQr?.amount) { ++rateRequest.current; setRateLoading(false); setCurrency('VND'); setRateInput(''); setQuoteTime(''); setQuoteSource('manual'); }
+  }, [activeQr]);
   const [showBankSheet, setShowBankSheet] = useState(false);
   const [setDefaultBank, setSetDefaultBank] = useState(true);
 
@@ -178,8 +208,13 @@ export default function ExpenseForm({
   useEffect(() => {
     if (editingExpense) {
       if (editingExpense.id !== lastEditingId) {
+        ++rateRequest.current; setRateLoading(false); setRateWasTyped(false);
         setDescription(editingExpense.description);
-        setAmountStr(Math.round(editingExpense.amount || 0).toLocaleString("vi-VN"));
+        setCurrency(editingExpense.fx?.currency || 'VND');
+        setRateInput(editingExpense.fx ? String(editingExpense.fx.rateToVnd) : '');
+        setQuoteTime(editingExpense.fx?.quotedAt || '');
+        setQuoteSource(editingExpense.fx?.source || 'manual');
+        setAmountStr(editingExpense.fx ? String(editingExpense.fx.originalAmount) : Math.round(editingExpense.amount || 0).toLocaleString("vi-VN"));
         setPayerId(editingExpense.payerId);
         setDateInput(toDMY(editingExpense.date));
         setSelectedParticipants(editingExpense.participantIds);
@@ -237,7 +272,7 @@ export default function ExpenseForm({
         if (namePart) {
           autoDesc = namePart.toLowerCase().startsWith("thanh toán")
             ? namePart
-            : `Thanh toán ${namePart}`;
+            : ui('mffd1181621', { v0: namePart });
         } else {
           autoDesc = "Thanh toán chi phí";
         }
@@ -313,11 +348,11 @@ export default function ExpenseForm({
       try {
         resData = await response.json();
       } catch (_jsonErr) {
-        throw new Error(`Máy chủ trả về phản hồi không hợp lệ (mã lỗi ${response.status}).`);
+        throw new Error(ui('m8eaf17dee2', { v0: response.status }));
       }
 
       if (!response.ok || !resData || !resData.success) {
-        throw new Error(resData?.error || "Không thể phân tích hóa đơn.");
+        throw new Error(localizeError(resData?.error, ui('m0a5d21c518')));
       }
 
       const { items, date } = resData.data;
@@ -327,13 +362,14 @@ export default function ExpenseForm({
         .replace(/^(ĐẾN\s*)?(MOMO_|ZALOPAY_|VIETQR_|BVBANK_|VCB_|TCB_|MB_|MBB_)/i, "")
         .replace(/_/g, " ")
         .trim();
-      const rawTitle = items.length > 1 ? `${firstTitle} và ${items.length - 1} mục khác` : firstTitle;
+      const rawTitle = items.length > 1 ? ui('mab023aea35', { v0: firstTitle, v1: items.length - 1 }) : firstTitle;
       const combinedTitle = rawTitle
-        ? (rawTitle.toLowerCase().startsWith("thanh toán") ? rawTitle : `Thanh toán ${rawTitle}`)
+        ? (rawTitle.toLowerCase().startsWith("thanh toán") ? rawTitle : ui('mffd1181621', { v0: rawTitle }))
         : "";
 
       if (combinedTitle) setDescription(combinedTitle);
       if (totalAmount) {
+        ++rateRequest.current; setRateLoading(false); setCurrency('VND'); setRateInput(''); setQuoteTime('');
         setAmountStr(Math.round(totalAmount).toLocaleString("vi-VN"));
       }
       if (date) {
@@ -352,7 +388,7 @@ export default function ExpenseForm({
       if (onUpdateOcrUsage) onUpdateOcrUsage();
     } catch (err: any) {
       console.error("Lỗi AI scanning: ", err);
-      setAiErrorMsg(err.message || "Không thể phân tích dữ liệu hóa đơn.");
+      setAiErrorMsg(localizeError(err.message, ui('m6f60b19e5e')));
       setScanSuccess(false);
     } finally {
       setIsScanning(false);
@@ -361,7 +397,7 @@ export default function ExpenseForm({
 
   const handleAiImageFile = async (file: File) => {
     if (planLimit !== Infinity && ocrUsage >= planLimit) {
-      setAiErrorMsg(`Bạn đã hết lượt quét AI trong tháng này (${ocrUsage}/${planLimit} lượt). Vui lòng nâng cấp gói cao hơn.`);
+      setAiErrorMsg(ui('me7eef56232', { v0: ocrUsage, v1: planLimit }));
       return;
     }
 
@@ -372,27 +408,27 @@ export default function ExpenseForm({
     const currentImageCount = getMonthlyReceiptImageCount(expenses, pendingReceipts);
     
     if (isFreeOrOffline && currentImageCount >= 10) {
-      setAiErrorMsg("Bạn đã đạt giới hạn lưu trữ tối đa 10 ảnh hóa đơn / tháng dành cho Gói Free / Xài 1 lần. Vui lòng nâng cấp nhóm lên gói Bè Bạn hoặc Hội Làng để tăng thêm.");
+      setAiErrorMsg(ui('m5b264370f6'));
       return;
     }
     
     if (isBeBan && currentImageCount >= 50) {
-      setAiErrorMsg("Bạn đã đạt giới hạn lưu trữ tối đa 50 ảnh hóa đơn / tháng dành cho Gói Bè Bạn. Vui lòng nâng cấp nhóm lên gói Hội Làng để tăng lên 200 ảnh / không giới hạn.");
+      setAiErrorMsg(ui('m779b29967b'));
       return;
     }
 
     if (isDuHi && currentImageCount >= 100) {
-      setAiErrorMsg("Bạn đã đạt giới hạn lưu trữ tối đa 100 ảnh hóa đơn / 30 ngày dành cho Gói Du Hí. Vui lòng nâng cấp nhóm lên gói Hội Làng để tăng lên 200 ảnh.");
+      setAiErrorMsg(ui('m24b87eb6b7'));
       return;
     }
 
     if (isHoiLang && currentImageCount >= 200) {
-      setAiErrorMsg("Bạn đã đạt giới hạn lưu trữ tối đa 200 ảnh hóa đơn / tháng dành cho Gói Hội Làng.");
+      setAiErrorMsg(ui('m3cea79ef5d'));
       return;
     }
 
     if (!file.type.startsWith("image/")) {
-      setErrorMsg("Chỉ hỗ trợ upload hình ảnh (PNG, JPG, JPEG).");
+      setErrorMsg(ui('m8d0549b39e'));
       return;
     }
     setErrorMsg("");
@@ -471,7 +507,7 @@ export default function ExpenseForm({
             }
             qrFormattedDesc = storeOrMemo.toLowerCase().startsWith("thanh toán")
               ? storeOrMemo
-              : `Thanh toán ${storeOrMemo}`;
+              : ui('mffd1181621', { v0: storeOrMemo });
           }
 
           setDescription(qrFormattedDesc);
@@ -549,11 +585,11 @@ export default function ExpenseForm({
         // We still use the compressed base64 for AI scanning to avoid re-fetching
         await scanReceiptWithAI(compressed);
       } else {
-        throw new Error(data.error || "Lỗi upload");
+        throw new Error(localizeError(data.error, ui('mfbe7344aca')));
       }
     } catch (err: any) {
       console.error("Lỗi xử lý ảnh hóa đơn AI: ", err);
-      setErrorMsg("Lỗi khi tải ảnh lên. Vui lòng thử lại.");
+      setErrorMsg(ui('m3654763c68'));
     }
   };
 
@@ -574,27 +610,27 @@ export default function ExpenseForm({
     const currentImageCount = getMonthlyReceiptImageCount(expenses, pendingReceipts);
     
     if (isFreeOrOffline && currentImageCount >= 10) {
-      setErrorMsg("Bạn đã đạt giới hạn lưu trữ tối đa 10 ảnh hóa đơn / tháng dành cho Gói Free / Xài 1 lần. Vui lòng nâng cấp nhóm lên gói Bè Bạn hoặc Hội Làng để tăng thêm.");
+      setErrorMsg(ui('m5b264370f6'));
       return;
     }
     
     if (isBeBan && currentImageCount >= 50) {
-      setErrorMsg("Bạn đã đạt giới hạn lưu trữ tối đa 50 ảnh hóa đơn / tháng dành cho Gói Bè Bạn. Vui lòng nâng cấp nhóm lên gói Hội Làng để tăng lên 200 ảnh / không giới hạn.");
+      setErrorMsg(ui('m779b29967b'));
       return;
     }
 
     if (isDuHi && currentImageCount >= 100) {
-      setErrorMsg("Bạn đã đạt giới hạn lưu trữ tối đa 100 ảnh hóa đơn / 30 ngày dành cho Gói Du Hí. Vui lòng nâng cấp nhóm lên gói Hội Làng để tăng lên 200 ảnh.");
+      setErrorMsg(ui('m24b87eb6b7'));
       return;
     }
 
     if (isHoiLang && currentImageCount >= 200) {
-      setErrorMsg("Bạn đã đạt giới hạn lưu trữ tối đa 200 ảnh hóa đơn / tháng dành cho Gói Hội Làng.");
+      setErrorMsg(ui('m3cea79ef5d'));
       return;
     }
 
     if (!file.type.startsWith("image/")) {
-      setErrorMsg("Chỉ hỗ trợ upload hình ảnh (PNG, JPG, JPEG).");
+      setErrorMsg(ui('m8d0549b39e'));
       return;
     }
     setErrorMsg("");
@@ -633,11 +669,11 @@ export default function ExpenseForm({
         }
         setReceiptImage(data.url);
       } else {
-        throw new Error(data.error || "Lỗi upload");
+        throw new Error(localizeError(data.error, ui('mfbe7344aca')));
       }
     } catch (err: any) {
       console.error("Lỗi xử lý ảnh hóa đơn thủ công: ", err);
-      setErrorMsg("Lỗi khi tải ảnh lên. Vui lòng thử lại.");
+      setErrorMsg(ui('m3654763c68'));
     }
   };
 
@@ -709,11 +745,16 @@ export default function ExpenseForm({
 
   // Safe numerical parser
   const getAmountNumber = () => {
-    return parseInt(amountStr.replace(/[^0-9]/g, "")) || 0;
+    const original = parseMoney(amountStr, currency);
+    const rate = currency === 'VND' ? 1 : (parseExchangeRate(rateInput, rateWasTyped) ?? 0);
+    if (original === null || original <= 0) return 0;
+    try { return convertToVnd(original, rate); } catch { return 0; }
   };
 
   // Visual formatting as user types: "100000" -> "100.000"
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (currency !== 'VND') { setAmountStr(e.target.value); return; }
+    if (/[^\d.,\s]/.test(e.target.value)) { setAmountStr(e.target.value); return; }
     const rawVal = e.target.value.replace(/[^0-9]/g, "");
     if (rawVal === "") {
       setAmountStr("");
@@ -749,22 +790,23 @@ export default function ExpenseForm({
     const trimmedDesc = description.trim();
 
     if (!trimmedDesc) {
-      setErrorMsg("Vui lòng nhập nội dung chi phí.");
+      setErrorMsg(ui('m007c23b1ea'));
       return;
     }
 
     if (amount <= 0) {
-      setErrorMsg("Vui lòng nhập số tiền lớn hơn 0.");
+      if (currency !== 'VND') { setErrorMsg(t('invalidAmount')); return; }
+      setErrorMsg(ui('m46e59928b1'));
       return;
     }
 
     if (!payerId) {
-      setErrorMsg("Vui lòng chọn người thanh toán.");
+      setErrorMsg(ui('mb5d1fd2c1e'));
       return;
     }
 
     if (selectedParticipants.length === 0) {
-      setErrorMsg("Vui lòng chọn ít nhất 1 thành viên tham gia chia tiền.");
+      setErrorMsg(ui('maa3a1d0972'));
       return;
     }
 
@@ -772,7 +814,7 @@ export default function ExpenseForm({
     const datePattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
     const dateMatch = dateInput.trim().match(datePattern);
     if (!dateMatch) {
-      setErrorMsg("Ngày phát sinh chưa đúng định dạng dd/mm/yyyy (Ví dụ: 12/06/2026).");
+      setErrorMsg(ui('me52b750e4b'));
       return;
     }
 
@@ -781,18 +823,18 @@ export default function ExpenseForm({
     const yearInt = parseInt(dateMatch[3], 10);
 
     if (monthInt < 1 || monthInt > 12) {
-      setErrorMsg("Tháng không hợp lệ (phải từ 01 đến 12).");
+      setErrorMsg(ui('m43b386c63d'));
       return;
     }
     if (dayInt < 1 || dayInt > 31) {
-      setErrorMsg("Ngày không hợp lệ (phải từ 01 đến 31).");
+      setErrorMsg(ui('m750d5df20d'));
       return;
     }
 
     // Checking if valid calendar day
     const parsedDate = new Date(yearInt, monthInt - 1, dayInt);
     if (parsedDate.getFullYear() !== yearInt || parsedDate.getMonth() !== monthInt - 1 || parsedDate.getDate() !== dayInt) {
-      setErrorMsg("Ngày phát sinh không tồn tại trong lịch.");
+      setErrorMsg(ui('m5c2581f7f0'));
       return;
     }
 
@@ -815,7 +857,7 @@ export default function ExpenseForm({
       });
       
       if (allocatedAmount > amount) {
-        setErrorMsg("Tổng số tiền nhập tùy chỉnh lớn hơn tổng số tiền của khoản chi.");
+        setErrorMsg(ui('m6aa8d93186'));
         return;
       }
       
@@ -823,7 +865,7 @@ export default function ExpenseForm({
       const remainingCount = selectedParticipants.length - specifiedCount;
       
       if (remainingCount === 0 && allocatedAmount !== amount) {
-        setErrorMsg("Tổng số tiền chia không bằng tổng số tiền của khoản chi.");
+        setErrorMsg(ui('mc5e9022a6d'));
         return;
       }
       
@@ -836,11 +878,17 @@ export default function ExpenseForm({
         });
       }
       
-      finalCustomSplit = validCustomSplit;
+      // Existing records may contain fractional VND shares from the old form.
+      // Preserve those records; new integer shares reconcile to a whole-VND total.
+      finalCustomSplit = Object.values(customSplit).some(value => !Number.isInteger(value))
+        ? validCustomSplit
+        : convertCustomSplit(amount, 'VND', 1, selectedParticipants, customSplit).ledger;
     }
 
     if (editingExpense) {
       const updatedExpense: Expense = {
+        ...editingExpense,
+        fx: currency === 'VND' ? undefined : { currency, originalAmount: parseMoney(amountStr, currency)!, rateToVnd: (parseExchangeRate(rateInput, rateWasTyped) ?? 0), quotedAt: quoteTime || new Date().toISOString(), source: quoteSource },
         id: editingExpense.id,
         description: trimmedDesc,
         amount,
@@ -865,7 +913,7 @@ export default function ExpenseForm({
         description: updatedExpense.description,
         amount: updatedExpense.amount,
         payerId: targetPayerId,
-        payerName: targetPayerId === "group" ? "Quỹ Nhóm 🏦" : (payerObj ? payerObj.name : "Thành viên"),
+        payerName: targetPayerId === "group" ? ui('m86756c9bce') : (payerObj ? payerObj.name : ui('mcd264c4a8f')),
         payerBankCode: payerObj?.bankCode,
         payerBankAccount: payerObj?.bankAccount,
         payerMomoPhone: payerObj?.momoPhone,
@@ -873,6 +921,7 @@ export default function ExpenseForm({
       });
     } else {
       const newExpense: Expense = {
+        fx: currency === 'VND' ? undefined : { currency, originalAmount: parseMoney(amountStr, currency)!, rateToVnd: (parseExchangeRate(rateInput, rateWasTyped) ?? 0), quotedAt: quoteTime || new Date().toISOString(), source: quoteSource },
         id: "exp_" + Date.now(),
         description: trimmedDesc,
         amount,
@@ -893,7 +942,7 @@ export default function ExpenseForm({
         description: newExpense.description,
         amount: newExpense.amount,
         payerId: newExpense.payerId,
-        payerName: newExpense.payerId === "group" ? "Quỹ Nhóm 🏦" : (payerObj ? payerObj.name : "Thành viên"),
+        payerName: newExpense.payerId === "group" ? ui('m86756c9bce') : (payerObj ? payerObj.name : ui('mcd264c4a8f')),
         payerBankCode: payerObj?.bankCode,
         payerBankAccount: payerObj?.bankAccount,
         payerMomoPhone: payerObj?.momoPhone,
@@ -925,16 +974,8 @@ export default function ExpenseForm({
     setDateInput(`${day}/${month}/${year}`);
   };
 
-  const VIETNAMESE_MONTHS = [
-    "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
-    "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
-  ];
-  const ENGLISH_MONTHS = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
-  const WEEKDAYS_VI = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
-  const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const VIETNAMESE_MONTHS = Array.from({ length: 12 }, (_, month) => new Intl.DateTimeFormat(locale, { month: 'long' }).format(new Date(2026, month, 1)));
+  const WEEKDAYS = Array.from({ length: 7 }, (_, day) => new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(new Date(2026, 0, 4 + day)));
 
   const buildCalendarGrid = () => {
     const list: { day: number; isCurrent: boolean; dateObj: Date; isSelected: boolean; isToday: boolean }[] = [];
@@ -1049,9 +1090,9 @@ export default function ExpenseForm({
   const handleOpenBankingApp = () => {
     if (!activeQr) return;
     
-    const parsedAmount = parseFloat(amountStr.replace(/\./g, "").replace(/,/g, ""));
+    const parsedAmount = getAmountNumber();
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      setErrorMsg("Vui lòng nhập số tiền hợp lệ trước khi thanh toán.");
+      setErrorMsg(ui('m0fb8da08c0'));
       const amountInput = document.getElementById("expense-amount");
       if (amountInput) amountInput.focus();
       return;
@@ -1082,7 +1123,7 @@ export default function ExpenseForm({
     if (addedExpenseSuccess) {
       handleOpenBankingAppAfterAdd(bankCode);
     } else if (activeQr) {
-      const parsedAmount = parseFloat(amountStr.replace(/\./g, "").replace(/,/g, "")) || activeQr.amount || 0;
+      const parsedAmount = getAmountNumber() || activeQr.amount || 0;
       const groupTitle = groupName || "SplitMate";
       const recipientName = activeQr.accountName || activeQr.storeName || description || "Chi phi";
       const rawMemo = `${groupTitle} Thanh toan ${recipientName}`;
@@ -1130,13 +1171,13 @@ export default function ExpenseForm({
       } else {
         const targetPayer = members.find(m => m.id === addedExpenseSuccess.payerId);
         if (targetPayer && !targetPayer.bankAccount && !targetPayer.momoPhone) {
-          alert(`Thành viên ${targetPayer.name} chưa cập nhật tài khoản ngân hàng nhận tiền. Vui lòng nhắc thành viên cập nhật STK trong mục Thành viên hoặc chọn ngân hàng/ví bên dưới.`);
+          alert(ui('md1716ea5a2', { v0: targetPayer.name }));
         }
       }
     } else if (activeQr) {
       bankBin = activeQr.bankBin;
       accountNumber = activeQr.accountNumber;
-      const parsedAmount = parseFloat(amountStr.replace(/\./g, "").replace(/,/g, "")) || activeQr.amount || 0;
+      const parsedAmount = getAmountNumber() || activeQr.amount || 0;
       amount = parsedAmount;
       const recipientName = activeQr.accountName || activeQr.storeName || description || "Chi phi";
       const rawMemo = `${groupTitle} Thanh toan ${recipientName}`;
@@ -1175,7 +1216,7 @@ export default function ExpenseForm({
                 ✓
               </div>
               <div>
-                <h4 className="font-black text-slate-900 text-sm">Đã ghi nhận chi phí vào quỹ!</h4>
+                <h4 className="font-black text-slate-900 text-sm">{ui('mb9e24e4012')}</h4>
                 <p className="text-xs font-extrabold text-emerald-800 line-clamp-1">{addedExpenseSuccess.description}</p>
               </div>
             </div>
@@ -1186,7 +1227,7 @@ export default function ExpenseForm({
                 setActiveQr(null);
               }}
               className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-white/60 transition-colors cursor-pointer"
-              title="Đóng thông báo"
+              title={ui('m813b128487')}
             >
               <X className="w-4 h-4" />
             </button>
@@ -1194,13 +1235,13 @@ export default function ExpenseForm({
 
           <div className="bg-white/90 p-3 rounded-2xl border border-emerald-200/60 flex items-center justify-between text-xs">
             <div className="space-y-0.5">
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Người trả trước:</p>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{ui('mfd52d319f4')}</p>
               <p className="font-black text-slate-800">{addedExpenseSuccess.payerName}</p>
             </div>
             <div className="text-right">
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Tổng số tiền:</p>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{ui('m37479bb827')}</p>
               <p className="font-black font-mono text-emerald-700 text-base">
-                {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(addedExpenseSuccess.amount)}
+                {new Intl.NumberFormat(getLocale(), { style: "currency", currency: "VND" }).format(addedExpenseSuccess.amount)}
               </p>
             </div>
           </div>
@@ -1216,21 +1257,20 @@ export default function ExpenseForm({
             <span className="p-1 px-1.5 bg-indigo-600 text-white rounded-lg font-black text-[10px] shrink-0 mt-0.5">VietQR</span>
             <div className="space-y-0.5">
               <p className="font-bold text-indigo-900">
-                Đã quét mã QR {activeQr.accountName ? `(${activeQr.accountName})` : ''}
+                {ui('m5ca80fe38e')}{activeQr.accountName ? `(${activeQr.accountName})` : ''}
               </p>
               <p className="text-[11px] text-slate-600">
                 {!activeQr.amount 
-                  ? "Vui lòng nhập số tiền bên dưới và bấm " 
-                  : "Kiểm tra thông tin và bấm "}
-                <b className="text-indigo-700">Thêm khoản chi</b> để lưu vào nhóm trước khi chuyển sang App ngân hàng thanh toán.
-              </p>
+                  ? ui('m63e90ef7f0')
+                  : ui('m8223942914')}
+                <b className="text-indigo-700">{ui('m74c24b11c3')}</b> {ui('m2a44e3cc5b')}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setActiveQr(null)}
             className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer shrink-0"
-            title="Hủy VietQR"
+            title={ui('mee9cc35164')}
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -1241,17 +1281,17 @@ export default function ExpenseForm({
           {activeQr ? (
             <>
               <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse"></span>
-              <span className="text-indigo-700 font-extrabold">{lang === 'en' ? "1-Tap VietQR ⚡" : "VietQR 1-Chạm ⚡"}</span>
+              <span className="text-indigo-700 font-extrabold">{ui('mff037c56ba')}</span>
             </>
           ) : editingExpense ? (
             <>
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse"></span>
-              <span className="text-emerald-700 font-extrabold">{t('edit_expense_title')}</span>
+              <span className="text-emerald-700 font-extrabold">{ui('me1a05dd43f')}</span>
             </>
           ) : (
             <>
               <Receipt className="h-4 w-4 text-emerald-600" />
-              <span>{t('create_expense_title')}</span>
+              <span>{ui('m6d7ce17a8c')}</span>
             </>
           )}
         </h4>
@@ -1292,28 +1332,25 @@ export default function ExpenseForm({
             className="text-[0.6875rem] font-bold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100/70 px-2.5 py-1 rounded-xl transition-all cursor-pointer flex items-center gap-1"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            {t('cancel')}
-          </button>
+            {ui('m6bedeae184')}</button>
         )}
       </div>
 
       {members.length === 0 ? (
         <div className="p-5 bg-amber-50 border border-amber-100 rounded-2xl text-center text-xs text-amber-700 font-medium">
-          {lang === 'en' ? "Please add members before creating an expense!" : "Vui lòng thêm thành viên vào nhóm trước khi tạo chi phí!"}
-        </div>
+          {ui('m1edf1b80a6')}</div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Description */}
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider" htmlFor="expense-desc">
-                {t('note')}
-              </label>
+                {ui('m2f4559acb5')}</label>
               <div className="relative">
                 <input
                   id="expense-desc"
                   type="text"
-                  placeholder={t('expense_name_placeholder')}
+                  placeholder={ui('m370616bdcb')}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   maxLength={100}
@@ -1325,16 +1362,10 @@ export default function ExpenseForm({
             {/* Category Selector */}
             <div className="space-y-2 col-span-1 md:col-span-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
-                {lang === 'en' ? "Category (Auto-detected if left empty)" : "Phân loại / Biểu tượng (Hệ thống sẽ tự chọn nếu để trống)"}
-              </label>
+                {ui('maecba2568b')}</label>
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map((cat) => {
                   const isSelected = categoryKey === cat.key;
-                  const catLabel = cat.key === 'food' ? t('cat_food') :
-                                  cat.key === 'transport' ? t('cat_transport') :
-                                  cat.key === 'shopping' ? t('cat_shopping') :
-                                  cat.key === 'accommodation' ? t('cat_hotel') :
-                                  cat.key === 'entertainment' ? t('cat_entertainment') : t('cat_other');
                   return (
                     <button
                       key={cat.key}
@@ -1347,7 +1378,7 @@ export default function ExpenseForm({
                       }`}
                     >
                       <span className="text-sm">{cat.emoji}</span>
-                      <span>{catLabel}</span>
+                      <span>{cat.name}</span>
                       {isSelected && <Check className="w-3.5 h-3.5 ml-0.5 text-emerald-600" />}
                     </button>
                   );
@@ -1357,23 +1388,30 @@ export default function ExpenseForm({
 
             {/* Amount */}
             <div className="space-y-1">
+              <select aria-label={t('currency')} value={currency} disabled={isAmountLocked} onChange={event => {
+                setCurrency(event.target.value as SupportedCurrency);
+                setAmountStr(''); setRateInput(''); setQuoteTime(''); setCustomSplit({});
+                void refreshRate(event.target.value as SupportedCurrency);
+              }} className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs">
+                {CURRENCIES.map(code => <option key={code} value={code}>{code}</option>)}
+              </select>
               <div className="flex items-center justify-between">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider" htmlFor="expense-amount">
-                  {t('amount')}
+                  {t('amount')} ({currency})
                 </label>
                 {isAmountLocked && (
                   <span className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
-                    🔒 {lang === 'en' ? "Locked from QR code" : "Số tiền cố định từ mã QR"}
-                  </span>
+                    {ui('md84653397d')}</span>
                 )}
               </div>
               <div className="relative flex items-center justify-between border-b border-slate-200/70 py-1">
                 <span className="text-emerald-600 text-2xl font-black font-mono select-none pr-2">
-                  ₫
+                  {currency === 'VND' ? '₫' : currency}
                 </span>
                 <input
                   id="expense-amount"
                   type="text"
+                  inputMode="decimal"
                   placeholder="0"
                   value={amountStr}
                   onChange={handleAmountChange}
@@ -1388,9 +1426,18 @@ export default function ExpenseForm({
               </div>
               {isAmountLocked && (
                 <p className="text-[10px] text-slate-500 font-medium pl-1">
-                  {lang === 'en' ? `Amount locked from scanned QR code (${Math.round(activeQr?.amount || 0).toLocaleString("vi-VN")} ₫)` : `Số tiền được đặt cố định từ mã QR quét được (${Math.round(activeQr?.amount || 0).toLocaleString("vi-VN")} ₫).`}
+                  {ui('mdb14f94114')}{Math.round(activeQr?.amount || 0).toLocaleString("vi-VN")} ₫).
                 </p>
               )}
+              {currency !== 'VND' && <div className="space-y-1">
+                <label htmlFor="expense-fx-rate" className="text-xs text-slate-500">{t('rateToVnd', { currency })}</label>
+                <input id="expense-fx-rate" type="text" inputMode="decimal" value={rateInput} onChange={event => { ++rateRequest.current; setRateLoading(false); setRateWasTyped(true); setRateInput(event.target.value); setQuoteSource('manual'); setQuoteTime(new Date().toISOString()); }} placeholder={t('exchangeRate')} className="w-full rounded-lg border border-slate-200 px-2 py-1 text-sm" />
+                <button type="button" disabled={rateLoading} onClick={() => void refreshRate(currency)} className="text-xs font-semibold text-emerald-700">{t(rateLoading ? 'loadingRate' : 'updateRate')}</button>
+                {rateFailed && <p role="status" className="text-xs text-amber-700">{t('rateUnavailable')}</p>}
+                {quoteTime && <p className="text-xs text-slate-500">{quoteSource === 'manual' ? t('manualSource') : quoteSource} · {formatDisplayDate(quoteTime, quoteSource === 'manual' ? 'Asia/Ho_Chi_Minh' : 'UTC')}</p>}
+                <p className="text-xs text-slate-500">{t('convertedAmount', { amount: new Intl.NumberFormat(locale, { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(getAmountNumber()) })}</p>
+                {splitMode === 'custom' && <p className="text-xs text-slate-500">{t('splitInVnd')}</p>}
+              </div>}
             </div>
           </div>
 
@@ -1400,12 +1447,10 @@ export default function ExpenseForm({
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 justify-between">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider" htmlFor="expense-payer">
-                  {t('payer')}
-                </label>
+                  {ui('m04077a1510')}</label>
                 {payerId === "group" && groupPlan === "DU_HI_30" && (
                   <span className="text-[8px] sm:text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded-md animate-pulse">
-                    🚗 {lang === 'en' ? "Auto-selected Fund" : "Đã tự động chọn Quỹ nhóm"}
-                  </span>
+                    {ui('m01fb78ae15')}</span>
                 )}
               </div>
               <div className="relative">
@@ -1416,7 +1461,7 @@ export default function ExpenseForm({
                   className="w-full bg-slate-50 border border-slate-200/60 rounded-xl py-2 px-3 pr-8 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 font-bold text-slate-800 text-xs transition-all appearance-none cursor-pointer"
                 >
                   {groupPlan === "DU_HI_30" && (
-                    <option value="group">🏦 {lang === 'en' ? "Group Fund" : "Quỹ Nhóm"}</option>
+                    <option value="group">{ui('m18882eb36d')}</option>
                   )}
                   {members.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -1433,8 +1478,7 @@ export default function ExpenseForm({
             {/* Date Pick */}
             <div className="space-y-1" id="expense-date-wrapper">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider" htmlFor="expense-date">
-                {t('expense_date')}
-              </label>
+                {ui('m474d82eea7')}</label>
               <div className="relative">
                 <input
                   id="expense-date"
@@ -1473,18 +1517,18 @@ export default function ExpenseForm({
                         type="button"
                         onClick={prevMonth}
                         className="h-8 w-8 flex items-center justify-center hover:bg-slate-100 rounded-xl text-slate-600 hover:text-slate-900 active:scale-95 transition-all cursor-pointer"
-                        title={lang === 'en' ? "Previous Month" : "Tháng trước"}
+                        title={ui('m0cfd503bec')}
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </button>
                       <span className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wide">
-                        {lang === 'en' ? `${ENGLISH_MONTHS[currentMonth]} ${currentYear}` : `${VIETNAMESE_MONTHS[currentMonth]} năm ${currentYear}`}
+                        {VIETNAMESE_MONTHS[currentMonth]} {currentYear}
                       </span>
                       <button
                         type="button"
                         onClick={nextMonth}
                         className="h-8 w-8 flex items-center justify-center hover:bg-slate-100 rounded-xl text-slate-600 hover:text-slate-900 active:scale-95 transition-all cursor-pointer"
-                        title={lang === 'en' ? "Next Month" : "Tháng sau"}
+                        title={ui('m9495e9380e')}
                       >
                         <ChevronRight className="h-4 w-4" />
                       </button>
@@ -1500,8 +1544,7 @@ export default function ExpenseForm({
                         }}
                         className="flex-1 py-1 px-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#03B875] font-bold text-[11px] transition-colors text-center cursor-pointer"
                       >
-                        {t('today')}
-                      </button>
+                        {ui('m0048b6a408')}</button>
                       <button
                         type="button"
                         onClick={() => {
@@ -1511,13 +1554,12 @@ export default function ExpenseForm({
                         }}
                         className="flex-1 py-1 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-[11px] transition-colors text-center cursor-pointer"
                       >
-                        {t('yesterday')}
-                      </button>
+                        {ui('m47bd3511b2')}</button>
                     </div>
 
                     {/* Weekdays */}
                     <div className="grid grid-cols-7 text-center text-[11px] font-black text-slate-400">
-                      {(lang === 'en' ? WEEKDAYS_EN : WEEKDAYS_VI).map((w) => (
+                      {WEEKDAYS.map((w) => (
                         <div key={w} className="py-0.5">{w}</div>
                       ))}
                     </div>
@@ -1557,13 +1599,12 @@ export default function ExpenseForm({
                 <div className="space-y-1.5">
                   <div className="flex flex-col items-end w-full space-y-1.5">
                     <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm">
-                      {planLimit === Infinity ? `${ocrUsage}/∞` : (lang === 'en' ? `${ocrUsage}/${planLimit} scans` : `${ocrUsage}/${planLimit} lượt`)}
+                      {planLimit === Infinity ? `${ocrUsage}/∞` : ui('mcf5720291c', { v0: ocrUsage, v1: planLimit })}
                     </span>
                     <div className="w-full">
                       <span className="text-[0.6875rem] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1">
                         <Sparkles className="h-3.5 w-3.5 text-emerald-500 animate-pulse" />
-                        {lang === 'en' ? "Scan Receipt via AI ✨" : "Quét hóa đơn bằng AI ✨"}
-                      </span>
+                        {ui('mabf75604da')}</span>
                     </div>
                   </div>
                   
@@ -1589,8 +1630,8 @@ export default function ExpenseForm({
                     <label htmlFor="receipt-upload-ai" className="cursor-pointer w-full h-full py-1.5 block">
                       <div className="flex flex-col items-center justify-center">
                         <UploadCloud className={`h-7 w-7 mb-1 text-emerald-500 ${dragActive ? "animate-bounce" : ""}`} />
-                        <p className="text-xs font-extrabold text-slate-700">{lang === 'en' ? "Drop or click to scan AI" : "Kéo thả hoặc click quét AI"}</p>
-                        <p className="text-[0.625rem] text-emerald-600 font-semibold mt-0.5">{lang === 'en' ? "Auto-detects items & totals" : "Tự động phân tích & điền nhanh"}</p>
+                        <p className="text-xs font-extrabold text-slate-700">{ui('m88ac462df3')}</p>
+                        <p className="text-[0.625rem] text-emerald-600 font-semibold mt-0.5">{ui('m6d2171e317')}</p>
                       </div>
                     </label>
                   </div>
@@ -1600,13 +1641,12 @@ export default function ExpenseForm({
                 <div className="space-y-1.5">
                   <div className="flex flex-col items-end w-full space-y-1.5">
                     <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 shadow-sm">
-                      {groupPlan === 'HOI_LANG' || groupPlan === 'PREMIUM' ? (lang === 'en' ? `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/200 images` : `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/200 ảnh`) : (groupPlan === 'DU_HI_30' ? (lang === 'en' ? `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/100 images` : `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/100 ảnh`) : (groupPlan === 'BE_BAN' || groupPlan === 'VIP' ? (lang === 'en' ? `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/50 images` : `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/50 ảnh`) : (lang === 'en' ? `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/10 images` : `${getMonthlyReceiptImageCount(expenses, pendingReceipts)}/10 ảnh`)))}
+                      {groupPlan === 'HOI_LANG' || groupPlan === 'PREMIUM' ? ui('mec8548399e', { v0: getMonthlyReceiptImageCount(expenses, pendingReceipts) }) : (groupPlan === 'DU_HI_30' ? ui('m4d31d55271', { v0: getMonthlyReceiptImageCount(expenses, pendingReceipts) }) : (groupPlan === 'BE_BAN' || groupPlan === 'VIP' ? ui('mdf95118424', { v0: getMonthlyReceiptImageCount(expenses, pendingReceipts) }) : ui('m79aa79ca9d', { v0: getMonthlyReceiptImageCount(expenses, pendingReceipts) })))}
                     </span>
                     <div className="w-full">
                       <span className="text-[0.6875rem] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
                         <ImageIcon className="h-3.5 w-3.5 text-slate-400" />
-                        {lang === 'en' ? "Manual Receipt 📁" : "Ảnh hóa đơn thủ công 📁"}
-                      </span>
+                        {ui('m02a6aa4853')}</span>
                     </div>
                   </div>
                   
@@ -1632,8 +1672,8 @@ export default function ExpenseForm({
                     <label htmlFor="receipt-upload-manual" className="cursor-pointer w-full h-full py-1.5 block">
                       <div className="flex flex-col items-center justify-center">
                         <UploadCloud className={`h-7 w-7 mb-1 text-slate-400 ${manualDragActive ? "animate-bounce" : ""}`} />
-                        <p className="text-xs font-extrabold text-slate-700">{lang === 'en' ? "Upload receipt manually" : "Tải ảnh thủ công lên"}</p>
-                        <p className="text-[0.625rem] text-slate-400 mt-0.5">{lang === 'en' ? "Proof of expense only" : "Chỉ lưu trữ làm minh chứng"}</p>
+                        <p className="text-xs font-extrabold text-slate-700">{ui('m172cfc83ed')}</p>
+                        <p className="text-[0.625rem] text-slate-400 mt-0.5">{ui('m38c6687dd9')}</p>
                       </div>
                     </label>
                   </div>
@@ -1643,15 +1683,14 @@ export default function ExpenseForm({
               <div className="space-y-1.5">
                 <span className="text-[0.6875rem] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
                   <ImageIcon className="h-3.5 w-3.5 text-slate-400" />
-                  {lang === 'en' ? "Attached Receipt Image" : "Ảnh hóa đơn đã tải lên"}
-                </span>
+                  {ui('m970370e144')}</span>
                 
                 <div className="border border-slate-200 rounded-2xl p-4 text-center relative flex flex-col items-center justify-center min-h-[5.625rem] bg-slate-50/45">
                   {/* Scanning overlay loader */}
                   {isScanning && (
                     <div className="absolute inset-0 bg-white/95 rounded-2xl flex flex-col items-center justify-center space-y-1.5 z-10 animate-in fade-in duration-200">
                       <Loader2 className="h-6 w-6 text-emerald-600 animate-spin" />
-                      <p className="text-xs font-bold text-emerald-800 animate-pulse">🤖 {lang === 'en' ? "Reading receipt..." : "đang đọc hóa đơn..."}</p>
+                      <p className="text-xs font-bold text-emerald-800 animate-pulse">{ui('m14bb03880f')}</p>
                     </div>
                   )}
 
@@ -1664,8 +1703,8 @@ export default function ExpenseForm({
                         className="w-12 h-12 object-cover rounded-lg border border-slate-200 shrink-0"
                       />
                       <div className="text-left min-w-0">
-                        <p className="text-xs font-extrabold text-slate-800 truncate">{lang === 'en' ? "Receipt saved successfully" : "Ảnh hóa đơn lưu thành công"}</p>
-                        <p className="text-[0.625rem] text-slate-400">{lang === 'en' ? "Available in expense history" : "Có thể xem lại trong lịch sử chi phí"}</p>
+                        <p className="text-xs font-extrabold text-slate-800 truncate">{ui('mb4324e0c79')}</p>
+                        <p className="text-[0.625rem] text-slate-400">{ui('m1ccc64710c')}</p>
                       </div>
                     </div>
                     <button
@@ -1678,8 +1717,7 @@ export default function ExpenseForm({
                       className="p-1.5 px-3 bg-rose-50 text-rose-600 hover:bg-rose-100/85 rounded-xl text-xs font-extrabold transition-all shrink-0 cursor-pointer"
                       disabled={isScanning}
                     >
-                      {t('delete_receipt_photo')}
-                    </button>
+                      {ui('ma501ea7f86')}</button>
                   </div>
                 </div>
               </div>
@@ -1689,8 +1727,8 @@ export default function ExpenseForm({
               <div className="mt-2.5 p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl text-emerald-800 text-xs font-semibold flex items-start gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
                 <Sparkles className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5 animate-pulse" />
                 <div>
-                  <p className="font-extrabold text-emerald-900">{lang === 'en' ? "AI filled in details! ✨" : "AI đã tự động điền thông tin! ✨"}</p>
-                  <p className="text-[0.6875rem] text-emerald-700/90 mt-0.5">{lang === 'en' ? "Note, amount and date have been extracted from the receipt." : "Tên chi phí, Số tiền và Ngày đã được tự động phân tích từ hóa đơn."}</p>
+                  <p className="font-extrabold text-emerald-900">{ui('m7902d714c6')}</p>
+                  <p className="text-[0.6875rem] text-emerald-700/90 mt-0.5">{ui('mbc1dc380fe')}</p>
                 </div>
               </div>
             )}
@@ -1699,9 +1737,9 @@ export default function ExpenseForm({
               <div className="mt-2.5 p-3 bg-amber-50/90 border border-amber-200 rounded-xl text-amber-800 text-xs flex items-start gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
                 <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-extrabold text-amber-950">{lang === 'en' ? "Automatic recognition failed" : "Không thể nhận diện tự động"}</p>
+                  <p className="font-extrabold text-amber-950">{ui('maf8255d9ec')}</p>
                   <p className="text-[0.6875rem] text-amber-800/90 mt-0.5">{aiErrorMsg}</p>
-                  <p className="text-[0.625rem] text-slate-500 mt-1">{lang === 'en' ? "Tip: Ensure good lighting, high contrast, and unobstructed details." : "Lưu ý: Chụp ảnh hóa đơn rõ nét, đầy đủ ánh sáng và không che khuất các thông tin quan trọng."}</p>
+                  <p className="text-[0.625rem] text-slate-500 mt-1">{ui('m4abe7104a4')}</p>
                 </div>
               </div>
             )}
@@ -1712,7 +1750,7 @@ export default function ExpenseForm({
             <div className="flex flex-col gap-3 border-b border-slate-200/60 pb-3">
               <div className="flex items-center gap-1.5">
                 <Users className="h-4 w-4 text-slate-550" />
-                <span className="text-xs font-bold text-slate-700">{lang === 'en' ? `Split with (${selectedParticipants.length} people)` : `Chia sẻ cùng ai (${selectedParticipants.length} người)`}</span>
+                <span className="text-xs font-bold text-slate-700">{ui('ma096339837')}{selectedParticipants.length} {ui('mc7f582db4d')}</span>
               </div>
               <div className="flex items-center justify-between gap-3 w-full">
                 <div className="flex bg-slate-200/70 p-1 rounded-xl">
@@ -1723,8 +1761,7 @@ export default function ExpenseForm({
                       splitMode === "equal" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
                     }`}
                   >
-                    {t('split_equally')}
-                  </button>
+                    {ui('m5673ad2108')}</button>
                   <button
                     type="button"
                     onClick={() => setSplitMode("custom")}
@@ -1732,8 +1769,7 @@ export default function ExpenseForm({
                       splitMode === "custom" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
                     }`}
                   >
-                    {t('split_custom')}
-                  </button>
+                    {ui('m66c5f1a28b')}</button>
                 </div>
                 
                 <div className="flex gap-2">
@@ -1742,16 +1778,14 @@ export default function ExpenseForm({
                     onClick={handleSelectAll}
                     className="text-[0.6875rem] font-bold text-emerald-600 hover:text-emerald-800 px-1.5 py-0.5 rounded hover:bg-emerald-50 transition-all cursor-pointer"
                   >
-                    {t('select_all_members')}
-                  </button>
+                    {ui('mf7a578dcbd')}</button>
                   <span className="text-slate-300 text-xs">|</span>
                   <button
                     type="button"
                     onClick={handleDeselectAll}
                     className="text-[0.6875rem] font-bold text-rose-500 hover:text-rose-700 px-1.5 py-0.5 rounded hover:bg-rose-50 transition-all cursor-pointer"
                   >
-                    {t('deselect_all')}
-                  </button>
+                    {ui('maa1d94fc16')}</button>
                 </div>
               </div>
             </div>
@@ -1868,10 +1902,10 @@ export default function ExpenseForm({
                   <>
                     <div className="flex items-center gap-1.5">
                       <Sparkles className="h-4 w-4 text-emerald-500" />
-                      <span>{lang === 'en' ? "Est. per person:" : "Dự báo mỗi người đóng:"}</span>
+                      <span>{ui('md04bbb9067')}</span>
                     </div>
                     <span className="font-bold font-mono text-emerald-700">
-                      {new Intl.NumberFormat("vi-VN").format(Math.round(costPerPerson))} ₫
+                      {new Intl.NumberFormat(getLocale()).format(Math.round(costPerPerson))} ₫
                     </span>
                   </>
                 ) : (
@@ -1882,10 +1916,10 @@ export default function ExpenseForm({
                           ? customRemainingAmount < 0 ? "text-rose-500" : "text-amber-500"
                           : "text-emerald-500"
                       }`} />
-                      <span>{lang === 'en' ? "Remaining balance:" : "Số tiền còn lại:"}</span>
+                      <span>{ui('m97477295de')}</span>
                     </div>
                     <span className={`font-bold font-mono ${customRemainingAmount === 0 && customRemainingCount === 0 && allocatedAmount === amount ? "text-emerald-700" : customRemainingAmount < 0 ? "text-rose-600" : "text-amber-600"}`}>
-                      {new Intl.NumberFormat("vi-VN").format(Math.round(customRemainingAmount))} ₫
+                      {new Intl.NumberFormat(getLocale()).format(Math.round(customRemainingAmount))} ₫
                     </span>
                   </>
                 )}
@@ -1914,10 +1948,9 @@ export default function ExpenseForm({
             {editingExpense ? (
               <>
                 <Check className="h-4 w-4" />
-                {t('save_expense_changes')}
-              </>
+                {ui('m14dfab05f1')}</>
             ) : (
-              t('submit_expense')
+              ui('maed724ac36')
             )}
           </button>
         </form>

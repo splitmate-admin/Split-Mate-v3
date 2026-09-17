@@ -1,3 +1,5 @@
+import { getLocale } from '../i18n/core';
+import { ui } from '../i18n/core';
 import React, { useState } from "react";
 import { 
   CheckCircle2, 
@@ -56,14 +58,14 @@ export default function DuHiOnboarding({
 
   const handleCreateFundDeposit = async () => {
     if (!isAdmin) {
-      showToast("Lỗi quyền hạn", "Chỉ Thủ quỹ / Trưởng nhóm mới có quyền tạo yêu cầu nộp quỹ.", "error");
+      showToast(ui('md14166ed4b'), ui('m1e074e9314'), "error");
       return;
     }
 
     const cleanAmountStr = depositAmountStr.replace(/\./g, "").replace(/,/g, "").trim();
     const amountVal = parseFloat(cleanAmountStr);
     if (isNaN(amountVal) || amountVal <= 0) {
-      showToast("Số tiền không hợp lệ", "Vui lòng nhập số tiền lớn hơn 0đ.", "error");
+      showToast(ui('mc42d13b8df'), ui('m41fc28cf3c'), "error");
       return;
     }
 
@@ -74,7 +76,7 @@ export default function DuHiOnboarding({
       
       const fundExpense: Expense = {
         id: `fund_req_${Date.now()}`,
-        description: `📥 [Nộp Quỹ] Đóng quỹ chung (Mỗi người ${new Intl.NumberFormat("vi-VN").format(amountVal)}đ)`,
+        description: `📥 [Nộp Quỹ] Đóng quỹ chung (Mỗi người ${new Intl.NumberFormat(getLocale()).format(amountVal)}đ)`,
         amount: totalAmount,
         payerId: "group",
         date: timestamp,
@@ -84,13 +86,13 @@ export default function DuHiOnboarding({
 
       await onBatchAddExpenses([fundExpense]);
       showToast(
-        "Tạo hóa đơn nộp quỹ thành công", 
-        `Đã tạo hóa đơn nộp quỹ ${new Intl.NumberFormat("vi-VN").format(totalAmount)}đ chia đều cho ${members.length} thành viên.`, 
+        ui('m006cde8ea1'),
+        ui('m1a519d0bcc', { v0: new Intl.NumberFormat(getLocale()).format(totalAmount), v1: members.length }),
         "success"
       );
     } catch (err) {
       console.error("Lỗi khi tạo nộp quỹ đồng loạt:", err);
-      showToast("Lỗi hệ thống", "Không thể tạo giao dịch nộp quỹ.", "error");
+      showToast(ui('mb3af2fa4d2'), ui('mecf5bb291f'), "error");
     } finally {
       setIsSubmittingDeposit(false);
     }
@@ -103,7 +105,7 @@ export default function DuHiOnboarding({
       setDepositAmountStr("");
       return;
     }
-    const formatted = new Intl.NumberFormat("vi-VN").format(parseInt(clean));
+    const formatted = new Intl.NumberFormat(getLocale()).format(parseInt(clean));
     setDepositAmountStr(formatted);
   };
 
@@ -117,10 +119,10 @@ export default function DuHiOnboarding({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-emerald-800 font-extrabold text-[13px] tracking-wide uppercase">
           <Sparkles className="w-4 h-4 text-emerald-600 animate-pulse" />
-          <span>HƯỚNG DẪN GÓI DU HÍ 🚗</span>
+          <span>{ui('m5f026f2307')}</span>
         </div>
         <span className="text-[10px] bg-emerald-200/50 text-emerald-800 px-2 py-0.5 rounded-full font-black uppercase tracking-wide">
-          Bước {currentStep}/4
+          {ui('mddd5582fc6')}{currentStep}/4
         </span>
       </div>
 
@@ -136,11 +138,10 @@ export default function DuHiOnboarding({
           </div>
           <div className="flex-1 text-left min-w-0">
             <h4 className="text-[12px] font-black text-slate-900 leading-tight">
-              Bước 1: Thêm bạn đồng hành ({members.length}/2+)
+              {ui('m339fb8397f')}{members.length}/2+)
             </h4>
             <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-              Nhóm du lịch cần tối thiểu 2 thành viên để bắt đầu sòng phẳng quỹ nhóm.
-            </p>
+              {ui('mb252d86266')}</p>
             {currentStep === 1 && (
               <button
                 type="button"
@@ -150,7 +151,7 @@ export default function DuHiOnboarding({
                 className="mt-2.5 inline-flex items-center gap-1 bg-[#03B875] hover:bg-[#02965f] text-white text-[10px] font-extrabold px-3 py-1.5 rounded-lg transition-all shadow-3xs hover:scale-[1.02] active:scale-95 cursor-pointer uppercase tracking-wider"
               >
                 <Users className="w-3.5 h-3.5" />
-                <span>Mở Thêm thành viên</span>
+                <span>{ui('m36dec39e78')}</span>
               </button>
             )}
           </div>
@@ -167,11 +168,9 @@ export default function DuHiOnboarding({
           </div>
           <div className="flex-1 text-left min-w-0">
             <h4 className="text-[12px] font-black text-slate-900 leading-tight">
-              Bước 2: Thiết lập ngân hàng quỹ nhóm 💳
-            </h4>
+              {ui('m30d8a627d4')}</h4>
             <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-              Cấu hình tài khoản ngân hàng hoặc SĐT ví MoMo của nhóm để thành viên nộp tiền tự động quét mã QR.
-            </p>
+              {ui('m2add586c4d')}</p>
             {currentStep === 2 && isAdmin && (
               <button
                 type="button"
@@ -181,13 +180,12 @@ export default function DuHiOnboarding({
                 className="mt-2.5 inline-flex items-center gap-1.5 bg-[#03B875] hover:bg-[#02965f] text-white text-[10px] font-extrabold px-3 py-1.5 rounded-lg transition-all shadow-3xs hover:scale-[1.02] active:scale-95 cursor-pointer uppercase tracking-wider"
               >
                 <CreditCard className="w-3.5 h-3.5" />
-                <span>Cấu hình quỹ chung</span>
+                <span>{ui('m203be38029')}</span>
               </button>
             )}
             {currentStep === 2 && !isAdmin && (
               <span className="mt-2 inline-block text-[10px] text-amber-600 font-extrabold italic">
-                ⏳ Chờ Trưởng nhóm/Thủ quỹ thiết lập ngân hàng quỹ...
-              </span>
+                {ui('md67ffe4f73')}</span>
             )}
           </div>
         </div>
@@ -203,17 +201,14 @@ export default function DuHiOnboarding({
           </div>
           <div className="flex-1 text-left min-w-0">
             <h4 className="text-[12px] font-black text-slate-900 leading-tight">
-              Bước 3: Tạo yêu cầu nộp Quỹ đồng loạt 💰
-            </h4>
+              {ui('m501066610c')}</h4>
             <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-              Tạo giao dịch đóng quỹ đồng loạt cho cả nhóm (mỗi người nộp một khoản bằng nhau) để lấy ngân sách du lịch.
-            </p>
+              {ui('m7cd31dfc8b')}</p>
             {currentStep === 3 && isAdmin && (
               <div className="mt-3.5 p-3.5 bg-white border border-emerald-100 rounded-2xl space-y-3">
                 <div className="flex items-center gap-2">
                   <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">
-                    Mỗi người nộp:
-                  </label>
+                    {ui('m630123dde5')}</label>
                   <div className="relative flex-1">
                     <input
                       type="text"
@@ -223,8 +218,7 @@ export default function DuHiOnboarding({
                       className="w-full text-right font-black text-slate-800 text-[13px] bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden"
                     />
                     <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase">
-                      đ
-                    </span>
+                      {ui('mc5f95801df')}</span>
                   </div>
                 </div>
                 <button
@@ -234,14 +228,13 @@ export default function DuHiOnboarding({
                   className="w-full inline-flex items-center justify-center gap-1.5 bg-[#03B875] hover:bg-[#02965f] disabled:bg-slate-300 text-white text-[10px] font-black py-2 px-3 rounded-xl transition-all shadow-3xs cursor-pointer uppercase tracking-wider"
                 >
                   <PiggyBank className="w-4 h-4" />
-                  <span>{isSubmittingDeposit ? "Đang xử lý..." : `Nộp đồng loạt (${depositAmountStr}đ/người)`}</span>
+                  <span>{isSubmittingDeposit ? ui('me8c1faabc9') : ui('m59405b5c08', { v0: depositAmountStr })}</span>
                 </button>
               </div>
             )}
             {currentStep === 3 && !isAdmin && (
               <span className="mt-2 inline-block text-[10px] text-amber-600 font-extrabold italic">
-                ⏳ Hãy nhắc Thủ quỹ tạo giao dịch Nộp Quỹ chung...
-              </span>
+                {ui('m6829d35d56')}</span>
             )}
           </div>
         </div>
@@ -257,10 +250,9 @@ export default function DuHiOnboarding({
           </div>
           <div className="flex-1 text-left min-w-0">
             <h4 className="text-[12px] font-black text-slate-900 leading-tight">
-              Bước 4: Thêm hóa đơn chi tiêu (Chi từ Quỹ) 📝
-            </h4>
+              {ui('m8258494ee5')}</h4>
             <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-              Bắt đầu ghi chép các hóa đơn đi lại, ăn uống phát sinh. Người chi trả sẽ tự động mặc định là <b>Quỹ Nhóm</b>.
+              {ui('mc95286ecee')}<b>{ui('m3f56f2dd08')}</b>.
             </p>
             {currentStep === 4 && (
               <button
@@ -269,7 +261,7 @@ export default function DuHiOnboarding({
                 className="mt-2.5 inline-flex items-center gap-1.5 bg-[#03B875] hover:bg-[#02965f] text-white text-[10px] font-extrabold px-3 py-1.5 rounded-lg transition-all shadow-3xs hover:scale-[1.02] active:scale-95 cursor-pointer uppercase tracking-wider"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Ghi chi tiêu từ Quỹ</span>
+                <span>{ui('m9a8f1ea1f9')}</span>
               </button>
             )}
           </div>

@@ -1,21 +1,20 @@
+import { getLocale } from '../i18n/core';
+import { ui } from '../i18n/core';
 import React, { useState } from "react";
 import { Member, Expense } from "../types";
 import { getMemberAvatar, getGroupFundAvatar } from "../utils/avatar";
 import { Search, Users, Calendar, User, Trash2, PiggyBank, ArrowDownLeft, ArrowUpRight, ArrowUpDown, Filter, List, ChevronLeft, ChevronRight } from "lucide-react";
-import { Currency, formatCurrencyAmount } from "../utils/i18n";
 
 interface FundHistoryListProps {
   expenses: Expense[];
   members: Member[];
   onDeleteExpense: (id: string) => void;
-  currency?: Currency;
 }
 
 export default function FundHistoryList({
   expenses,
   members,
   onDeleteExpense,
-  currency = "VND",
 }: FundHistoryListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPayerId, setFilterPayerId] = useState("all");
@@ -26,16 +25,16 @@ export default function FundHistoryList({
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  const weekDays = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+  const weekDays = Array.from({ length: 7 }, (_, day) => new Intl.DateTimeFormat(getLocale(), { weekday: 'short' }).format(new Date(2026, 0, 5 + day)));
 
   const getMemberEmojiName = (id: string) => {
     const m = members.find((member) => member.id === id);
-    return m ? `${m.emoji} ${m.name}` : "Ẩn danh";
+    return m ? `${m.emoji} ${m.name}` : ui('m7f0ab3a994');
   };
 
   const getMemberNameOnly = (id: string) => {
     const m = members.find((member) => member.id === id);
-    return m ? m.name : "Ẩn danh";
+    return m ? m.name : ui('m7f0ab3a994');
   };
 
   const getMemberAvatarOnly = (id: string) => {
@@ -73,7 +72,7 @@ export default function FundHistoryList({
 
   // Formatter helper
   const formatMoney = (val: number) => {
-    return formatCurrencyAmount(val, currency);
+    return new Intl.NumberFormat(getLocale()).format(Math.round(val)) + "đ";
   };
 
   const formatDate = (dateStr: string) => {
@@ -99,7 +98,7 @@ export default function FundHistoryList({
   };
 
   const getMonthName = (date: Date) => {
-    return `Tháng ${date.getMonth() + 1} / ${date.getFullYear()}`;
+    return ui('mcdc56b27b5', { v0: date.getMonth() + 1, v1: date.getFullYear() });
   };
 
   const prevMonthHandler = () => {
@@ -141,7 +140,7 @@ export default function FundHistoryList({
     if (total >= 1000) {
       return `${(total / 1000).toFixed(0)}K`;
     }
-    return `${Math.round(total).toLocaleString("vi-VN")}đ`;
+    return ui('mf42237c13c', { v0: Math.round(total).toLocaleString(getLocale()) });
   };
 
   const getGridCells = () => {
@@ -215,13 +214,11 @@ export default function FundHistoryList({
             {viewMode === "calendar" ? (
               <>
                 <Calendar className="h-4.5 w-4.5 text-emerald-600 animate-pulse" />
-                Lịch sử giao dịch Quỹ Nhóm
-              </>
+                {ui('m29e356ce2a')}</>
             ) : (
               <>
                 <PiggyBank className="h-4.5 w-4.5 text-emerald-600 animate-pulse" />
-                Lịch sử giao dịch Quỹ Nhóm
-              </>
+                {ui('m29e356ce2a')}</>
             )}
           </h4>
         </div>
@@ -238,7 +235,7 @@ export default function FundHistoryList({
             }`}
           >
             <List className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Danh sách</span>
+            <span className="hidden sm:inline">{ui('mb27f473652')}</span>
           </button>
           <button
             type="button"
@@ -250,7 +247,7 @@ export default function FundHistoryList({
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Lịch</span>
+            <span className="hidden sm:inline">{ui('m1459c0558d')}</span>
           </button>
         </div>
       </div>
@@ -268,8 +265,7 @@ export default function FundHistoryList({
               }`}
             >
               <Filter className="w-3.5 h-3.5" />
-              Bộ lọc
-              {(searchTerm || filterType !== "all" || filterPayerId !== "all") && (
+              {ui('m75051abc1e')}{(searchTerm || filterType !== "all" || filterPayerId !== "all") && (
                 <span className="flex items-center justify-center bg-emerald-500 text-white w-4 h-4 rounded-full text-[0.5625rem]">
                   {Number(!!searchTerm) + Number(filterType !== "all") + Number(filterPayerId !== "all")}
                 </span>
@@ -281,7 +277,7 @@ export default function FundHistoryList({
             <div className="relative w-full sm:w-auto">
               <input
                 type="text"
-                placeholder="Tìm giao dịch quỹ..."
+                placeholder={ui('m755bf93ce6')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="bg-slate-50 border border-slate-200 rounded-xl py-1.5 pl-8 pr-3 text-[0.6875rem] w-full sm:w-32 focus:bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all text-slate-800 font-medium"
@@ -293,25 +289,25 @@ export default function FundHistoryList({
 
             <div className="relative flex-1 sm:flex-none min-w-[7.5rem]">
               <select
-                aria-label="Lọc loại quỹ"
+                aria-label={ui('me9aa850a06')}
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl py-1.5 pl-2 pr-6 text-[0.6875rem] font-semibold focus:bg-white focus:outline-none text-slate-705 cursor-pointer appearance-none"
               >
-                <option value="all">Mọi loại quỹ</option>
-                <option value="in">📥 Thu vào Quỹ</option>
-                <option value="out">📤 Chi từ Quỹ</option>
+                <option value="all">{ui('m1b92854915')}</option>
+                <option value="in">{ui('maa257a1a46')}</option>
+                <option value="out">{ui('mc433e43dbc')}</option>
               </select>
             </div>
 
             <div className="relative flex-1 sm:flex-none min-w-[7.5rem]">
               <select
-                aria-label="Lọc thành viên"
+                aria-label={ui('m080aa76d9f')}
                 value={filterPayerId}
                 onChange={(e) => setFilterPayerId(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl py-1.5 pl-2 pr-6 text-[0.6875rem] font-semibold focus:bg-white focus:outline-none text-slate-705 cursor-pointer appearance-none"
               >
-                <option value="all">Mọi người đóng</option>
+                <option value="all">{ui('m3a4b939315')}</option>
                 {members.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.emoji} {m.name}
@@ -332,7 +328,7 @@ export default function FundHistoryList({
               type="button"
               onClick={prevMonthHandler}
               className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-600 cursor-pointer transition-colors"
-              title="Tháng trước"
+              title={ui('m0cfd503bec')}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -343,7 +339,7 @@ export default function FundHistoryList({
               type="button"
               onClick={nextMonthHandler}
               className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-600 cursor-pointer transition-colors"
-              title="Tháng sau"
+              title={ui('m9495e9380e')}
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -396,7 +392,7 @@ export default function FundHistoryList({
                       {cell.day}
                     </span>
                     {isToday && (
-                      <span className="w-1.5 h-1.5 bg-[#03B875] rounded-full animate-ping" title="Hôm nay" />
+                      <span className="w-1.5 h-1.5 bg-[#03B875] rounded-full animate-ping" title={ui('m0048b6a408')} />
                     )}
                   </div>
 
@@ -440,11 +436,11 @@ export default function FundHistoryList({
       {displayExpenses.length === 0 ? (
         <div className="text-center py-12 text-slate-400 text-xs space-y-2">
           {viewMode === "calendar" && selectedDate ? (
-            <p>Không có giao dịch quỹ nào trong ngày {selectedDate.split("-").reverse().join("/")}</p>
+            <p>{ui('m9045cff46c')}{selectedDate.split("-").reverse().join("/")}</p>
           ) : (
             <>
-              <p>Không tìm thấy hoạt động Quỹ nào.</p>
-              <p className="text-[0.6875rem] text-slate-450 italic">Bạn hãy thực hiện tất toán công nợ theo phương thức Thu/Chi Quỹ ở trên!</p>
+              <p>{ui('mef6b2da6a1')}</p>
+              <p className="text-[0.6875rem] text-slate-450 italic">{ui('m58d7a1dc96')}</p>
             </>
           )}
         </div>
@@ -453,15 +449,14 @@ export default function FundHistoryList({
           {viewMode === "calendar" && selectedDate && (
             <div className="bg-slate-50 px-4 py-2 border-b border-slate-100 flex items-center justify-between sticky top-0 z-20">
               <span className="text-[11px] font-bold text-slate-700">
-                Giao dịch ngày {selectedDate.split("-").reverse().join("/")}
+                {ui('mc592249245')}{selectedDate.split("-").reverse().join("/")}
               </span>
               <button
                 type="button"
                 onClick={() => setSelectedDate(null)}
                 className="text-[10px] text-slate-500 hover:text-slate-800 font-semibold"
               >
-                Đóng
-              </button>
+                {ui('md2b73ab2ad')}</button>
             </div>
           )}
           {displayExpenses.map((expense) => {
@@ -489,7 +484,7 @@ export default function FundHistoryList({
                         ? "bg-rose-50 border-rose-100 text-rose-500"
                         : "bg-emerald-50 border-emerald-100 text-emerald-600"
                     }`}
-                    title={isNopQuy ? "Thu vào Quỹ" : "Chi từ Quỹ"}
+                    title={isNopQuy ? ui('m696e3ba212') : ui('m3e9fdb0b3f')}
                   >
                     {isNopQuy ? (
                       <ArrowDownLeft className="h-5 w-5 text-rose-500 shrink-0" />
@@ -529,8 +524,8 @@ export default function FundHistoryList({
                         )}
                         <span>
                           {expense.description.includes("[Nhận Quỹ]") 
-                            ? "Trưởng nhóm / Thủ quỹ" 
-                            : `${getMemberNameOnly(expense.payerId)} (Thành viên)`}
+                            ? ui('m5d9903dd63')
+                            : ui('me8c16a825f', { v0: getMemberNameOnly(expense.payerId) })}
                         </span>
                       </span>
                       <span className="text-slate-350">•</span>
@@ -549,7 +544,7 @@ export default function FundHistoryList({
                       {isNopQuy ? "+" : "-"}{formatMoney(expense.amount)}
                     </p>
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">
-                      {isNopQuy ? "Đã nộp vào quỹ" : "Đã trả từ quỹ"}
+                      {isNopQuy ? ui('m48934a526c') : ui('m69f017a04b')}
                     </p>
                   </div>
 
@@ -557,10 +552,10 @@ export default function FundHistoryList({
                     <button
                       onClick={() => onDeleteExpense(expense.id)}
                       className="p-1.5 px-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all flex items-center gap-1.5 text-[11px] cursor-pointer font-bold border border-slate-100 hover:border-rose-100"
-                      title="Xóa giao dịch này"
+                      title={ui('ma5cfd1c200')}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      <span>Xóa</span>
+                      <span>{ui('maa1d94fc16')}</span>
                     </button>
                   </div>
                 </div>

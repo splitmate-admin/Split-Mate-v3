@@ -1,3 +1,4 @@
+import { ui } from '../i18n/core';
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -29,42 +30,42 @@ export default function OnboardingTutorial({ onClose, onStart, userName }: Onboa
   const steps = [
     {
       id: 1,
-      title: "Chào mừng bạn đến với SplitMate! 🚀",
-      description: `Chào ${userName || "bạn"}, hệ thống quản lý chi tiêu nhóm thông minh đã sẵn sàng phục vụ bạn. Hãy để chúng tôi giúp bạn "sòng phẳng" hơn trong mọi cuộc vui.`,
+      get title() { return ui('m0f5119a1a4'); },
+      description: ui('mcdbce1a1a1', { v0: userName || ui('me8f0432213') }),
       icon: <Rocket className="w-8 h-8 text-emerald-600" />,
-      button: "Bắt đầu thôi",
+      get button() { return ui('m5424f31b98'); },
       image: imgWelcome
     },
     {
       id: 2,
-      title: "Bước 1: Tạo Nhóm Đầu Tiên",
-      description: "Click vào nút '+' ở góc trên cùng để tạo không gian riêng cho nhóm của bạn (ví dụ: 'Du lịch Đà Lạt', 'Ăn uống cuối tuần').",
+      get title() { return ui('mfe3fbaa63f'); },
+      get description() { return ui('me23f113d91'); },
       icon: <Plus className="w-8 h-8 text-pink-600" />,
-      button: "Tiếp theo",
+      get button() { return ui('mf202ea2312'); },
       image: imgCreateGroup
     },
     {
       id: 3,
-      title: "Bước 2: Thêm Thành Viên",
-      description: "Thêm bạn bè vào danh sách. Hệ thống sẽ tự động cấp 'Mã truy cập' để họ có thể tự vào xem báo cáo và nộp biên lai.",
+      get title() { return ui('m93a9767468'); },
+      get description() { return ui('me01fc63165'); },
       icon: <Users className="w-8 h-8 text-emerald-600" />,
-      button: "Tiếp theo",
+      get button() { return ui('mf202ea2312'); },
       image: imgFriends
     },
     {
       id: 4,
-      title: "Bước 3: Ghi Chép & Chia Tiền",
-      description: "Nhập các khoản chi tiêu hàng ngày. SplitMate sẽ tự động tính toán 'ai nợ ai' một cách chính xác nhất.",
+      get title() { return ui('m72800b74a4'); },
+      get description() { return ui('mb39745b104'); },
       icon: <Receipt className="w-8 h-8 text-orange-600" />,
-      button: "Tiếp theo",
+      get button() { return ui('mf202ea2312'); },
       image: imgCalculator
     },
     {
       id: 5,
-      title: "Nguyên Tắc 'Sòng Phẳng'",
-      description: "Để xóa nhóm thì nhóm phải sòng phẳng - tức là không còn khoản buộc phải thu, chi nào. Điều này giúp bảo vệ quyền lợi của mọi thành viên.",
+      get title() { return ui('m3b71e1d97b'); },
+      get description() { return ui('mda09b14052'); },
       icon: <CheckCircle2 className="w-8 h-8 text-cyan-600" />,
-      button: "Sẵn sàng trải nghiệm!",
+      get button() { return ui('mfde19f005d'); },
       image: imgSettleDelete
     }
   ];
@@ -138,8 +139,7 @@ export default function OnboardingTutorial({ onClose, onStart, userName }: Onboa
               <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
             </button>
             <p className="mt-4 text-[0.6875rem] font-bold text-slate-400 uppercase tracking-widest">
-              Dành 30 giây để bắt đầu hành trình sòng phẳng
-            </p>
+              {ui('m83e79e0e82')}</p>
           </div>
         </div>
       </motion.div>

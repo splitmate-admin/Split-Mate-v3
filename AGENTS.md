@@ -39,6 +39,12 @@ Mọi thông tin chi tiết về Kiến trúc, Database Schema, Luồng Camera A
 Trước khi thực hiện công việc, AI cần kiểm tra `PROJECT_BRAIN.md` để đảm bảo nắm trọn vẹn bối cảnh dự án mà không cần hỏi lại người dùng.
 
 ## LỊCH SỬ NHẬN THỨC CỦA AGENT
+- **17/09/2026 (Đa ngôn ngữ và ngoại tệ)**:
+  - UI dùng `src/i18n/core.ts`, `uiMessages.ts` và `I18nProvider`; hỗ trợ `vi`, `en`, `zh-CN`, mặc định VI. Không ghi chuỗi dịch vào các marker kế toán `[Nộp Quỹ]`, `[Nhận Quỹ]` hoặc thay tên/nội dung người dùng.
+  - Các cấu hình UI ở cấp module dùng getter khi lấy chuỗi dịch, tránh giữ ngôn ngữ cũ. Các `useMemo` tạo nội dung dịch phải phụ thuộc `language`.
+  - `Expense.amount` và `customSplit` vẫn là VND. `Expense.fx` chỉ là snapshot ngoại tệ; không tính lại tỷ giá khi đổi ngôn ngữ hoặc tải khoản chi cũ.
+  - Tỷ giá tham khảo qua `/api/fx/rates`, cache 1 giờ; lỗi phải cho nhập thủ công, không tự đoán tỷ giá. VietQR khóa số tiền và OCR dùng VND.
+  - Chạy `npm run lint`, `npm run test`, `npm run build` khi đổi i18n hoặc tiền tệ.
 - **03/09/2026 (Loại bỏ AI Khớp Lệnh Tự Động & Chuẩn hóa Đối Soát Biên Lai Chuyển Khoản)**:
   - **Mục tiêu**: Khắc phục triệt để lỗi biên lai chuyển khoản (ví dụ: hoàn tiền 2.000.000đ cho Panh) bị AI tự động duyệt dẫn đến xung đột ghi đè state làm mất khoản chi tiêu khấu trừ công nợ, đồng thời loại bỏ rủi ro AI tự duyệt ngoài ý muốn.
   - **Thực hiện (`src/components/SettleUpSection.tsx`)**:

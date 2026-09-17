@@ -1,4 +1,8 @@
+import { formatDisplayDateTime } from '../utils/dateUtils';
+import { errorMessage as localizeError } from '../i18n/core';
+import { ui } from '../i18n/core';
 import React, { useState, useEffect } from "react";
+import { LanguageSwitcher } from './LanguageSwitcher';
 import { motion, AnimatePresence } from "motion/react";
 import { 
   LogOut, Globe, ChevronRight, X, ChevronDown, User, Sparkles, Crown, Settings, 
@@ -181,7 +185,7 @@ export default function SmartHeader({
     const cleanEmail = editEmail.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!cleanEmail || !emailRegex.test(cleanEmail)) {
-      showAlert("Email không hợp lệ", "Vui lòng nhập địa chỉ Email chính xác trước khi gửi mã OTP.");
+      showAlert(ui('me3d38be3c7'), ui('mf442a96a2e'));
       return;
     }
 
@@ -199,13 +203,13 @@ export default function SmartHeader({
       });
       const data = await res.json();
       if (!res.ok) {
-        showAlert("❌ Gửi Mã OTP Thất Bại", data.error || "Gặp sự cố khi gửi mã OTP.");
+        showAlert(ui('me1db07a8d8'), localizeError(data.error, ui('m93181c4c2b')));
       } else {
         setMemberOtpCooldown(60);
-        showAlert("📩 Đã Gửi Mã OTP", data.message || `Mã OTP 6 chữ số đã được gửi tới ${cleanEmail}. Vui lòng kiểm tra hộp thư.`);
+        showAlert(ui('m4310f9ad3b'), localizeError(data.message, `Mã OTP 6 chữ số đã được gửi tới ${cleanEmail}. Vui lòng kiểm tra hộp thư.`));
       }
     } catch (err: any) {
-      showAlert("Lỗi", err.message || "Không thể gửi mã OTP xác thực.");
+      showAlert(ui('md290780737'), localizeError(err.message, ui('mc23aa188c8')));
     } finally {
       setIsSendingMemberOtp(false);
     }
@@ -221,7 +225,7 @@ export default function SmartHeader({
       if (isAdmin) {
         setShowGroupSettings(true);
       } else {
-        showAlert("Không có quyền", "Chỉ Trưởng nhóm (Quản trị viên) mới có quyền cài đặt và cấu hình thông tin nhóm.");
+        showAlert(ui('m1c6ba8de8b'), ui('ma62e773e3e'));
       }
     };
     const handleOpenMembers = () => {
@@ -243,7 +247,7 @@ export default function SmartHeader({
         setEditEmail(effectiveMember.email || "");
         setEditPhotoURL(effectiveMember.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(effectiveMember.name)}`);
       } else {
-        setEditDisplayName(user?.displayName || user?.email?.split("@")[0] || "Thành viên");
+        setEditDisplayName(user?.displayName || user?.email?.split("@")[0] || ui('mcd264c4a8f'));
         setEditEmail(user?.email || "");
         setEditPhotoURL(user?.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(user?.email || "Guest")}`);
       }
@@ -310,7 +314,7 @@ export default function SmartHeader({
       }
 
       if (!user?.email) {
-        showAlert("Lỗi", "Không tìm thấy thông tin tài khoản hợp lệ.");
+        showAlert(ui('md290780737'), ui('m0694b69912'));
         return;
       }
 
@@ -327,14 +331,14 @@ export default function SmartHeader({
       });
       const data = await res.json();
       if (data.success) {
-        showAlert("Thành công", "Đã lưu thông tin tài khoản cá nhân!");
+        showAlert(ui('m9a7d703709'), ui('m8f882b447d'));
         setIsEditingBankInfo(false);
       } else {
-        throw new Error(data.error || "Lỗi lưu dữ liệu");
+        throw new Error(localizeError(data.error, ui('mde67baf00c')));
       }
     } catch (err: any) {
       console.error(err);
-      showAlert("Lỗi", err.message || "Không thể lưu thông tin tài khoản.");
+      showAlert(ui('md290780737'), localizeError(err.message, ui('mc556900477')));
     } finally {
       setIsSavingPersonalBank(false);
     }
@@ -342,7 +346,7 @@ export default function SmartHeader({
 
   const handleSaveProfile = async () => {
     if (!editDisplayName.trim()) {
-      showAlert("Lỗi", "Tên hiển thị không được để trống.");
+      showAlert(ui('md290780737'), ui('mdaaa2cfcc8'));
       return;
     }
 
@@ -352,17 +356,17 @@ export default function SmartHeader({
     if (isNewEmailLink) {
       if (editPassword.trim()) {
         if (editPassword.trim().length < 4) {
-          showAlert("Mật khẩu quá ngắn", "Mật khẩu bảo mật tối thiểu phải từ 4 ký tự.");
+          showAlert(ui('m26d5401c04'), ui('mcc0d4f8e13'));
           return;
         }
         if (editPassword.trim() !== editConfirmPassword.trim()) {
-          showAlert("Mật khẩu không khớp", "Mật khẩu xác nhận không khớp với mật khẩu đã nhập.");
+          showAlert(ui('m7c74adf800'), ui('mebcdddbac9'));
           return;
         }
       }
 
       if (!editOtpCode.trim() || editOtpCode.trim().length !== 6) {
-        showAlert("Thiếu mã OTP", "Vui lòng bấm 'Gửi mã OTP' và nhập mã OTP 6 chữ số được gửi tới email để xác thực liên kết.");
+        showAlert(ui('m976220bbd1'), ui('me3df365eb6'));
         return;
       }
     }
@@ -386,7 +390,7 @@ export default function SmartHeader({
           await onEditMember(updated);
         }
         if (isNewEmailLink) {
-          showAlert("Xác thực & Liên kết thành công", `🎉 Đã xác thực email ${newEmailClean} thành công! Email đã được khóa bảo mật cố định. Bạn có thể đăng nhập lại ứng dụng bất cứ lúc nào.`);
+          showAlert(ui('m859d1987c7'), ui('m16304cf9a3', { v0: newEmailClean }));
         }
         setIsEditingProfile(false);
         setEditPassword("");
@@ -396,7 +400,7 @@ export default function SmartHeader({
       }
 
       if (!user?.email) {
-        showAlert("Lỗi", "Không tìm thấy thông tin tài khoản hợp lệ.");
+        showAlert(ui('md290780737'), ui('m0694b69912'));
         return;
       }
 
@@ -411,17 +415,17 @@ export default function SmartHeader({
       });
       const data = await res.json();
       if (data.success) {
-        showAlert("Thành công", "Đã cập nhật hồ sơ thành công!");
+        showAlert(ui('m9a7d703709'), ui('m4d6d34b514'));
         setIsEditingProfile(false);
         if (onUpdateUser) {
           onUpdateUser(data.user, data.updatedGroups);
         }
       } else {
-        throw new Error(data.error || "Lỗi cập nhật hồ sơ.");
+        throw new Error(localizeError(data.error, ui('mdceaefb12b')));
       }
     } catch (err: any) {
       console.error(err);
-      showAlert("Lỗi", err.message || "Không thể cập nhật hồ sơ.");
+      showAlert(ui('md290780737'), localizeError(err.message, ui('mb35ecf5802')));
     } finally {
       setIsSavingProfile(false);
     }
@@ -430,13 +434,13 @@ export default function SmartHeader({
   const handleDeleteAccount = () => {
     const targetEmail = user?.email || effectiveMember?.email;
     if (!targetEmail) {
-      showAlert("Thông báo", "Tài khoản của bạn chưa liên kết Email nên không có tài khoản độc lập để xóa. Bạn có thể chọn 'Rời khỏi nhóm' hoặc 'Đăng xuất'.");
+      showAlert(ui('m5d6af377c2'), ui('mc606da13d8'));
       return;
     }
     setShowPersonalDrawer(false);
     askConfirm(
-      "Xác nhận xóa tài khoản vĩnh viễn",
-      `CẢNH BÁO NGUY HIỂM: Hành động này KHÔNG THỂ HOÀN TÁC. Tài khoản đăng nhập, các nhóm bạn sở hữu và email liên kết (${targetEmail}) sẽ bị XÓA VĨNH VIỄN khỏi hệ thống. Bạn có chắc chắn muốn xóa tài khoản?`,
+      ui('maebdc239a5'),
+      ui('m2d6e1ffb89', { v0: targetEmail }),
       async () => {
         try {
           const res = await fetch("/api/user/delete-account", {
@@ -446,14 +450,14 @@ export default function SmartHeader({
           });
           const data = await res.json();
           if (data.success) {
-            showAlert("Xóa tài khoản thành công", "Tài khoản của bạn đã được xóa vĩnh viễn khỏi hệ thống.");
+            showAlert(ui('m060a8cb22d'), ui('mc2b9486e66'));
             onLogout();
           } else {
-            throw new Error(data.error || "Lỗi xóa tài khoản");
+            throw new Error(localizeError(data.error, ui('meae012865b')));
           }
         } catch (err: any) {
           console.error(err);
-          showAlert("Lỗi", err.message || "Không thể thực hiện xóa tài khoản.");
+          showAlert(ui('md290780737'), localizeError(err.message, ui('m3374221acc')));
         }
       }
     );
@@ -464,7 +468,7 @@ export default function SmartHeader({
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      showAlert("Lỗi hình ảnh", "Vui lòng chọn một file hình ảnh hợp lệ.");
+      showAlert(ui('m01719e3808'), ui('mbe2e8dea89'));
       return;
     }
 
@@ -493,13 +497,13 @@ export default function SmartHeader({
       const data = await response.json();
       if (response.ok && data.url) {
         setEditPhotoURL(data.url);
-        showAlert("Thành công", "Đã tải lên ảnh đại diện mới. Hãy bấm 'Lưu' để hoàn tất.");
+        showAlert(ui('m9a7d703709'), ui('mdc33f21200'));
       } else {
-        throw new Error(data.error || "Lỗi upload");
+        throw new Error(localizeError(data.error, ui('mfbe7344aca')));
       }
     } catch (err) {
       console.error(err);
-      showAlert("Lỗi", "Không thể tải ảnh đại diện lên. Vui lòng thử lại.");
+      showAlert(ui('md290780737'), ui('m655c8e7348'));
     }
   };
 
@@ -536,7 +540,7 @@ export default function SmartHeader({
   // Handle uploading group image
   const handleGroupImageUpload = async (file: File) => {
     if (!file.type.startsWith("image/")) {
-      showAlert("Lỗi hình ảnh", "Vui lòng chọn một file hình ảnh hợp lệ.");
+      showAlert(ui('m01719e3808'), ui('mbe2e8dea89'));
       return;
     }
     try {
@@ -557,20 +561,20 @@ export default function SmartHeader({
       const data = await response.json();
       if (data.success && data.url) {
         setTempGroupImage(data.url);
-        showAlert("Thành công", "Đã tải lên ảnh đại diện mới. Hãy bấm 'Lưu cấu hình' để hoàn tất.");
+        showAlert(ui('m9a7d703709'), ui('ma56aa3b368'));
       } else {
-        throw new Error(data.error || "Lỗi upload");
+        throw new Error(localizeError(data.error, ui('mfbe7344aca')));
       }
     } catch (err) {
       console.error(err);
-      showAlert("Lỗi", "Không thể tải ảnh nhóm lên. Vui lòng thử lại.");
+      showAlert(ui('md290780737'), ui('ma178902969'));
     }
   };
 
   // Upload fund QR code (MoMo/Bank)
   const handleQrImageUpload = async (file: File, type: "momo" | "bank") => {
     if (!file.type.startsWith("image/")) {
-      showAlert("Lỗi hình ảnh", "Vui lòng chọn một file hình ảnh hợp lệ.");
+      showAlert(ui('m01719e3808'), ui('mbe2e8dea89'));
       return;
     }
     try {
@@ -595,13 +599,13 @@ export default function SmartHeader({
         } else {
           setBankQrImage(data.url);
         }
-        showAlert("Thành công", "Đã nhận diện và lưu ảnh QR nộp quỹ thành công.");
+        showAlert(ui('m9a7d703709'), ui('m32909ae66b'));
       } else {
-        throw new Error(data.error || "Lỗi upload");
+        throw new Error(localizeError(data.error, ui('mfbe7344aca')));
       }
     } catch (err) {
       console.error(err);
-      showAlert("Lỗi", "Không thể tải ảnh QR lên. Vui lòng thử lại.");
+      showAlert(ui('md290780737'), ui('mac9d6c29e7'));
     }
   };
 
@@ -610,7 +614,7 @@ export default function SmartHeader({
     e.preventDefault();
     if (!activeGroup) return;
     if (!isAdmin) {
-      showAlert("Không có quyền", "Chỉ Trưởng nhóm (Quản trị viên) mới có quyền thay đổi cấu hình nhóm.");
+      showAlert(ui('m1c6ba8de8b'), ui('m3d327f1c42'));
       setShowGroupSettings(false);
       return;
     }
@@ -640,11 +644,11 @@ export default function SmartHeader({
 
       await onUpdateGroup(mergedGroup);
 
-      showAlert("Thành công", "Đã cập nhật cấu hình nhóm và thông tin quỹ chung!");
+      showAlert(ui('m9a7d703709'), ui('mbaf4503702'));
       setShowGroupSettings(false);
     } catch (err) {
       console.error(err);
-      showAlert("Thất bại", "Gặp lỗi trong quá trình lưu thông tin cấu hình.");
+      showAlert(ui('m471434ca39'), ui('m97c81107cb'));
     } finally {
       setIsSaving(false);
     }
@@ -670,13 +674,13 @@ export default function SmartHeader({
 
 
   // Avatar and details of User/Logged-in Member
-  const userName = effectiveMember ? effectiveMember.name : (user?.displayName || user?.email?.split("@")[0] || "Thành viên");
+  const userName = effectiveMember ? effectiveMember.name : (user?.displayName || user?.email?.split("@")[0] || ui('mcd264c4a8f'));
   const userAvatarUrl = effectiveMember 
     ? (effectiveMember.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(effectiveMember.name)}`)
     : (user?.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(user?.email || "Guest")}`);
   const userEmail = effectiveMember 
-    ? (effectiveMember.email || (tryOfflineMode ? "Trưởng nhóm • Chế độ xài 1 lần" : "Đăng nhập bằng mã (Chưa bổ sung email)")) 
-    : (user?.email || "Chưa đồng bộ tài khoản");
+    ? (effectiveMember.email || (tryOfflineMode ? ui('m51b60aa2fe') : ui('m4a1d394772'))) 
+    : (user?.email || ui('m5d85537a09'));
 
   const groupPlan = tryOfflineMode ? "TRY_OFFLINE" : (activeGroup?.plan || "FREE");
 
@@ -713,7 +717,7 @@ export default function SmartHeader({
               type="button"
               onClick={() => setShowNotificationModal(true)}
               className="relative w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/20 active:scale-95 cursor-pointer"
-              title="Thông báo"
+              title={ui('m5d6af377c2')}
             >
               <Bell className="w-4.5 h-4.5 text-slate-500" />
               {unreadCount > 0 && (
@@ -750,7 +754,7 @@ export default function SmartHeader({
               className="flex items-center gap-1 bg-slate-50 border border-slate-100 hover:bg-slate-100/70 transition-all rounded-full px-3 py-1.5 max-w-[180px] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 active:scale-98"
             >
               <span className="font-extrabold text-xs text-slate-850 truncate">
-                {activeGroup?.name || "Chọn nhóm"}
+                {activeGroup?.name || ui('m396f962afd')}
               </span>
               <ChevronDown className="w-3.5 h-3.5 text-slate-450 shrink-0" />
             </button>
@@ -762,7 +766,7 @@ export default function SmartHeader({
                 type="button"
                 onClick={() => setShowNotificationModal(true)}
                 className="relative w-8 h-8 rounded-full bg-slate-50 border border-slate-100 hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/20 active:scale-95 cursor-pointer"
-                title="Thông báo"
+                title={ui('m5d6af377c2')}
               >
                 <Bell className="w-4 h-4 text-slate-500" />
                 {unreadCount > 0 && (
@@ -780,7 +784,7 @@ export default function SmartHeader({
                 type="button"
                 onClick={() => setShowMemberManagement(true)}
                 className="relative flex -space-x-1.5 p-0.5 hover:bg-slate-50 rounded-lg active:scale-95 transition-all focus:outline-none"
-                title="Quản lý thành viên"
+                title={ui('m2251dabb56')}
               >
                 <div className="flex -space-x-1.5">
                   {members.slice(0, 3).map((m, index) => (
@@ -809,7 +813,7 @@ export default function SmartHeader({
                   type="button"
                   onClick={() => setShowGroupSettings(true)}
                   className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/20 active:scale-95 cursor-pointer"
-                  title="Cài đặt nhóm"
+                  title={ui('mbd75ce1856')}
                 >
                   <Settings className="w-4 h-4 text-slate-500" />
                 </button>
@@ -843,8 +847,7 @@ export default function SmartHeader({
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100 px-5 pt-5 shrink-0">
                   <span className="font-extrabold text-sm text-slate-800 tracking-tight flex items-center gap-1.5">
                     <User className="w-4 h-4 text-emerald-600" />
-                    Tài khoản cá nhân
-                  </span>
+                    {ui('m96d16c56fa')}</span>
                   <button
                     onClick={() => setShowPersonalDrawer(false)}
                     className="p-1 text-slate-400 hover:text-slate-600 rounded-full active:scale-95 transition-all"
@@ -858,12 +861,12 @@ export default function SmartHeader({
                   {isEditingProfile ? (
                     <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-4 text-left">
                       <div className="text-center">
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">SỬA THÔNG TIN CÁ NHÂN</span>
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{ui('me4ab17bfcc')}</span>
                       </div>
                       
                       {/* Chọn Avatar */}
                       <div className="space-y-2">
-                        <label className="block text-[10px] font-extrabold text-slate-500 uppercase">Chọn ảnh đại diện</label>
+                        <label className="block text-[10px] font-extrabold text-slate-500 uppercase">{ui('m21bba55588')}</label>
                         <div className="flex items-center gap-3">
                           <div className="relative shrink-0">
                             <img
@@ -888,8 +891,7 @@ export default function SmartHeader({
                           </div>
                           
                           <div className="text-[10px] text-slate-400 font-bold leading-tight">
-                            Nhấp chọn avatar hoạt hình bên dưới hoặc tải ảnh từ thiết bị.
-                          </div>
+                            {ui('m107ed51637')}</div>
                         </div>
 
                         {/* List các avatar hoạt hình có sẵn để chọn nhanh */}
@@ -911,13 +913,13 @@ export default function SmartHeader({
 
                       {/* Nhập tên */}
                       <div className="space-y-1.5">
-                        <label className="block text-[10px] font-extrabold text-slate-500 uppercase">Tên hiển thị</label>
+                        <label className="block text-[10px] font-extrabold text-slate-500 uppercase">{ui('m1e9d85d892')}</label>
                         <input
                           type="text"
                           value={editDisplayName}
                           onChange={(e) => setEditDisplayName(e.target.value)}
                           className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-emerald-500 transition-all"
-                          placeholder="Nhập tên hiển thị..."
+                          placeholder={ui('m78b3a4db1e')}
                         />
                       </div>
 
@@ -929,7 +931,7 @@ export default function SmartHeader({
                         return (
                           <div className="space-y-1.5">
                             <label className="block text-[10px] font-extrabold text-slate-500 uppercase">
-                              {isEmailLocked ? "Email liên kết tài khoản" : "Email tài khoản"}
+                              {isEmailLocked ? ui('me2b2c915fb') : ui('ma6e8a24ced')}
                             </label>
                             <div className="relative">
                               <input
@@ -942,7 +944,7 @@ export default function SmartHeader({
                                     ? "bg-slate-100/80 border-slate-200 text-slate-500 cursor-not-allowed pr-8" 
                                     : "bg-white border-slate-200 text-slate-800 outline-none focus:border-emerald-500"
                                 }`}
-                                placeholder="Nhập email của bạn (ví dụ: name@gmail.com)..."
+                                placeholder={ui('m43b4587ed6')}
                               />
                               {isEmailLocked && (
                                 <Lock className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
@@ -951,45 +953,42 @@ export default function SmartHeader({
 
                             {isEmailLocked ? (
                               <p className="text-[10px] text-slate-500 font-medium leading-tight flex items-center gap-1">
-                                🔒 Email đã được xác thực & liên kết cố định để bảo vệ tài khoản.
-                              </p>
+                                {ui('m98a39113c3')}</p>
                             ) : (
                               <p className="text-[10px] text-emerald-600 font-semibold leading-tight">
-                                💡 Nhập email, xác thực OTP & đặt mật khẩu để đăng nhập lại từ bất kỳ thiết bị nào.
-                              </p>
+                                {ui('m738b90d77c')}</p>
                             )}
 
                             {/* Nếu chưa khóa email và đang nhập email mới -> hiển thị Mật khẩu & Xác thực OTP */}
                             {!isEmailLocked && editEmail.trim() !== "" && (
                               <div className="p-2.5 bg-emerald-50/60 border border-emerald-100 rounded-xl space-y-2 mt-2">
                                 <p className="text-[10px] font-bold text-emerald-800 flex items-center gap-1">
-                                  🔐 Mật khẩu & Mã OTP Xác Thực Email
-                                </p>
+                                  {ui('m6b24e90476')}</p>
                                 <div className="space-y-1">
-                                  <label className="block text-[9px] font-extrabold text-slate-500 uppercase">Mật khẩu mới (tối thiểu 4 ký tự)</label>
+                                  <label className="block text-[9px] font-extrabold text-slate-500 uppercase">{ui('m3fdd699440')}</label>
                                   <input
                                     type="password"
                                     value={editPassword}
                                     onChange={(e) => setEditPassword(e.target.value)}
                                     className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-emerald-500"
-                                    placeholder="Nhập mật khẩu tự chọn..."
+                                    placeholder={ui('m9b049cb69c')}
                                   />
                                 </div>
                                 <div className="space-y-1">
-                                  <label className="block text-[9px] font-extrabold text-slate-500 uppercase">Xác nhận mật khẩu</label>
+                                  <label className="block text-[9px] font-extrabold text-slate-500 uppercase">{ui('m7386c6b173')}</label>
                                   <input
                                     type="password"
                                     value={editConfirmPassword}
                                     onChange={(e) => setEditConfirmPassword(e.target.value)}
                                     className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-emerald-500"
-                                    placeholder="Xác nhận lại mật khẩu..."
+                                    placeholder={ui('me818181bbc')}
                                   />
                                 </div>
 
                                 {/* Nút gửi OTP và Khung nhập mã OTP */}
                                 <div className="pt-1.5 space-y-1.5 border-t border-emerald-200/50">
                                   <div className="flex items-center justify-between gap-2">
-                                    <label className="block text-[9px] font-extrabold text-slate-600 uppercase">Mã OTP xác thực (6 số)</label>
+                                    <label className="block text-[9px] font-extrabold text-slate-600 uppercase">{ui('m08946704bf')}</label>
                                     <button
                                       type="button"
                                       onClick={handleSendMemberOtp}
@@ -997,10 +996,10 @@ export default function SmartHeader({
                                       className="text-[10px] font-bold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-lg transition-all active:scale-95 disabled:opacity-50"
                                     >
                                       {isSendingMemberOtp
-                                        ? "Đang gửi..."
+                                        ? ui('mcecc548a2b')
                                         : memberOtpCooldown > 0
-                                        ? `Gửi lại (${memberOtpCooldown}s)`
-                                        : "📩 Gửi mã OTP"}
+                                        ? ui('m1b45225c4d', { v0: memberOtpCooldown })
+                                        : ui('m1b4f6178e9')}
                                     </button>
                                   </div>
                                   <input
@@ -1009,7 +1008,7 @@ export default function SmartHeader({
                                     value={editOtpCode}
                                     onChange={(e) => setEditOtpCode(e.target.value.replace(/\D/g, ""))}
                                     className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-black text-slate-800 outline-none focus:border-emerald-500 tracking-widest text-center"
-                                    placeholder="Nhập 6 số OTP..."
+                                    placeholder={ui('m9bbb753f7e')}
                                   />
                                 </div>
                               </div>
@@ -1025,15 +1024,14 @@ export default function SmartHeader({
                           onClick={() => setIsEditingProfile(false)}
                           className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 rounded-xl text-xs transition-all active:scale-95"
                         >
-                          Hủy
-                        </button>
+                          {ui('m34ca764caf')}</button>
                         <button
                           type="button"
                           onClick={handleSaveProfile}
                           disabled={isSavingProfile}
                           className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs transition-all active:scale-95 disabled:opacity-50"
                         >
-                          {isSavingProfile ? "Đang lưu..." : "Lưu"}
+                          {isSavingProfile ? ui('m063670e1bf') : ui('ma306970e8b')}
                         </button>
                       </div>
                     </div>
@@ -1067,8 +1065,7 @@ export default function SmartHeader({
                         className="mt-3 flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-600 border border-slate-150 hover:border-emerald-100 rounded-full text-[11px] font-black transition-all active:scale-95 cursor-pointer"
                       >
                         <Edit2 className="w-3 h-3" />
-                        Chỉnh sửa hồ sơ
-                      </button>
+                        {ui('m085de759b0')}</button>
                     </div>
                   )}
 
@@ -1078,11 +1075,10 @@ export default function SmartHeader({
                       <div className="text-left space-y-2">
                         <div className="flex items-center gap-2 text-emerald-800 font-extrabold text-xs">
                           <Building2 className="w-4 h-4 text-emerald-600" />
-                          <span>STK Quỹ Nhóm (Dùng chung)</span>
+                          <span>{ui('m5aad9cc61f')}</span>
                         </div>
                         <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
-                          Trong chế độ xài 1 lần, Trưởng nhóm quản lý trực tiếp STK Quỹ Nhóm để nhận tiền tất toán và xuất PDF/QR cho cả nhóm.
-                        </p>
+                          {ui('m73b88a06b2')}</p>
                         {isAdmin && (
                           <button
                             type="button"
@@ -1093,7 +1089,7 @@ export default function SmartHeader({
                             className="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 px-3 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-3xs active:scale-95"
                           >
                             <Building2 className="w-3.5 h-3.5" />
-                            <span>Cấu hình STK Quỹ Nhóm</span>
+                            <span>{ui('m66f51b1b75')}</span>
                           </button>
                         )}
                       </div>
@@ -1105,7 +1101,7 @@ export default function SmartHeader({
                             
                             <div className="flex justify-between items-start pr-7">
                               <div>
-                                <p className="text-[9px] font-black tracking-widest text-emerald-100 uppercase">Tài khoản mặc định</p>
+                                <p className="text-[9px] font-black tracking-widest text-emerald-100 uppercase">{ui('mcc73646a87')}</p>
                                 <h6 className="text-sm font-extrabold mt-1 truncate max-w-[150px]">
                                   {selectedPersonalBankObj ? (selectedPersonalBankObj.shortCode || selectedPersonalBankObj.name) : personalBankCode}
                                 </h6>
@@ -1115,7 +1111,7 @@ export default function SmartHeader({
                             <div className="mt-5 flex justify-between items-end">
                               <div className="space-y-1">
                                 <p className="text-xs font-mono tracking-wider font-extrabold">{personalBankAccount}</p>
-                                <p className="text-[9px] uppercase font-black tracking-wider text-emerald-100 truncate">{personalBankAccountName || "CHƯA NHẬP TÊN"}</p>
+                                <p className="text-[9px] uppercase font-black tracking-wider text-emerald-100 truncate">{personalBankAccountName || ui('m75c88f33b6')}</p>
                               </div>
                               {selectedPersonalBankObj?.logoUrl ? (
                                 <div className="bg-white/90 p-1 rounded-lg shrink-0 flex items-center justify-center h-6 min-w-10">
@@ -1130,18 +1126,18 @@ export default function SmartHeader({
                               type="button"
                               onClick={() => setIsEditingBankInfo(true)}
                               className="absolute right-3 top-3 p-1.5 bg-white/15 hover:bg-white/25 rounded-full transition-all active:scale-90 cursor-pointer z-10"
-                              title="Chỉnh sửa tài khoản"
+                              title={ui('m4838e71d9f')}
                             >
                               <Edit2 className="w-3 h-3 text-white" />
                             </button>
                           </div>
                         ) : (
                           <div className="space-y-4">
-                            <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Tài khoản mặc định</h5>
+                            <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">{ui('mcc73646a87')}</h5>
                             
                             {/* Bank Selection */}
                             <div className="space-y-1.5 relative">
-                              <label className="block text-[10px] font-extrabold text-slate-500 uppercase">Ngân hàng / Ví</label>
+                              <label className="block text-[10px] font-extrabold text-slate-500 uppercase">{ui('m3838d295ac')}</label>
                               <button
                                 type="button"
                                 onClick={() => setIsPersonalBankDropdownOpen(!isPersonalBankDropdownOpen)}
@@ -1155,7 +1151,7 @@ export default function SmartHeader({
                                     <span className="truncate">{selectedPersonalBankObj.shortCode || selectedPersonalBankObj.name}</span>
                                   </div>
                                 ) : (
-                                  <span className="text-slate-400">Chọn ngân hàng...</span>
+                                  <span className="text-slate-400">{ui('mcca29f897f')}</span>
                                 )}
                                 <ChevronDown className="w-4 h-4 text-slate-450 shrink-0" />
                               </button>
@@ -1169,7 +1165,7 @@ export default function SmartHeader({
                                       value={personalBankSearchTerm}
                                       onChange={(e) => setPersonalBankSearchTerm(e.target.value)}
                                       className="w-full bg-transparent outline-none border-none text-[11px] font-bold text-slate-700"
-                                      placeholder="Tìm ngân hàng..."
+                                      placeholder={ui('m5f91a2bd38')}
                                     />
                                   </div>
                                   <div className="overflow-y-auto flex-1">
@@ -1197,18 +1193,18 @@ export default function SmartHeader({
                             </div>
 
                             <div className="space-y-1.5">
-                              <label className="block text-[10px] font-extrabold text-slate-500 uppercase">Số tài khoản / SĐT</label>
+                              <label className="block text-[10px] font-extrabold text-slate-500 uppercase">{ui('mdf680bda86')}</label>
                               <input
                                 type="text"
                                 value={personalBankAccount}
                                 onChange={(e) => setPersonalBankAccount(e.target.value.replace(/[^0-9]/g, ""))}
                                 className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-emerald-500 transition-all font-mono"
-                                placeholder="Nhập STK hoặc SĐT..."
+                                placeholder={ui('me60db9b83b')}
                               />
                             </div>
 
                             <div className="space-y-1.5">
-                              <label className="block text-[10px] font-extrabold text-slate-500 uppercase">Tên chủ tài khoản</label>
+                              <label className="block text-[10px] font-extrabold text-slate-500 uppercase">{ui('m25d681ecfe')}</label>
                               <input
                                 type="text"
                                 value={personalBankAccountName}
@@ -1225,8 +1221,7 @@ export default function SmartHeader({
                                   onClick={() => setIsEditingBankInfo(false)}
                                   className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-xl text-xs transition-all active:scale-95"
                                 >
-                                  Hủy
-                                </button>
+                                  {ui('m34ca764caf')}</button>
                               )}
                               <button
                                 type="button"
@@ -1236,7 +1231,7 @@ export default function SmartHeader({
                                   personalBankAccount ? 'flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-50' : 'w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-50'
                                 }`}
                               >
-                                {isSavingPersonalBank ? "Đang lưu..." : "Lưu tài khoản"}
+                                {isSavingPersonalBank ? ui('m063670e1bf') : ui('m8d7fe16a6a')}
                               </button>
                             </div>
                           </div>
@@ -1247,20 +1242,20 @@ export default function SmartHeader({
 
                   {/* PHẦN 3: TIỆN ÍCH & CÀI ĐẶT */}
                   <div className="space-y-1">
-                    <button className="w-full flex items-center justify-between px-3 py-3 hover:bg-slate-50 transition-all rounded-xl cursor-pointer text-xs font-bold text-slate-700">
+                    <div className="w-full flex items-center justify-between px-3 py-3 rounded-xl text-xs font-bold text-slate-700">
                       <div className="flex items-center gap-2.5">
                         <Globe className="w-4 h-4 text-slate-450" />
-                        <span>Ngôn ngữ</span>
+                        <span>{ui('m65074a8565')}</span>
                       </div>
                       <div className="flex items-center gap-1 text-slate-450 text-[10px]">
-                        Tiếng Việt <ChevronDown className="w-3.5 h-3.5" />
+                        <LanguageSwitcher />
                       </div>
-                    </button>
+                    </div>
                     
                     <button className="w-full flex items-center justify-between px-3 py-3 hover:bg-slate-50 transition-all rounded-xl cursor-pointer text-xs font-bold text-slate-700">
                       <div className="flex items-center gap-2.5">
                         <Sparkles className="w-4 h-4 text-amber-500" />
-                        <span>Có gì mới?</span>
+                        <span>{ui('m0bfa09e539')}</span>
                       </div>
                       <ChevronRight className="w-4 h-4 text-slate-300" />
                     </button>
@@ -1274,7 +1269,7 @@ export default function SmartHeader({
                     >
                       <div className="flex items-center gap-2.5">
                         <HelpCircle className="w-4 h-4 text-emerald-600" />
-                        <span>Góp ý & FAQ hỗ trợ</span>
+                        <span>{ui('md9a76861a7')}</span>
                       </div>
                       <ChevronRight className="w-4 h-4 text-slate-300" />
                     </button>
@@ -1289,9 +1284,9 @@ export default function SmartHeader({
                       >
                         <div className="flex items-center gap-2.5">
                           <Download className="w-4 h-4 text-emerald-600 animate-bounce" />
-                          <span>Thêm vào Màn hình chính</span>
+                          <span>{ui('mfab1a261e5')}</span>
                         </div>
-                        <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-black">MỚI</span>
+                        <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-black">{ui('m82849b9335')}</span>
                       </button>
                     )}
                   </div>
@@ -1302,8 +1297,8 @@ export default function SmartHeader({
                 <button
                   onClick={() => {
                     askConfirm(
-                      "Xác nhận đăng xuất",
-                      "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản SplitMate?",
+                      ui('m8b1c92e7c9'),
+                      ui('m17a3ca4cb5'),
                       () => {
                         setShowPersonalDrawer(false);
                         onLogout();
@@ -1313,8 +1308,7 @@ export default function SmartHeader({
                   className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 font-bold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer text-xs active:scale-98"
                 >
                   <LogOut className="w-4 h-4" />
-                  Đăng xuất tài khoản
-                </button>
+                  {ui('m6827e6178d')}</button>
                 <button
                   onClick={() => {
                     handleDeleteAccount();
@@ -1322,8 +1316,7 @@ export default function SmartHeader({
                   className="w-full bg-red-50 hover:bg-red-100 border border-red-150 text-red-600 font-bold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer text-xs active:scale-98 shadow-2xs"
                 >
                   <Trash2 className="w-4 h-4" />
-                  Xóa tài khoản vĩnh viễn
-                </button>
+                  {ui('maac306d18e')}</button>
               </div>
             </motion.div>
           </>
@@ -1357,11 +1350,9 @@ export default function SmartHeader({
               <div className="px-5 pb-3 border-b border-slate-100 flex items-center justify-between shrink-0">
                 <h3 className="font-extrabold text-sm text-slate-800 tracking-tight flex items-center gap-1.5">
                   <ArrowLeftRight className="w-4.5 h-4.5 text-emerald-600" />
-                  Đổi nhóm hoạt động
-                </h3>
+                  {ui('m45559d7fa9')}</h3>
                 <span className="text-[10px] font-black bg-slate-100 text-slate-500 py-0.5 px-2.5 rounded-full">
-                  {groups.length} nhóm
-                </span>
+                  {groups.length} {ui('m77c7dc3b70')}</span>
               </div>
 
               {/* List of groups */}
@@ -1396,7 +1387,7 @@ export default function SmartHeader({
                             {g.name}
                           </h4>
                           <p className="text-[10px] text-slate-500 mt-0.5">
-                            {g.members?.length || 0} thành viên • {((g.plan as string) === "HOI_LANG" || (g.plan as string) === "PREMIUM") ? "Hội Làng 👑" : ((g.plan as string) === "BE_BAN" || (g.plan as string) === "VIP") ? "Bè Bạn ⭐" : ((g.plan as string) === "DU_HI_30") ? "Du Hí 🚗" : "Free 🌱"}
+                            {g.members?.length || 0} {ui('m1c51eca543')}{((g.plan as string) === "HOI_LANG" || (g.plan as string) === "PREMIUM") ? ui('m14724ffbc4') : ((g.plan as string) === "BE_BAN" || (g.plan as string) === "VIP") ? ui('m1c14d48cd2') : ((g.plan as string) === "DU_HI_30") ? ui('m47f66d8cab') : "Free 🌱"}
                           </p>
                         </div>
                       </div>
@@ -1433,8 +1424,7 @@ export default function SmartHeader({
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer text-xs active:scale-95"
                 >
                   <Plus className="w-4 h-4" />
-                  Tạo nhóm chi tiêu mới
-                </button>
+                  {ui('m36c0424fa9')}</button>
               </div>
             </motion.div>
           </>
@@ -1469,8 +1459,8 @@ export default function SmartHeader({
                     <Users className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-sm text-slate-850 tracking-tight">Thành viên nhóm</h3>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Thêm, sửa đổi hoặc xóa thành viên</p>
+                    <h3 className="font-extrabold text-sm text-slate-850 tracking-tight">{ui('me91fb7a715')}</h3>
+                    <p className="text-[10px] text-slate-500 mt-0.5">{ui('m97400ca569')}</p>
                   </div>
                 </div>
                 <button
@@ -1531,8 +1521,8 @@ export default function SmartHeader({
                     <Settings className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-sm text-slate-850 tracking-tight">Cấu hình & Cài đặt nhóm</h3>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Dành riêng cho Quản trị viên nhóm</p>
+                    <h3 className="font-extrabold text-sm text-slate-850 tracking-tight">{ui('mf6c114d91b')}</h3>
+                    <p className="text-[10px] text-slate-500 mt-0.5">{ui('me4e9fb5449')}</p>
                   </div>
                 </div>
                 <button
@@ -1548,7 +1538,7 @@ export default function SmartHeader({
                 
                 {/* 4.1. Thông tin chung (Tên, Ảnh đại diện nhóm) */}
                 <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                  <h4 className="font-extrabold text-xs text-slate-750 uppercase tracking-wider">Thông tin nhận diện nhóm</h4>
+                  <h4 className="font-extrabold text-xs text-slate-750 uppercase tracking-wider">{ui('me792fdb6fe')}</h4>
                   
                   <div className="flex items-center gap-4">
                     {/* Square clickable image */}
@@ -1581,13 +1571,13 @@ export default function SmartHeader({
                     </div>
 
                     <div className="flex-1 space-y-1">
-                      <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Tên nhóm hiển thị</label>
+                      <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">{ui('ma16ca6d463')}</label>
                       <input
                         type="text"
                         value={tempGroupName}
                         onChange={(e) => setTempGroupName(e.target.value)}
                         className="w-full bg-slate-100 border-none rounded-xl px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:bg-slate-200/60 transition-all"
-                        placeholder="Ví dụ: Trip Vũng Tàu 2026..."
+                        placeholder={ui('m4362e9a00c')}
                         required
                       />
                     </div>
@@ -1597,8 +1587,8 @@ export default function SmartHeader({
                 {/* 4.2. Cấu hình số tài khoản nhận tiền Quỹ chung (VietQR / MoMo) */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-extrabold text-xs text-slate-750 uppercase tracking-wider">Cấu hình Quỹ chung nhóm</h4>
-                    <span className="bg-emerald-50 text-[#03B875] text-[9px] font-black py-0.5 px-2.5 rounded-full uppercase tracking-wider">Tự động VietQR</span>
+                    <h4 className="font-extrabold text-xs text-slate-750 uppercase tracking-wider">{ui('m8ed6fad9d6')}</h4>
+                    <span className="bg-emerald-50 text-[#03B875] text-[9px] font-black py-0.5 px-2.5 rounded-full uppercase tracking-wider">{ui('m842e850264')}</span>
                   </div>
 
                   {/* THẺ VÍ ẢO NẰM NGANG */}
@@ -1610,9 +1600,9 @@ export default function SmartHeader({
                       
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="text-[10px] font-bold tracking-widest text-emerald-100/80 uppercase">Ví Quỹ Chung Nhóm</p>
+                          <p className="text-[10px] font-bold tracking-widest text-emerald-100/80 uppercase">{ui('m1b1e3c7fc4')}</p>
                           <h6 className="text-sm font-black tracking-tight mt-1 truncate max-w-[200px]">
-                            {selectedBankObj ? (selectedBankObj.shortCode || selectedBankObj.name) : (bankCode || "Chưa thiết lập")}
+                            {selectedBankObj ? (selectedBankObj.shortCode || selectedBankObj.name) : (bankCode || ui('m51036b5d1a'))}
                           </h6>
                         </div>
                         <div className="flex items-center gap-2">
@@ -1635,7 +1625,7 @@ export default function SmartHeader({
                             {bankAccount ? bankAccount.replace(/(\d{4})(?=\d)/g, "$1 ") : "•••• •••• ••••"}
                           </p>
                           <p className="text-[10px] uppercase font-extrabold tracking-widest text-emerald-100/90 truncate max-w-[180px]">
-                            {bankAccountName || "CHƯA THIẾT LẬP"}
+                            {bankAccountName || ui('m890b8e9946')}
                           </p>
                         </div>
                         {selectedBankObj?.logoUrl ? (
@@ -1684,44 +1674,38 @@ export default function SmartHeader({
                     <div className="pt-4 border-t border-slate-100">
                       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-150 space-y-4">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Gói dịch vụ nhóm</span>
+                          <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">{ui('m2f1c85f5c7')}</span>
                           
                           {((groupPlan as string) === "TRY_OFFLINE") ? (
                             <span className="bg-amber-50 text-amber-800 text-[10px] font-black py-1 px-3 rounded-xl border border-amber-200 flex items-center gap-1 shadow-2xs">
-                              ⚡ Chế độ xài 1 lần
-                            </span>
+                              {ui('mf52e7045d3')}</span>
                           ) : ((groupPlan as string) === "HOI_LANG" || (groupPlan as string) === "PREMIUM") ? (
                             <span className="bg-amber-50 text-amber-700 text-[10px] font-black py-1 px-3 rounded-xl border border-amber-200">
-                              👑 Gói HỘI LÀNG
-                            </span>
+                              {ui('m15776b3430')}</span>
                           ) : ((groupPlan as string) === "BE_BAN" || (groupPlan as string) === "VIP") ? (
                             <span className="bg-emerald-50 text-[#03B875] text-[10px] font-black py-1 px-3 rounded-xl border border-emerald-100">
-                              🤝 Gói BÈ BẠN
-                            </span>
+                              {ui('mbbe82fe92a')}</span>
                           ) : ((groupPlan as string) === "DU_HI_30") ? (
                             <span className="bg-blue-50 text-blue-600 text-[10px] font-black py-1 px-3 rounded-xl border border-blue-100 flex items-center gap-1">
-                              🚗 Gói DU HÍ
-                            </span>
+                              {ui('m3d2f5dadd0')}</span>
                           ) : (
                             <span className="bg-slate-100 text-slate-600 text-[10px] font-black py-1 px-3 rounded-xl border border-slate-200">
-                              🌱 Gói FREE
-                            </span>
+                              {ui('mfefca0c1bf')}</span>
                           )}
                         </div>
 
                         {hasPaidPlan && (
                           <div className="bg-white/80 p-3 rounded-xl border border-slate-150 flex flex-col gap-1 text-[10.5px]">
                             <div className="flex justify-between items-center">
-                              <span className="text-slate-500 font-medium">Hạn sử dụng:</span>
+                              <span className="text-slate-500 font-medium">{ui('m14d93a9b8a')}</span>
                               <span className="font-extrabold text-slate-800">
-                                {formatDateTime(fallbackExpiredAt)}
+                                {formatDisplayDateTime(fallbackExpiredAt)}
                               </span>
                             </div>
                             <div className="flex justify-between items-center pt-1 border-t border-slate-100 text-[10px]">
-                              <span className="text-slate-500">Thời gian còn lại:</span>
+                              <span className="text-slate-500">{ui('ma1fb7e02ed')}</span>
                               <span className="font-extrabold text-[#03B875] bg-[#E6F7F0] px-2 py-0.5 rounded-lg border border-[#03B875]/10">
-                                {Math.max(0, Math.ceil((parseFormattedDate(fallbackExpiredAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))} ngày
-                              </span>
+                                {Math.max(0, Math.ceil((parseFormattedDate(fallbackExpiredAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))} {ui('m8ccdd04078')}</span>
                             </div>
                           </div>
                         )}
@@ -1731,10 +1715,9 @@ export default function SmartHeader({
                           {/* Thành viên */}
                           <div className="space-y-1">
                             <div className="flex justify-between items-center text-[10.5px]">
-                              <span className="text-slate-500 font-medium">Thành viên nhóm</span>
+                              <span className="text-slate-500 font-medium">{ui('me91fb7a715')}</span>
                               <span className="font-bold text-slate-800">
-                                {memberCount} / {maxMembers} người
-                              </span>
+                                {memberCount} / {maxMembers} {ui('m0021a30f3e')}</span>
                             </div>
                             <div className="w-full bg-slate-200/60 rounded-full h-1.5 overflow-hidden">
                               <div 
@@ -1747,9 +1730,9 @@ export default function SmartHeader({
                           {/* Hóa đơn */}
                           <div className="space-y-1">
                             <div className="flex justify-between items-center text-[10.5px]">
-                              <span className="text-slate-500 font-medium">Hóa đơn chi tiêu</span>
+                              <span className="text-slate-500 font-medium">{ui('mf5fd4f6017')}</span>
                               <span className="font-bold text-slate-800">
-                                {invoiceCount} / {maxInvoices === Infinity ? "∞ Không giới hạn" : `${maxInvoices} hóa đơn`}
+                                {invoiceCount} / {maxInvoices === Infinity ? ui('m9d92999735') : ui('m769a79f9bf', { v0: maxInvoices })}
                               </span>
                             </div>
                             <div className="w-full bg-slate-200/60 rounded-full h-1.5 overflow-hidden">
@@ -1763,9 +1746,9 @@ export default function SmartHeader({
                           {/* Quét AI */}
                           <div className="space-y-1">
                             <div className="flex justify-between items-center text-[10.5px]">
-                              <span className="text-slate-500 font-medium">Lượt quét hóa đơn AI</span>
+                              <span className="text-slate-500 font-medium">{ui('m5ebcb54cd3')}</span>
                               <span className="font-bold text-slate-800">
-                                {aiScanCount} / {maxScans === Infinity ? "∞" : `${maxScans} lượt`}
+                                {aiScanCount} / {maxScans === Infinity ? "∞" : ui('m077e71f878', { v0: maxScans })}
                               </span>
                             </div>
                             <div className="w-full bg-slate-200/60 rounded-full h-1.5 overflow-hidden">
@@ -1789,8 +1772,7 @@ export default function SmartHeader({
                               className="bg-[#03B875]/10 hover:bg-[#03B875]/20 text-[#03B875] font-extrabold px-3 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer flex items-center gap-1"
                             >
                               <Sparkles className="w-3.5 h-3.5 fill-[#03B875]/10" />
-                              Nâng cấp ngay
-                            </button>
+                              {ui('m58081fcdb2')}</button>
                           </div>
                         )}
                       </div>
@@ -1801,7 +1783,7 @@ export default function SmartHeader({
                 {/* 4.3. Cấu hình quyền hạn thành viên (Ẩn ở Chế độ 1 lần TRY_OFFLINE vì thành viên không đăng nhập) */}
                 {groupPlan !== "TRY_OFFLINE" && (
                   <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between gap-4">
-                    <span className="text-xs font-extrabold text-slate-800">Thành viên được thêm & sửa chi tiêu</span>
+                    <span className="text-xs font-extrabold text-slate-800">{ui('mcc1f0f15d6')}</span>
                     
                     <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
                       <input
@@ -1823,7 +1805,7 @@ export default function SmartHeader({
                     type="button"
                     onClick={() => {
                       if (!activeIsSettled) {
-                        showAlert("Không thể xóa nhóm", "Chỉ cho phép xóa khi nhóm đã thanh toán sòng phẳng (không còn dư nợ).");
+                        showAlert(ui('md083f712a5'), ui('mef7fda7d49'));
                         return;
                       }
                       setShowGroupSettings(false);
@@ -1832,7 +1814,7 @@ export default function SmartHeader({
                     className="text-[11px] font-bold text-slate-400 hover:text-rose-500 transition-all flex items-center gap-1.5 cursor-pointer py-2"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    <span>Xóa vĩnh viễn nhóm này</span>
+                    <span>{ui('m97ac906ed9')}</span>
                   </button>
                 </div>
 
@@ -1868,8 +1850,8 @@ export default function SmartHeader({
                       <div className="p-5 overflow-y-auto space-y-4 flex-1">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="font-extrabold text-sm text-slate-850">Cấu hình tài khoản nhận quỹ</h4>
-                            <p className="text-[10px] text-slate-500 mt-0.5">Thông tin hiển thị khi thành viên chuyển khoản nộp quỹ</p>
+                            <h4 className="font-extrabold text-sm text-slate-850">{ui('m2df4575563')}</h4>
+                            <p className="text-[10px] text-slate-500 mt-0.5">{ui('m802a08201b')}</p>
                           </div>
                           <button
                             type="button"
@@ -1882,7 +1864,7 @@ export default function SmartHeader({
 
                         {/* Bank selector */}
                         <div className="space-y-1.5 relative">
-                          <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Ngân hàng / Ví nhận quỹ</label>
+                          <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">{ui('mae1d3a9282')}</label>
                           <button
                             type="button"
                             onClick={() => setIsBankDropdownOpen(!isBankDropdownOpen)}
@@ -1896,7 +1878,7 @@ export default function SmartHeader({
                                 <span>{selectedBankObj.fullName} ({selectedBankObj.shortCode || selectedBankObj.name})</span>
                               </div>
                             ) : (
-                              <span className="text-slate-400">Chọn ngân hàng thụ hưởng...</span>
+                              <span className="text-slate-400">{ui('m0813c838f0')}</span>
                             )}
                             <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
                           </button>
@@ -1911,7 +1893,7 @@ export default function SmartHeader({
                                   value={bankSearchTerm}
                                   onChange={(e) => setBankSearchTerm(e.target.value)}
                                   className="w-full bg-transparent outline-none border-none text-[11px] font-bold text-slate-700"
-                                  placeholder="Tìm kiếm tên ngân hàng..."
+                                  placeholder={ui('mc26c453ba4')}
                                 />
                               </div>
                               <div className="overflow-y-auto flex-1">
@@ -1934,7 +1916,7 @@ export default function SmartHeader({
                                   </button>
                                 ))}
                                 {filteredBanks.length === 0 && (
-                                  <p className="p-4 text-center text-[10px] text-slate-400">Không tìm thấy ngân hàng</p>
+                                  <p className="p-4 text-center text-[10px] text-slate-400">{ui('mc13de0184c')}</p>
                                 )}
                               </div>
                             </div>
@@ -1943,26 +1925,26 @@ export default function SmartHeader({
 
                         {/* Account number */}
                         <div className="space-y-1.5">
-                          <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Số tài khoản nhận quỹ</label>
+                          <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">{ui('m0876d747ea')}</label>
                           <input
                             type="text"
                             value={bankAccount}
                             onChange={(e) => setBankAccount(e.target.value.replace(/[^0-9]/g, ""))}
                             className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:bg-slate-100/80 transition-all font-mono"
-                            placeholder="Nhập số tài khoản ngân hàng..."
+                            placeholder={ui('ma922926f5d')}
                             required
                           />
                         </div>
 
                         {/* Recipient name */}
                         <div className="space-y-1.5">
-                          <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Tên người thụ hưởng</label>
+                          <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">{ui('m118c854f11')}</label>
                           <input
                             type="text"
                             value={bankAccountName}
                             onChange={(e) => setBankAccountName(e.target.value)}
                             className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:bg-slate-100/80 transition-all uppercase"
-                            placeholder="Ví dụ: NGUYEN VAN A..."
+                            placeholder={ui('mdca9e26dc6')}
                             required
                           />
                         </div>
@@ -1981,16 +1963,14 @@ export default function SmartHeader({
                             }}
                             className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl text-xs transition-all active:scale-95 cursor-pointer text-center"
                           >
-                            Hủy bỏ
-                          </button>
+                            {ui('m247d4b1efe')}</button>
                           <button
                             type="button"
                             disabled={!bankAccount || !bankAccountName}
                             onClick={() => setIsEditingGroupFund(false)}
                             className="flex-1 bg-[#03B875] hover:bg-[#029E64] disabled:opacity-50 text-white font-bold py-3 rounded-xl text-xs shadow-md shadow-emerald-500/10 transition-all active:scale-95 cursor-pointer text-center"
                           >
-                            Xác nhận & Cập nhật
-                          </button>
+                            {ui('md74c940daf')}</button>
                         </div>
                       </div>
                     </motion.div>
@@ -2005,15 +1985,14 @@ export default function SmartHeader({
                   onClick={() => setShowGroupSettings(false)}
                   className="flex-1 bg-white hover:bg-slate-100 text-slate-750 border border-slate-200 font-black py-3 rounded-2xl text-xs active:scale-95 transition-all cursor-pointer text-center"
                 >
-                  Đóng lại
-                </button>
+                  {ui('m4ab9d213cf')}</button>
                 <button
                   type="button"
                   onClick={handleSaveGroupSettings}
                   disabled={isSaving}
                   className="flex-1 bg-[#03B875] hover:bg-[#029E64] disabled:opacity-50 text-white font-black py-3 rounded-2xl text-xs shadow-md shadow-emerald-500/10 active:scale-95 transition-all cursor-pointer text-center flex items-center justify-center gap-1"
                 >
-                  {isSaving ? "Đang lưu..." : "Lưu cấu hình"}
+                  {isSaving ? ui('m063670e1bf') : ui('m3633ceb693')}
                 </button>
               </div>
             </motion.div>

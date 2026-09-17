@@ -1,3 +1,6 @@
+import { formatDisplayDateTime } from '../utils/dateUtils';
+import { errorMessage as localizeError } from '../i18n/core';
+import { ui } from '../i18n/core';
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -57,50 +60,50 @@ interface UpgradeModalProps {
 const PLANS = [
   {
     type: "DU_HI_30" as PlanType,
-    name: "Gói Du Hí 🚗",
-    price: "29.000đ",
+    get name() { return ui('mee0fbc0fe2'); },
+    get price() { return ui('mfdd3fd3f52'); },
     priceRaw: 29000,
     color: "emerald",
     features: [
-      { text: "Tối đa 20 thành viên trong nhóm", icon: Users },
-      { text: "Không giới hạn số lượng hóa đơn", icon: FileText },
-      { text: "100 lượt quét hóa đơn bằng AI / 30 ngày", icon: Scan },
-      { text: "Lưu trữ 100 ảnh hóa đơn / 30 ngày", icon: Image },
-      { text: "Tích hợp sẵn mã QR trả nợ trong file PDF", icon: QrCode },
-      { text: "Xác nhận thanh toán bằng ảnh biên lai", icon: Check },
-      { text: "ĐẶC QUYỀN: Mặc định người trả trước là \"Quỹ nhóm\"", icon: Zap, isSpecial: true },
+      { get text() { return ui('m8c090baace'); }, icon: Users },
+      { get text() { return ui('m632a2b6555'); }, icon: FileText },
+      { get text() { return ui('m32c0f92a28'); }, icon: Scan },
+      { get text() { return ui('mc43acb8ae9'); }, icon: Image },
+      { get text() { return ui('m289edf6dd0'); }, icon: QrCode },
+      { get text() { return ui('m3d207f9d6f'); }, icon: Check },
+      { get text() { return ui('m55ac0f05a1'); }, icon: Zap, isSpecial: true },
     ]
   },
   {
     type: "BE_BAN" as PlanType,
-    name: "Gói Bè Bạn 🤝",
-    price: "49.000đ",
+    get name() { return ui('m8633ebc74f'); },
+    get price() { return ui('mad3a1e1075'); },
     priceRaw: 49000,
     color: "amber",
     features: [
-      { text: "Tối đa 20 thành viên", icon: Users },
-      { text: "Không giới hạn số lượng hóa đơn", icon: FileText },
-      { text: "50 lượt quét AI/tháng", icon: Scan },
-      { text: "Lưu trữ 50 ảnh hóa đơn/tháng", icon: Image },
-      { text: "Tích hợp sẵn mã QR trả nợ trong file PDF", icon: QrCode, isSpecial: true },
-      { text: "Xác nhận thanh toán bằng ảnh biên lai", icon: Check },
-      { text: "Mở khóa Chốt sổ thông minh & Báo cáo PDF", icon: ShieldCheck },
+      { get text() { return ui('mfc8500afa1'); }, icon: Users },
+      { get text() { return ui('m632a2b6555'); }, icon: FileText },
+      { get text() { return ui('m95199f376a'); }, icon: Scan },
+      { get text() { return ui('m1a85170195'); }, icon: Image },
+      { get text() { return ui('m289edf6dd0'); }, icon: QrCode, isSpecial: true },
+      { get text() { return ui('m3d207f9d6f'); }, icon: Check },
+      { get text() { return ui('m0e6e88f92b'); }, icon: ShieldCheck },
     ]
   },
   {
     type: "HOI_LANG" as PlanType,
-    name: "Gói Hội Làng 👑",
-    price: "99.000đ",
+    get name() { return ui('m4ace909a8f'); },
+    get price() { return ui('m801ea753d6'); },
     priceRaw: 99000,
     color: "indigo",
     features: [
-      { text: "Tối đa 50 thành viên", icon: Users },
-      { text: "Không giới hạn số lượng hóa đơn", icon: FileText },
-      { text: "Quét AI KHÔNG GIỚI HẠN", icon: Scan, isSpecial: true },
-      { text: "Lưu trữ 200 ảnh hóa đơn/tháng", icon: Image },
-      { text: "Tích hợp sẵn mã QR trả nợ trong file PDF", icon: QrCode },
-      { text: "Xác nhận thanh toán bằng ảnh biên lai", icon: Check },
-      { text: "Báo cáo Kế toán & Đính kèm hóa đơn gốc", icon: ShieldCheck },
+      { get text() { return ui('m810ed1a0a8'); }, icon: Users },
+      { get text() { return ui('m632a2b6555'); }, icon: FileText },
+      { get text() { return ui('mdff64c92c5'); }, icon: Scan, isSpecial: true },
+      { get text() { return ui('mac1a663b82'); }, icon: Image },
+      { get text() { return ui('m289edf6dd0'); }, icon: QrCode },
+      { get text() { return ui('m3d207f9d6f'); }, icon: Check },
+      { get text() { return ui('m605a78c9df'); }, icon: ShieldCheck },
     ]
   }
 ];
@@ -202,10 +205,9 @@ export default function UpgradeModal({
             </div>
 
             <div className="space-y-1.5">
-              <h3 className="text-base font-black text-slate-850">Cần Tạo Tài Khoản Thủ Quỹ</h3>
+              <h3 className="text-base font-black text-slate-850">{ui('m4583c27c69')}</h3>
               <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed font-medium">
-                Bạn đang trải nghiệm <strong>Chế độ xài 1 lần (Offline)</strong>. Để nâng cấp gói dịch vụ và tự động sao lưu dữ liệu vĩnh viễn trên Cloud, vui lòng Đăng ký hoặc Đăng nhập nhé!
-              </p>
+                {ui('m35db920172')}<strong>{ui('mac12bc537b')}</strong>{ui('mbc34a462ae')}</p>
             </div>
 
             <div className="pt-2 space-y-2">
@@ -217,7 +219,7 @@ export default function UpgradeModal({
                 }}
                 className="w-full bg-[#03B875] hover:bg-[#029a62] text-white font-extrabold text-xs py-3.5 px-4 rounded-xl transition-all shadow-sm active:scale-98 cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <span>Đăng ký / Đăng nhập Thủ quỹ</span>
+                <span>{ui('md40c277023')}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
@@ -226,8 +228,7 @@ export default function UpgradeModal({
                 onClick={onClose}
                 className="w-full bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold text-xs py-2.5 px-4 rounded-xl transition-all cursor-pointer"
               >
-                Đóng
-              </button>
+                {ui('md2b73ab2ad')}</button>
             </div>
           </motion.div>
         </div>
@@ -237,7 +238,7 @@ export default function UpgradeModal({
 
   const handleSelectPlan = (plan: any) => {
     if (isPlanHigherOrEqual(group?.plan, plan.type)) {
-      showAlert("Thông báo", "Nhóm của bạn đã ở gói này hoặc cao hơn.");
+      showAlert(ui('m5d6af377c2'), ui('me36cb82be7'));
       return;
     }
     setSelectedPlan(plan);
@@ -259,12 +260,12 @@ export default function UpgradeModal({
         })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Mã quà tặng không hợp lệ.");
+      if (!res.ok) throw new Error(localizeError(data.error, ui('mbf340b0d28')));
       
       onUpgradeSuccess(data.planType, data.planActivatedAt, data.planExpiredAt);
       onClose();
     } catch (err: any) {
-      showAlert("Lỗi Voucher", err.message);
+      showAlert(ui('m57980e9b5e'), err.message);
     } finally {
       setIsVoucherChecking(false);
     }
@@ -298,14 +299,12 @@ export default function UpgradeModal({
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
                 <Check className="w-10 h-10 text-green-600" />
               </div>
-              <h2 className="text-3xl font-black text-gray-900 mb-2">Thanh toán thành công!</h2>
+              <h2 className="text-3xl font-black text-gray-900 mb-2">{ui('me343294760')}</h2>
               <p className="text-gray-500 mb-8 max-w-sm">
-                Cảm ơn bạn! Nhóm <b>{group.name}</b> đã được nâng cấp lên gói <b>{selectedPlan?.name}</b> thành công.
-              </p>
+                {ui('m5d61db567a')}<b>{group.name}</b> {ui('mf493c6f368')}<b>{selectedPlan?.name}</b> {ui('m723630b040')}</p>
               <div className="flex items-center gap-2 text-sm text-green-600 font-bold">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Đang áp dụng thay đổi...
-              </div>
+                {ui('m6869f4b06a')}</div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -318,9 +317,9 @@ export default function UpgradeModal({
             </div>
             <div>
               <h2 className="text-xl font-bold text-[#0F172A]">
-                {step === "pricing" ? "Nâng cấp Nhóm" : `Thanh toán gói ${selectedPlan?.name}`}
+                {step === "pricing" ? ui('mcb36bc5378') : ui('m40cda9fba3', { v0: selectedPlan?.name })}
               </h2>
-              <p className="text-sm text-gray-500">Mở khóa sức mạnh cho nhóm {group.name}</p>
+              <p className="text-sm text-gray-500">{ui('mabf7a9cc68')}{group.name}</p>
             </div>
           </div>
           <button 
@@ -354,24 +353,23 @@ export default function UpgradeModal({
                          </div>
                          <div className="space-y-1">
                            <h4 className="font-extrabold text-[#0F172A] flex items-center gap-2">
-                             Nhóm đang dùng gói {currentPlanType === "HOI_LANG" ? "Hội Làng 👑" : currentPlanType === "DU_HI_30" ? "Du Hí 🚗" : "Bè Bạn 🤝"}
+                             {ui('mbc519121a9')}{currentPlanType === "HOI_LANG" ? ui('m14724ffbc4') : currentPlanType === "DU_HI_30" ? ui('m47f66d8cab') : ui('m5d35bc723c')}
                            </h4>
                            <p className="text-xs text-slate-600 leading-relaxed">
-                             Thời gian kích hoạt: <span className="font-semibold text-slate-800">
-                               {formatDateTime(fallbackActivatedAt)}
+                             {ui('m090d8e25b1')}<span className="font-semibold text-slate-800">
+                               {formatDisplayDateTime(fallbackActivatedAt)}
                              </span>
                              <br />
-                             Thời gian hết hạn: <span className="font-semibold text-slate-800">
-                               {formatDateTime(fallbackExpiredAt)}
+                             {ui('mf33357ee55')}<span className="font-semibold text-slate-800">
+                               {formatDisplayDateTime(fallbackExpiredAt)}
                              </span>
                            </p>
                          </div>
                        </div>
                        <div className="bg-[#03B875]/10 border border-[#03B875]/20 text-[#03B875] px-4 py-2 rounded-xl text-center shrink-0">
-                         <span className="text-[10px] uppercase font-black tracking-wider block">Thời hạn còn lại</span>
+                         <span className="text-[10px] uppercase font-black tracking-wider block">{ui('m4c822cb718')}</span>
                          <span className="text-lg font-black">
-                           {Math.max(0, Math.ceil((parseFormattedDate(fallbackExpiredAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))} ngày
-                         </span>
+                           {Math.max(0, Math.ceil((parseFormattedDate(fallbackExpiredAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))} {ui('m8ccdd04078')}</span>
                        </div>
                      </div>
                    );
@@ -387,7 +385,7 @@ export default function UpgradeModal({
                          : "text-slate-600 hover:text-slate-900"
                      }`}
                    >
-                     <span>Theo Chuyến 🚗</span>
+                     <span>{ui('m25975f7bdc')}</span>
                    </button>
                    <button
                      onClick={() => setActiveTab("year")}
@@ -397,7 +395,7 @@ export default function UpgradeModal({
                          : "text-[#0F172A] hover:text-slate-900"
                      }`}
                    >
-                     <span>Theo Năm 🤝</span>
+                     <span>{ui('m0461c07d92')}</span>
                    </button>
                  </div>
 
@@ -416,14 +414,14 @@ export default function UpgradeModal({
                          <div className="flex justify-between items-start">
                            <div>
                              <h3 className="text-lg font-extrabold text-[#0F172A] flex items-center gap-2">
-                               <span>Gói Du Hí</span>
+                               <span>{ui('m6f67711ccd')}</span>
                                <span className="bg-[#E6F7F0] text-[#03B875] text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-black">🚗</span>
                              </h3>
-                             <p className="text-xs text-slate-500 mt-1">Gói ngắn hạn tối ưu nhất cho nhóm phượt, du lịch, liên hoan</p>
+                             <p className="text-xs text-slate-500 mt-1">{ui('m6046450a1d')}</p>
                            </div>
                            <div className="text-right">
-                             <div className="text-2xl font-black text-[#0F172A]">29.000đ</div>
-                             <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Cho 30 ngày</div>
+                             <div className="text-2xl font-black text-[#0F172A]">{ui('mfdd3fd3f52')}</div>
+                             <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{ui('m75aa06ba2d')}</div>
                            </div>
                          </div>
                          
@@ -477,28 +475,27 @@ export default function UpgradeModal({
                                  <div className="flex justify-between items-start">
                                    <div>
                                      <h3 className="text-base font-extrabold text-[#0F172A]">{plan.name}</h3>
-                                     <p className="text-[10px] text-slate-500 mt-0.5">Thời hạn 1 năm sử dụng</p>
+                                     <p className="text-[10px] text-slate-500 mt-0.5">{ui('m899bc0d47c')}</p>
                                    </div>
                                    <div className="text-right">
                                      <span className="text-lg font-black text-[#0F172A]">{plan.price}</span>
-                                     <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">/ năm</span>
+                                     <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">{ui('ma0b2bfc115')}</span>
                                    </div>
                                  </div>
                                </div>
 
                                {isCurrent ? (
                                  <span className="inline-block self-start bg-[#E6F7F0] text-[#03B875] rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wider">
-                                   ✓ Đang sử dụng (Hạn: {expireDateFormatted})
+                                   {ui('meb11299ffd')}{expireDateFormatted})
                                  </span>
                                ) : isPlanHigherOrEqual(group.plan, plan.type) ? (
                                  <span className="inline-block self-start bg-slate-100 text-slate-400 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wider">
-                                   ✓ Gói đã kích hoạt (Cao hơn/Bằng)
-                                 </span>
+                                   {ui('mb399d27417')}</span>
                                ) : (
                                  <span className={`inline-block self-start rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wider ${
                                    isSelected ? "bg-[#03B875] text-white" : "bg-slate-100 text-slate-600"
                                  }`}>
-                                   {isSelected ? "Đang chọn" : "Nhấp để chọn"}
+                                   {isSelected ? ui('m1ebb48f4eb') : ui('m15d53e14a9')}
                                  </span>
                                )}
                              </div>
@@ -513,7 +510,7 @@ export default function UpgradeModal({
                          return (
                            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 space-y-3 max-w-2xl mx-auto">
                              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                               Đặc quyền của {activePlanInfo.name}
+                               {ui('m84c0eceaf0')}{activePlanInfo.name}
                              </h4>
                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                                {activePlanInfo.features.map((feat, i) => (
@@ -545,8 +542,7 @@ export default function UpgradeModal({
                      </div>
                      <div>
                        <h4 className="text-xs font-black text-[#0F172A]">
-                         Bạn có Mã quà tặng / Voucher?
-                       </h4>
+                         {ui('m2c445d0c41')}</h4>
                      </div>
                    </div>
 
@@ -555,7 +551,7 @@ export default function UpgradeModal({
                        type="text" 
                        value={voucherCode}
                        onChange={(e) => setVoucherCode(e.target.value)}
-                       placeholder="Nhập mã voucher (VD: SPLITMATE2026)..."
+                       placeholder={ui('m72aa144fee')}
                        className="flex-1 px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold font-mono uppercase text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#03B875] placeholder:normal-case placeholder:font-sans placeholder:font-normal placeholder:text-slate-400"
                      />
                      <button 
@@ -566,16 +562,15 @@ export default function UpgradeModal({
                        {isVoucherChecking ? (
                          <>
                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                           <span>Đang kiểm tra...</span>
+                           <span>{ui('m1e58b883d6')}</span>
                          </>
                        ) : (
-                         <span>Kích hoạt Voucher 🚀</span>
+                         <span>{ui('m4b6e2f2525')}</span>
                        )}
                      </button>
                    </div>
                    <p className="text-[10px] text-slate-400 font-medium italic">
-                     * Mỗi email trưởng nhóm chỉ được áp dụng mã voucher quà tặng 1 lần duy nhất.
-                   </p>
+                     {ui('mcc59027a06')}</p>
                  </div>
               </motion.div>
             ) : (
@@ -598,11 +593,9 @@ export default function UpgradeModal({
                   <div className="text-center space-y-2">
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
                       <Zap className="w-3 h-3 fill-current" />
-                      Tự động xác nhận sau 30-60 giây
-                    </div>
+                      {ui('m7d8f1ab630')}</div>
                     <p className="text-sm text-gray-500">
-                      Vui lòng quét mã và giữ nguyên nội dung chuyển khoản:
-                    </p>
+                      {ui('mbe6e0fa2e0')}</p>
                     <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl font-mono text-amber-700 font-bold select-all">
                       SPLIT{inviteCode}
                     </div>
@@ -614,21 +607,20 @@ export default function UpgradeModal({
                   <div className="space-y-4">
                     <h3 className="font-bold text-gray-900 flex items-center gap-2">
                       <CreditCard className="w-5 h-5 text-gray-400" />
-                      Chi tiết đơn hàng
-                    </h3>
+                      {ui('m5b6352212d')}</h3>
                     <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50 space-y-3">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Gói nâng cấp:</span>
-                        <span className="font-bold text-gray-900">{selectedPlan?.name} {selectedPlan?.type === "DU_HI_30" ? "(Hạn 30 ngày)" : "(Hạn 1 năm)"}</span>
+                        <span className="text-gray-500">{ui('m625c40424d')}</span>
+                        <span className="font-bold text-gray-900">{selectedPlan?.name} {selectedPlan?.type === "DU_HI_30" ? ui('mfabad32e1a') : ui('m849fd8f6f8')}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Áp dụng cho:</span>
+                        <span className="text-gray-500">{ui('mc4fac678be')}</span>
                         <span className="font-medium text-gray-900">{group.name}</span>
                       </div>
                       <div className="h-px bg-gray-200" />
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-900 font-bold">Tổng thanh toán:</span>
-                        <span className="text-2xl font-black text-amber-600">{selectedPlan?.price} <span className="text-xs font-normal text-gray-500">{selectedPlan?.type === "DU_HI_30" ? "/ 30 ngày" : "/ năm"}</span></span>
+                        <span className="text-gray-900 font-bold">{ui('m38924fa7a1')}</span>
+                        <span className="text-2xl font-black text-amber-600">{selectedPlan?.price} <span className="text-xs font-normal text-gray-500">{selectedPlan?.type === "DU_HI_30" ? ui('m8222ae9598') : ui('ma0b2bfc115')}</span></span>
                       </div>
                     </div>
                   </div>
@@ -642,8 +634,8 @@ export default function UpgradeModal({
                         className="w-5 h-5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
                       />
                       <div className="flex-1">
-                        <div className="text-sm font-bold text-gray-900">Chia đều chi phí nâng cấp</div>
-                        <div className="text-xs text-gray-500 italic">Tự động tạo hóa đơn trong nhóm cho khoản phí này</div>
+                        <div className="text-sm font-bold text-gray-900">{ui('m51ba3717c9')}</div>
+                        <div className="text-xs text-gray-500 italic">{ui('m67359f0178')}</div>
                       </div>
                     </label>
                   </div>
@@ -651,14 +643,13 @@ export default function UpgradeModal({
                   <div className="space-y-3">
                     <h4 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                       <Gift className="w-4 h-4 text-gray-400" />
-                      Mã quà tặng / Voucher
-                    </h4>
+                      {ui('m0fab721ccc')}</h4>
                     <div className="flex gap-2">
                       <input 
                         type="text" 
                         value={voucherCode}
                         onChange={(e) => setVoucherCode(e.target.value)}
-                        placeholder="Nhập mã tại đây..."
+                        placeholder={ui('m9419aaf86e')}
                         className="flex-1 px-4 py-2 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-amber-500 uppercase font-mono"
                       />
                       <button 
@@ -666,7 +657,7 @@ export default function UpgradeModal({
                         disabled={!voucherCode.trim() || isVoucherChecking}
                         className="px-6 py-2 bg-[#0F172A] text-white rounded-xl text-sm font-bold hover:bg-slate-800 disabled:opacity-50"
                       >
-                        {isVoucherChecking ? "Đang kiểm tra..." : "Áp dụng"}
+                        {isVoucherChecking ? ui('m1e58b883d6') : ui('m1e948c5913')}
                       </button>
                     </div>
                   </div>
@@ -674,16 +665,14 @@ export default function UpgradeModal({
                   <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex gap-3">
                     <AlertCircle className="w-5 h-5 text-blue-500 shrink-0" />
                     <p className="text-xs text-blue-700 leading-relaxed">
-                      Gói dịch vụ có thời hạn {selectedPlan?.type === "DU_HI_30" ? "30 ngày" : "1 năm"} kể từ thời điểm kích hoạt. Hệ thống sẽ tự động đóng màn hình này sau khi nhận được tiền. Nếu quá 5 phút chưa thấy cập nhật, vui lòng liên hệ admin.
-                    </p>
+                      {ui('m29961a5f4a')}{selectedPlan?.type === "DU_HI_30" ? ui('mc67759da28') : ui('m395483d76d')} {ui('m9e972dc17e')}</p>
                   </div>
 
                   <button 
                     onClick={() => setStep("pricing")}
                     className="w-full py-2 text-gray-500 text-sm font-medium hover:text-gray-900"
                   >
-                    Quay lại bảng giá
-                  </button>
+                    {ui('m75e8314a34')}</button>
                 </div>
               </motion.div>
             )}
@@ -724,8 +713,7 @@ export default function UpgradeModal({
                     className="w-full max-w-md py-4 bg-emerald-50 text-[#03B875] rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-1.5 cursor-default border border-[#03B875]/20"
                   >
                     <Check className="w-5 h-5 stroke-[3px]" />
-                    Bạn đang sử dụng gói này
-                  </button>
+                    {ui('m6192720d98')}</button>
                 );
               }
 
@@ -736,7 +724,7 @@ export default function UpgradeModal({
                       <div className="w-full text-center p-3.5 bg-amber-50 border border-amber-100 rounded-2xl">
                         <p className="text-xs text-amber-800 font-bold leading-relaxed flex items-center justify-center gap-1.5">
                           <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
-                          <span>Nhóm đã sở hữu gói {group.plan === "HOI_LANG" ? "Hội Làng 👑" : "Bè Bạn 🤝"}. Hãy tạo nhóm mới để áp dụng Gói Du Hí 🚗 nhé!</span>
+                          <span>{ui('m8cdab00aa9')}{group.plan === "HOI_LANG" ? ui('m14724ffbc4') : ui('m5d35bc723c')}{ui('mb41981efe6')}</span>
                         </p>
                       </div>
                       <button
@@ -748,8 +736,7 @@ export default function UpgradeModal({
                         }}
                         className="w-full py-4 bg-[#03B875] hover:bg-[#029E64] text-white rounded-2xl font-black text-sm transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/10 cursor-pointer flex items-center justify-center gap-1.5"
                       >
-                        🚗 Tạo nhóm mới để dùng Gói Du Hí
-                      </button>
+                        {ui('m2cb138ec85')}</button>
                     </div>
                   );
                 }
@@ -759,8 +746,7 @@ export default function UpgradeModal({
                     disabled
                     className="w-full max-w-md py-4 bg-slate-100 text-slate-400 rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-1.5 cursor-default border border-slate-200"
                   >
-                    Bạn đang sử dụng gói cao hơn
-                  </button>
+                    {ui('m13ea4dcdf7')}</button>
                 );
               }
 

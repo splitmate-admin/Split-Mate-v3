@@ -1,3 +1,5 @@
+import { getLocale } from '../i18n/core';
+import { ui, t } from '../i18n/core';
 import React, { useState, useEffect } from "react";
 import { Member, Expense, Group } from "../types";
 import { 
@@ -23,13 +25,13 @@ interface ExpenseListProps {
 }
 
 const CATEGORY_FILTERS = [
-  { key: "all", name: "Tất cả", emoji: "✨" },
-  { key: "food", name: "Ăn uống", emoji: "🍔" },
-  { key: "transport", name: "Xe cộ", emoji: "🚗" },
-  { key: "shopping", name: "Mua sắm", emoji: "🛍️" },
-  { key: "accommodation", name: "Chỗ ở", emoji: "🏨" },
-  { key: "entertainment", name: "Vui chơi", emoji: "🎉" },
-  { key: "other", name: "Khác", emoji: "💸" }
+  { key: "all", get name() { return ui('mf7a578dcbd'); }, emoji: "✨" },
+  { key: "food", get name() { return ui('ma76a975787'); }, emoji: "🍔" },
+  { key: "transport", get name() { return ui('m7a1ea91c08'); }, emoji: "🚗" },
+  { key: "shopping", get name() { return ui('ma36d416185'); }, emoji: "🛍️" },
+  { key: "accommodation", get name() { return ui('m624eea31f5'); }, emoji: "🏨" },
+  { key: "entertainment", get name() { return ui('m675f351843'); }, emoji: "🎉" },
+  { key: "other", get name() { return ui('m5b8a28abf8'); }, emoji: "💸" }
 ];
 
 export default function ExpenseList({
@@ -92,9 +94,9 @@ export default function ExpenseList({
   }, []);
 
   const getMemberNameOnly = (id: string) => {
-    if (id === "group") return "Quỹ Nhóm";
+    if (id === "group") return ui('m3f56f2dd08');
     const m = members.find((member) => member.id === id);
-    return m ? m.name : "Thành viên cũ";
+    return m ? m.name : ui('m96b61a88c3');
   };
 
   const getMemberAvatarOnly = (id: string) => {
@@ -108,7 +110,7 @@ export default function ExpenseList({
 
   // Formatter helpers
   const formatMoney = (val: number) => {
-    return new Intl.NumberFormat("vi-VN").format(Math.round(val)) + "đ";
+    return new Intl.NumberFormat(getLocale()).format(Math.round(val)) + "đ";
   };
 
   const formatDate = (dateStr: string) => {
@@ -132,31 +134,31 @@ export default function ExpenseList({
   // Auto detect category from description
   const getCategoryFromDescription = (description: string, customCategoryKey?: string) => {
     if (customCategoryKey) {
-      if (customCategoryKey === "food") return { name: "Ăn uống", emoji: "🍔", bg: "bg-orange-50", text: "text-orange-500", key: "food" };
-      if (customCategoryKey === "transport") return { name: "Xe cộ", emoji: "🚗", bg: "bg-blue-50", text: "text-blue-500", key: "transport" };
-      if (customCategoryKey === "shopping") return { name: "Mua sắm", emoji: "🛍️", bg: "bg-purple-50", text: "text-purple-500", key: "shopping" };
-      if (customCategoryKey === "accommodation") return { name: "Chỗ ở", emoji: "🏨", bg: "bg-cyan-50", text: "text-cyan-500", key: "accommodation" };
-      if (customCategoryKey === "entertainment") return { name: "Vui chơi", emoji: "🎉", bg: "bg-rose-50", text: "text-rose-500", key: "entertainment" };
-      if (customCategoryKey === "other") return { name: "Khác", emoji: "💸", bg: "bg-emerald-50 text-emerald-500", text: "text-emerald-500", key: "other" };
+      if (customCategoryKey === "food") return { get name() { return ui('ma76a975787'); }, emoji: "🍔", bg: "bg-orange-50", text: "text-orange-500", key: "food" };
+      if (customCategoryKey === "transport") return { get name() { return ui('m7a1ea91c08'); }, emoji: "🚗", bg: "bg-blue-50", text: "text-blue-500", key: "transport" };
+      if (customCategoryKey === "shopping") return { get name() { return ui('ma36d416185'); }, emoji: "🛍️", bg: "bg-purple-50", text: "text-purple-500", key: "shopping" };
+      if (customCategoryKey === "accommodation") return { get name() { return ui('m624eea31f5'); }, emoji: "🏨", bg: "bg-cyan-50", text: "text-cyan-500", key: "accommodation" };
+      if (customCategoryKey === "entertainment") return { get name() { return ui('m675f351843'); }, emoji: "🎉", bg: "bg-rose-50", text: "text-rose-500", key: "entertainment" };
+      if (customCategoryKey === "other") return { get name() { return ui('m5b8a28abf8'); }, emoji: "💸", bg: "bg-emerald-50 text-emerald-500", text: "text-emerald-500", key: "other" };
     }
     const desc = description.toLowerCase();
     
     if (desc.includes("ăn") || desc.includes("uống") || desc.includes("trà") || desc.includes("sữa") || desc.includes("lẩu") || desc.includes("nướng") || desc.includes("cơm") || desc.includes("bún") || desc.includes("phở") || desc.includes("cafe") || desc.includes("cà phê") || desc.includes("nhậu") || desc.includes("buffet") || desc.includes("pizza") || desc.includes("bánh") || desc.includes("gà") || desc.includes("quán") || desc.includes("tiệc") || desc.includes("beer") || desc.includes("bia") || desc.includes("mì") || desc.includes("food") || desc.includes("snack") || desc.includes("ngọt")) {
-      return { name: "Ăn uống", emoji: "🍔", bg: "bg-orange-50", text: "text-orange-500", key: "food" };
+      return { get name() { return ui('ma76a975787'); }, emoji: "🍔", bg: "bg-orange-50", text: "text-orange-500", key: "food" };
     }
     if (desc.includes("xe") || desc.includes("xăng") || desc.includes("taxi") || desc.includes("grab") || desc.includes("bus") || desc.includes("buýt") || desc.includes("tàu") || desc.includes("máy bay") || desc.includes("vé") || desc.includes("gửi xe") || desc.includes("di chuyển") || desc.includes("ô tô") || desc.includes("phí đường") || desc.includes("toll") || desc.includes("phà")) {
-      return { name: "Xe cộ", emoji: "🚗", bg: "bg-blue-50", text: "text-blue-500", key: "transport" };
+      return { get name() { return ui('m7a1ea91c08'); }, emoji: "🚗", bg: "bg-blue-50", text: "text-blue-500", key: "transport" };
     }
     if (desc.includes("mua") || desc.includes("sắm") || desc.includes("siêu thị") || desc.includes("chợ") || desc.includes("quần") || desc.includes("áo") || desc.includes("giày") || desc.includes("dép") || desc.includes("shopee") || desc.includes("lazada") || desc.includes("vinmart") || desc.includes("coop") || desc.includes("kính") || desc.includes("túi")) {
-      return { name: "Mua sắm", emoji: "🛍️", bg: "bg-purple-50", text: "text-purple-500", key: "shopping" };
+      return { get name() { return ui('ma36d416185'); }, emoji: "🛍️", bg: "bg-purple-50", text: "text-purple-500", key: "shopping" };
     }
     if (desc.includes("homestay") || desc.includes("khách sạn") || desc.includes("phòng") || desc.includes("ở") || desc.includes("villa") || desc.includes("resort") || desc.includes("nhà nghỉ") || desc.includes("airbnb")) {
-      return { name: "Chỗ ở", emoji: "🏨", bg: "bg-cyan-50", text: "text-cyan-500", key: "accommodation" };
+      return { get name() { return ui('m624eea31f5'); }, emoji: "🏨", bg: "bg-cyan-50", text: "text-cyan-500", key: "accommodation" };
     }
     if (desc.includes("karaoke") || desc.includes("phim") || desc.includes("rạp") || desc.includes("trò chơi") || desc.includes("game") || desc.includes("bar") || desc.includes("club") || desc.includes("spa") || desc.includes("tour") || desc.includes("vui chơi") || desc.includes("giải trí") || desc.includes("vé vào") || desc.includes("cáp treo") || desc.includes("vịnh")) {
-      return { name: "Vui chơi", emoji: "🎉", bg: "bg-rose-50", text: "text-rose-500", key: "entertainment" };
+      return { get name() { return ui('m675f351843'); }, emoji: "🎉", bg: "bg-rose-50", text: "text-rose-500", key: "entertainment" };
     }
-    return { name: "Khác", emoji: "💸", bg: "bg-emerald-50 text-emerald-500", text: "text-emerald-500", key: "other" };
+    return { get name() { return ui('m5b8a28abf8'); }, emoji: "💸", bg: "bg-emerald-50 text-emerald-500", text: "text-emerald-500", key: "other" };
   };
 
   // Parser foreign currencies if any
@@ -214,15 +216,13 @@ export default function ExpenseList({
     if (isNew) {
       return (
         <span key="new" className="inline-flex items-center bg-rose-50 text-rose-500 text-[9px] font-black px-1.5 py-0.5 rounded-md border border-rose-100 select-none uppercase tracking-wider animate-pulse">
-          MỚI THÊM
-        </span>
+          {ui('mb2ce9dd305')}</span>
       );
     }
     if (isEdited) {
       return (
         <span key="edited" className="inline-flex items-center bg-orange-50 text-orange-500 text-[9px] font-black px-1.5 py-0.5 rounded-md border border-orange-100 select-none uppercase tracking-wider">
-          ĐÃ SỬA ✏️
-        </span>
+          {ui('m65d3fcf7a9')}</span>
       );
     }
     return null;
@@ -260,7 +260,7 @@ export default function ExpenseList({
     if (total >= 1000) {
       return `${(total / 1000).toFixed(0)}K`;
     }
-    return `${Math.round(total).toLocaleString("vi-VN")}đ`;
+    return ui('mf42237c13c', { v0: Math.round(total).toLocaleString(getLocale()) });
   };
 
   // Month navigation handlers
@@ -276,7 +276,7 @@ export default function ExpenseList({
 
   // Month name helper
   const getMonthName = (date: Date) => {
-    return `Tháng ${date.getMonth() + 1} / ${date.getFullYear()}`;
+    return ui('mcdc56b27b5', { v0: date.getMonth() + 1, v1: date.getFullYear() });
   };
 
   // Group expenses by Date for clean categorized history lists
@@ -376,12 +376,12 @@ export default function ExpenseList({
   const totalNavigatedMonth = navigatedMonthExpenses.reduce((sum, e) => sum + ((e.description.includes("[Nộp Quỹ]") || e.description.includes("[Nhận Quỹ]")) ? 0 : e.amount), 0);
   const totalSelectedDay = selectedDayExpenses.reduce((sum, e) => sum + ((e.description.includes("[Nộp Quỹ]") || e.description.includes("[Nhận Quỹ]")) ? 0 : e.amount), 0);
 
-  const weekDays = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+  const weekDays = Array.from({ length: 7 }, (_, day) => new Intl.DateTimeFormat(getLocale(), { weekday: 'short' }).format(new Date(2026, 0, 5 + day)));
 
   // Smart User Avatar for the mỏng nhẹ header
   const currentUser = members.find(m => m.id === viewingMemberId);
   const userAvatarUrl = currentUser?.avatar || (isAdmin ? "https://api.dicebear.com/7.x/adventurer/svg?seed=admin" : "https://api.dicebear.com/7.x/adventurer/svg?seed=guest");
-  const userName = currentUser?.name || "Trưởng nhóm";
+  const userName = currentUser?.name || ui('m9c931ee8d2');
 
   return (
     <div className="bg-[#FFFFFF] p-6 max-sm:p-4 rounded-[24px] shadow-[0_8px_30px_rgba(15,23,42,0.03)] border border-slate-100 space-y-5 max-sm:space-y-4 max-sm:h-full max-sm:flex max-sm:flex-col max-sm:overflow-hidden text-[#0F172A]">
@@ -392,12 +392,12 @@ export default function ExpenseList({
           {viewMode === "calendar" ? (
             <>
               <Calendar className="w-4 h-4 text-[#03B875]" />
-              <span>Lịch chi tiêu</span>
+              <span>{ui('ma29dfdc9ae')}</span>
             </>
           ) : (
             <>
               <List className="w-4 h-4 text-[#03B875]" />
-              <span>Danh sách chi tiêu</span>
+              <span>{ui('md4e94a3e64')}</span>
             </>
           )}
         </h4>
@@ -414,7 +414,7 @@ export default function ExpenseList({
             }`}
           >
             <List className="w-3.5 h-3.5" />
-            <span>Danh sách</span>
+            <span>{ui('mb27f473652')}</span>
           </button>
           <button
             type="button"
@@ -426,7 +426,7 @@ export default function ExpenseList({
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
-            <span>Lịch</span>
+            <span>{ui('m1459c0558d')}</span>
           </button>
         </div>
       </div>
@@ -441,7 +441,7 @@ export default function ExpenseList({
             </div>
             <input
               type="text"
-              placeholder="Search here..."
+              placeholder={t('search')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-slate-100/60 border-none rounded-2xl py-2.5 pl-9 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-slate-200 transition-all text-slate-800 placeholder:text-slate-400"
@@ -474,12 +474,12 @@ export default function ExpenseList({
           <div className="bg-slate-50 p-3 rounded-2xl flex flex-col sm:flex-row gap-2 animate-fade-in border border-slate-100">
             <div className="relative flex-1">
               <select
-                aria-label="Lọc người chi"
+                aria-label={ui('m5061df9b9e')}
                 value={filterPayerId}
                 onChange={(e) => setFilterPayerId(e.target.value)}
                 className="w-full bg-white border border-slate-200/60 rounded-xl py-2 pl-3 pr-8 text-xs focus:outline-none focus:ring-1 focus:ring-[#03B875] transition-all text-slate-700 cursor-pointer appearance-none"
               >
-                <option value="all">Tất cả người chi</option>
+                <option value="all">{ui('ma727d99ab4')}</option>
                 {members.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.emoji} {m.name}
@@ -491,13 +491,13 @@ export default function ExpenseList({
 
             <div className="relative flex-1">
               <select
-                aria-label="Sắp xếp hóa đơn"
+                aria-label={ui('m5655c3eb55')}
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as "date" | "updated_at")}
                 className="w-full bg-white border border-slate-200/60 rounded-xl py-2 pl-3 pr-8 text-xs focus:outline-none focus:ring-1 focus:ring-[#03B875] transition-all font-bold text-[#03B875] cursor-pointer appearance-none"
               >
-                <option value="date">📅 Ngày đi ăn</option>
-                <option value="updated_at">✏️ Mới cập nhật</option>
+                <option value="date">{ui('m70fea97608')}</option>
+                <option value="updated_at">{ui('m65e3958bdc')}</option>
               </select>
               <ChevronDown className="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-[#03B875] pointer-events-none" />
             </div>
@@ -535,7 +535,7 @@ export default function ExpenseList({
               type="button"
               onClick={prevMonthHandler}
               className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-600 cursor-pointer transition-colors"
-              title="Tháng trước"
+              title={ui('m0cfd503bec')}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -546,7 +546,7 @@ export default function ExpenseList({
               type="button"
               onClick={nextMonthHandler}
               className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-600 cursor-pointer transition-colors"
-              title="Tháng sau"
+              title={ui('m9495e9380e')}
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -599,7 +599,7 @@ export default function ExpenseList({
                       {cell.day}
                     </span>
                     {isToday && (
-                      <span className="w-1.5 h-1.5 bg-[#03B875] rounded-full animate-ping" title="Hôm nay" />
+                      <span className="w-1.5 h-1.5 bg-[#03B875] rounded-full animate-ping" title={ui('m0048b6a408')} />
                     )}
                   </div>
 
@@ -646,7 +646,7 @@ export default function ExpenseList({
               </div>
               <div className="text-left">
                 <p className="text-[10px] text-[#64748B] font-bold uppercase tracking-wider">
-                  {selectedDate ? `Chi tiêu ngày ${formatDate(selectedDate)}` : `Tổng chi tiêu ${getMonthName(currentMonth)}`}
+                  {selectedDate ? ui('m56b2c8d874', { v0: formatDate(selectedDate) }) : ui('m71fc3ba368', { v0: getMonthName(currentMonth) })}
                 </p>
                 <p className="font-extrabold text-sm sm:text-base text-[#03B875] font-mono">
                   {formatMoney(selectedDate ? totalSelectedDay : totalNavigatedMonth)}
@@ -657,8 +657,8 @@ export default function ExpenseList({
             <div className="text-left sm:text-right shrink-0">
               <p className="text-[11px] text-[#64748B] font-bold">
                 {selectedDate 
-                  ? `Có ${selectedDayExpenses.length} khoản chi tiêu chung` 
-                  : `Có ${navigatedMonthExpenses.length} khoản chi tiêu chung`}
+                  ? ui('m99f9ca9ea4', { v0: selectedDayExpenses.length }) 
+                  : ui('m99f9ca9ea4', { v0: navigatedMonthExpenses.length })}
               </p>
               {selectedDate && (
                 <button 
@@ -666,7 +666,7 @@ export default function ExpenseList({
                   onClick={() => setSelectedDate(null)}
                   className="text-[10px] text-[#03B875] hover:text-[#02935d] font-black cursor-pointer hover:underline inline-flex items-center gap-0.5 mt-0.5"
                 >
-                  <span>← Xem chi tiêu cả tháng</span>
+                  <span>{ui('m882a812208')}</span>
                 </button>
               )}
             </div>
@@ -684,12 +684,10 @@ export default function ExpenseList({
               </div>
               <div className="space-y-1 max-w-sm mx-auto">
                 <span className="inline-block px-3 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white uppercase tracking-wider mb-1 shadow-2xs">
-                  👉 BƯỚC 2: THÊM THÀNH VIÊN VÀO NHÓM
-                </span>
-                <h4 className="font-extrabold text-[#0F172A] text-xs sm:text-sm">Nhóm của bạn hiện mới có 1 người!</h4>
+                  {ui('md458f33600')}</span>
+                <h4 className="font-extrabold text-[#0F172A] text-xs sm:text-sm">{ui('m1ded050351')}</h4>
                 <p className="text-[11px] text-slate-600 leading-relaxed">
-                  Để chia tiền chính xác, hãy thêm các bạn cùng ăn chơi / đi du lịch vào nhóm trước nhé.
-                </p>
+                  {ui('m77b9879eb8')}</p>
               </div>
               <div className="pt-1">
                 <button
@@ -698,7 +696,7 @@ export default function ExpenseList({
                   className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl transition-all shadow-md shadow-amber-500/25 active:scale-95 cursor-pointer uppercase tracking-wider"
                 >
                   <UserPlus className="w-4 h-4 text-white shrink-0" />
-                  <span>Bấm Thêm Thành Viên Ngay</span>
+                  <span>{ui('m338a27f01b')}</span>
                 </button>
               </div>
             </div>
@@ -710,12 +708,10 @@ export default function ExpenseList({
               </div>
               <div className="space-y-1 max-w-sm mx-auto">
                 <span className="inline-block px-3 py-0.5 rounded-full text-[10px] font-black bg-[#03B875] text-white uppercase tracking-wider mb-1 shadow-2xs">
-                  👉 BƯỚC 3: GHI SỔ HÓA ĐƠN ĐẦU TIÊN
-                </span>
-                <h4 className="font-bold text-[#0F172A] text-xs sm:text-sm">Nhập các khoản chi tiêu phát sinh</h4>
+                  {ui('ma2a350859d')}</span>
+                <h4 className="font-bold text-[#0F172A] text-xs sm:text-sm">{ui('mc9935bae55')}</h4>
                 <p className="text-[11px] text-[#64748B] leading-relaxed">
-                  Hãy bấm nút bên dưới để thêm chi phí phát sinh chung, tự động tính toán và chia tiền hoàn hảo.
-                </p>
+                  {ui('ma55964d429')}</p>
               </div>
               {onNavigateToAdd && (
                 <div className="pt-1">
@@ -724,7 +720,7 @@ export default function ExpenseList({
                     onClick={onNavigateToAdd}
                     className="inline-flex items-center gap-1.5 bg-[#03B875] hover:bg-[#02935d] text-white font-extrabold text-xs px-5 py-2.5 rounded-xl transition-all shadow-md shadow-[#03B875]/20 active:scale-95 cursor-pointer uppercase tracking-wider"
                   >
-                    <span>Thêm chi tiêu ngay</span>
+                    <span>{ui('mc4a28b27d7')}</span>
                     <Sparkles className="w-3.5 h-3.5 text-white shrink-0" />
                   </button>
                 </div>
@@ -734,11 +730,11 @@ export default function ExpenseList({
         </div>
       ) : displayExpenses.length === 0 ? (
         <div className="text-center py-10 text-slate-400 text-xs space-y-2">
-          <p>Không tìm thấy khoản chi tiêu nào khớp bộ lọc.</p>
+          <p>{ui('md9e548586c')}</p>
           <p className="text-[10px] text-slate-400">
             {viewMode === "calendar" 
-              ? (selectedDate ? "Không có chi phí vào ngày này. Thử chọn ngày khác nhé!" : "Không có dữ liệu trong tháng này.") 
-              : "Dùng thanh tìm kiếm hoặc thử bộ lọc danh mục khác."}
+              ? (selectedDate ? ui('m296fb5a80f') : ui('mf329ff1af8')) 
+              : ui('m4e0dbce5c3')}
           </p>
         </div>
       ) : (
@@ -749,7 +745,7 @@ export default function ExpenseList({
               {/* Group Day Header (FLAT) */}
               <div className="flex items-center justify-between px-1 select-none">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  {sortBy === "updated_at" ? `Sửa ngày ${formatDate(group.dateStr)}` : formatDate(group.dateStr)}
+                  {sortBy === "updated_at" ? ui('m6afbc3d27c', { v0: formatDate(group.dateStr) }) : formatDate(group.dateStr)}
                 </span>
                 <span className="text-xs font-bold text-slate-400">
                   {formatMoney(group.totalDayAmount)}
@@ -807,7 +803,7 @@ export default function ExpenseList({
                               {formattedDesc}
                             </h5>
                             <p className="text-xs text-slate-400 mt-0.5 leading-none flex items-center gap-1.5">
-                              <span>{isFundIn ? "Nộp Quỹ" : "Nhận Quỹ"}</span>
+                              <span>{isFundIn ? ui('m2b7eada509') : ui('mdbf3e6a6f7')}</span>
                               {timeOnly && <span>• {timeOnly}</span>}
                             </p>
                           </div>
@@ -823,7 +819,7 @@ export default function ExpenseList({
 
                   // 5b. Tiêu chuẩn Transaction Card
                   const catInfo = getCategoryFromDescription(expense.description, expense.categoryKey);
-                  const foreignCurrency = parseForeignCurrency(expense.description);
+                  const foreignCurrency = expense.fx ? { amount: expense.fx.originalAmount, currency: expense.fx.currency } : parseForeignCurrency(expense.description);
                   const expenseTime = getExpenseTime(expense);
 
                   return (
@@ -867,7 +863,7 @@ export default function ExpenseList({
                             {foreignCurrency ? (
                               <>
                                 <p className="text-[10px] font-bold text-slate-400 font-mono leading-none mb-0.5">
-                                  {foreignCurrency.amount.toLocaleString()} {foreignCurrency.currency}
+                                  {foreignCurrency.amount.toLocaleString(getLocale())} {foreignCurrency.currency}
                                 </p>
                                 <p className="font-bold text-sm text-[#0F172A] font-mono leading-none">
                                   {formatMoney(expense.amount)}
@@ -898,28 +894,28 @@ export default function ExpenseList({
                           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
                             <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md text-[11px]">
                               <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                              Ngày: {formatDate(expense.date)}
+                              {ui('m312fb1f0f1')}{formatDate(expense.date)}
                             </span>
                             
                             {personalDebtType === "owed" && (
                               <span className="font-bold text-[10px] text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md uppercase tracking-wider flex items-center gap-1 shadow-xs border border-emerald-100 animate-pulse">
-                                💸 Nhận lại: {formatMoney(personalDebtAmount)}
+                                {ui('m891aef15fd')}{formatMoney(personalDebtAmount)}
                               </span>
                             )}
                             {personalDebtType === "owe" && (
                               <span className="font-bold text-[10px] text-rose-500 bg-rose-50 px-2 py-1 rounded-md uppercase tracking-wider flex items-center gap-1 shadow-xs border border-rose-100 animate-pulse">
-                                💸 Cần trả: {formatMoney(personalDebtAmount)}
+                                {ui('m3e522ec2e3')}{formatMoney(personalDebtAmount)}
                               </span>
                             )}
 
                             {expense.addedBy && (
                               <span className="font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md uppercase tracking-wider text-[10px]">
-                                Thêm: {expense.addedBy === "admin" ? "Ad" : (getMemberNameOnly(expense.addedBy) || "Thành viên")}
+                                {ui('mca576bcf5d')}{expense.addedBy === "admin" ? "Ad" : (getMemberNameOnly(expense.addedBy) || ui('mcd264c4a8f'))}
                               </span>
                             )}
                             {expense.editedBy && (
                               <span className="font-semibold text-orange-500 bg-orange-50 px-2 py-1 rounded-md uppercase tracking-wider text-[10px]">
-                                Sửa: {expense.editedBy === "admin" ? "Ad" : (getMemberNameOnly(expense.editedBy) || "Thành viên")}
+                                {ui('m1c45017459')}{expense.editedBy === "admin" ? "Ad" : (getMemberNameOnly(expense.editedBy) || ui('mcd264c4a8f'))}
                               </span>
                             )}
                             {expense.receiptImage && (
@@ -929,8 +925,7 @@ export default function ExpenseList({
                                 className="inline-flex items-center gap-1 text-[10px] bg-sky-50 hover:bg-sky-100 text-sky-600 font-bold px-2 py-1 rounded-md cursor-pointer transition-colors border border-sky-100"
                               >
                                 <FileText className="h-3 w-3" />
-                                Hóa đơn gốc
-                              </button>
+                                {ui('mb2981e0de9')}</button>
                             )}
                           </div>
 
@@ -947,8 +942,7 @@ export default function ExpenseList({
                               </div>
                               <div className="flex flex-col text-left">
                                 <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider leading-none">
-                                  Người trả trước
-                                </span>
+                                  {ui('mc6e2c79aba')}</span>
                                 <span className="text-xs font-bold text-[#0F172A] leading-tight mt-0.5">
                                   {getMemberNameOnly(expense.payerId)}
                                 </span>
@@ -956,7 +950,7 @@ export default function ExpenseList({
                             </div>
                             
                             <div className="flex flex-col items-end gap-1">
-                               <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Chia sẻ: {(expense.participantIds || []).length} người</span>
+                               <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{ui('md8bf00143a')}{(expense.participantIds || []).length} {ui('m0021a30f3e')}</span>
                                <div className="flex -space-x-2">
                                  {(expense.participantIds || []).slice(0, 5).map((pId, idx) => (
                                      <div key={pId} className="w-7 h-7 rounded-full border-2 border-white overflow-hidden shrink-0 shadow-sm" style={{ zIndex: 10 - idx }}>
@@ -981,7 +975,7 @@ export default function ExpenseList({
                                 className="flex-1 px-3 py-2.5 bg-slate-100/50 hover:bg-slate-100 text-slate-700 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs font-semibold"
                               >
                                 <Pencil className="h-3.5 w-3.5" />
-                                <span>Sửa</span>
+                                <span>{ui('m0963749f2c')}</span>
                               </button>
                               {isAdmin && (
                                 <button
@@ -990,7 +984,7 @@ export default function ExpenseList({
                                   className="flex-1 px-3 py-2.5 bg-rose-50/50 hover:bg-rose-50 text-rose-600 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs font-semibold"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
-                                  <span>Xóa</span>
+                                  <span>{ui('maa1d94fc16')}</span>
                                 </button>
                               )}
                             </div>
@@ -1018,8 +1012,7 @@ export default function ExpenseList({
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <h4 className="font-extrabold text-[#0F172A] text-sm flex items-center gap-1.5">
                 <FileText className="h-4.5 w-4.5 text-[#03B875]" />
-                Ảnh hóa đơn đính kèm
-              </h4>
+                {ui('m673a8f36b3')}</h4>
               <button
                 type="button"
                 onClick={() => setActiveReceiptImage(null)}
@@ -1044,8 +1037,7 @@ export default function ExpenseList({
                 onClick={() => setActiveReceiptImage(null)}
                 className="bg-[#0F172A] text-white font-black py-2.5 px-8 rounded-xl hover:bg-slate-800 transition-all text-xs cursor-pointer shadow-md"
               >
-                Tôi đã xem xong
-              </button>
+                {ui('m5fadb8c2c5')}</button>
             </div>
           </div>
         </div>

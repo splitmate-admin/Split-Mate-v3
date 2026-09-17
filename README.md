@@ -6,6 +6,18 @@ Nói lời tạm biệt với những bảng tính Excel phức tạp hay sự n
 
 ---
 
+## Ngôn ngữ và tiền tệ
+
+- Có giao diện Tiếng Việt (mặc định), English và 简体中文. Đổi tại màn hình đăng nhập, thanh công cụ desktop hoặc mục Ngôn ngữ trong tài khoản trên điện thoại. Lựa chọn được lưu trên thiết bị.
+- Khi ghi chi tiêu, chọn VND, USD, EUR, CNY, JPY, GBP, SGD hoặc THB. Ngoại tệ có ô tỷ giá, ngày/nguồn tỷ giá và xem trước số tiền VND. Tỷ giá tham khảo lấy từ [Frankfurter](https://frankfurter.dev/); có thể nhập tỷ giá thực tế thủ công.
+- Mỗi khoản chi ngoại tệ lưu số tiền gốc và tỷ giá tại thời điểm ghi nhận. Sửa khoản chi giữ tỷ giá đã lưu; chỉ bấm cập nhật nếu muốn đổi tỷ giá.
+- Sổ nợ, quỹ, chia tùy chỉnh và VietQR dùng VND. Chọn ngoại tệ không đổi tiền tệ của khoản nợ. QR có số tiền cố định khóa nhập ở VND; OCR hiện ghi nhận số tiền bằng VND.
+- Nội dung hóa đơn, tên nhóm/thành viên và dữ liệu cũ giữ nguyên. Bản dịch được viết trực tiếp, không dùng dịch vụ dịch tự động.
+
+Kiểm tra: `npm run lint`, `npm run test`, `npm run build`. Không cần thêm khóa API hoặc migration database.
+
+---
+
 ## 💡 Cách SplitMate giúp ích cho bạn
 
 ### 1. Quản lý Quỹ nhóm & Ghi chép chi tiêu tập trung

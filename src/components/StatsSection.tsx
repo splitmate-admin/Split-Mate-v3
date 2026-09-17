@@ -1,3 +1,5 @@
+import { getLocale } from '../i18n/core';
+import { ui } from '../i18n/core';
 import React, { useState } from "react";
 import { Member, Expense, MemberBalance, DebtOffset } from "../types";
 import { calculateBalances } from "../utils/debtSimplifier";
@@ -44,7 +46,7 @@ export default function StatsSection({ members, expenses, debtOffsets, hideOverv
 
   // Formatter
   const formatVnd = (num: number) => {
-    return new Intl.NumberFormat("vi-VN", {
+    return new Intl.NumberFormat(getLocale(), {
       style: "currency",
       currency: "VND",
     }).format(Math.round(num));
@@ -99,7 +101,7 @@ export default function StatsSection({ members, expenses, debtOffsets, hideOverv
               <Wallet className="h-5 w-5 text-white" />
             </div>
             <div className="space-y-0.5">
-              <span className="text-emerald-200 text-[0.625rem] font-bold uppercase tracking-wider">Tổng Chi Nhóm</span>
+              <span className="text-emerald-200 text-[0.625rem] font-bold uppercase tracking-wider">{ui('m5331a41cd5')}</span>
               <h3 className="text-xl font-black tracking-tight">{formatVnd(totalGroupSpent)}</h3>
             </div>
           </div>
@@ -109,9 +111,9 @@ export default function StatsSection({ members, expenses, debtOffsets, hideOverv
               <PieChart className="h-5 w-5 text-emerald-600" />
             </div>
             <div className="space-y-0.5">
-              <span className="text-slate-400 text-[0.625rem] font-bold uppercase tracking-wider">Bình Quân Chi Tiêu</span>
+              <span className="text-slate-400 text-[0.625rem] font-bold uppercase tracking-wider">{ui('mc109103877')}</span>
               <h3 className="text-xl font-bold text-slate-900 tracking-tight">
-                {members.length > 0 ? formatVnd(totalGroupSpent / members.length) : "0 đ"}
+                {members.length > 0 ? formatVnd(totalGroupSpent / members.length) : ui('m39c1dfe6c2')}
               </h3>
             </div>
           </div>
@@ -128,10 +130,10 @@ export default function StatsSection({ members, expenses, debtOffsets, hideOverv
               </div>
               <div className="text-sm">
                 <p className="text-amber-800 font-extrabold flex items-center gap-1 text-xs">
-                  Đại gia chi tiêu {topSpender.emoji}
+                  {ui('m85ed68d8dc')}{topSpender.emoji}
                 </p>
                 <p className="text-slate-600 text-[0.6875rem] leading-tight">
-                  <span className="font-bold text-slate-800">{topSpender.name}</span> chi nhiều nhất: <span className="font-bold text-amber-700">{formatVnd(balances.find(b => b.memberId === topSpender.id)?.paid || 0)}</span>
+                  <span className="font-bold text-slate-800">{topSpender.name}</span> {ui('m7818aebf9a')}<span className="font-bold text-amber-700">{formatVnd(balances.find(b => b.memberId === topSpender.id)?.paid || 0)}</span>
                 </p>
               </div>
             </div>
@@ -144,10 +146,10 @@ export default function StatsSection({ members, expenses, debtOffsets, hideOverv
               </div>
               <div className="text-sm">
                 <p className="text-rose-800 font-extrabold flex items-center gap-1 text-xs">
-                  Chơi nhiệt huyết {activeComer.emoji}
+                  {ui('m92c970af11')}{activeComer.emoji}
                 </p>
                 <p className="text-slate-600 text-[0.6875rem] leading-tight">
-                  <span className="font-bold text-slate-800">{activeComer.name}</span> dùng thực tế: <span className="font-bold text-rose-700">{formatVnd(balances.find(b => b.memberId === activeComer.id)?.share || 0)}</span>
+                  <span className="font-bold text-slate-800">{activeComer.name}</span> {ui('m2e9089be1e')}<span className="font-bold text-rose-700">{formatVnd(balances.find(b => b.memberId === activeComer.id)?.share || 0)}</span>
                 </p>
               </div>
             </div>
@@ -160,14 +162,13 @@ export default function StatsSection({ members, expenses, debtOffsets, hideOverv
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <h4 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
             <TrendingUp className="h-4 w-4 text-emerald-600" />
-            Tỷ Lệ Chi Tiêu
-          </h4>
+            {ui('mc9dd109223')}</h4>
         </div>
 
         {/* Biểu đồ tròn */}
         <div className="pt-4 grid grid-cols-2 gap-4">
           <div className="flex flex-col items-center">
-            <h5 className="text-xs font-bold text-slate-500 mb-2">Đã trả trước</h5>
+            <h5 className="text-xs font-bold text-slate-500 mb-2">{ui('m7ee7090961')}</h5>
             <div className="w-full h-40">
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsPieChart>
@@ -191,7 +192,7 @@ export default function StatsSection({ members, expenses, debtOffsets, hideOverv
           </div>
           
           <div className="flex flex-col items-center">
-            <h5 className="text-xs font-bold text-slate-500 mb-2">Thực dùng</h5>
+            <h5 className="text-xs font-bold text-slate-500 mb-2">{ui('mfa3185b2fa')}</h5>
             <div className="w-full h-40">
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsPieChart>
@@ -257,11 +258,11 @@ export default function StatsSection({ members, expenses, debtOffsets, hideOverv
                 {isExpanded && (
                   <div className="mt-3 pt-3 border-t border-slate-200/60 grid grid-cols-2 gap-4 text-xs animate-in fade-in slide-in-from-top-2">
                     <div className="flex flex-col gap-1">
-                      <span className="text-slate-500 font-medium">Đã trả trước:</span>
+                      <span className="text-slate-500 font-medium">{ui('md38af918e7')}</span>
                       <span className="font-bold text-sky-600">{formatVnd(bal.paid)}</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className="text-slate-500 font-medium">Thực dùng:</span>
+                      <span className="text-slate-500 font-medium">{ui('maa7e281cba')}</span>
                       <span className="font-bold text-emerald-600">{formatVnd(bal.share)}</span>
                     </div>
                   </div>

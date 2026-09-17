@@ -1,3 +1,5 @@
+import { getLocale } from '../i18n/core';
+import { ui } from '../i18n/core';
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -18,38 +20,38 @@ interface FaqPageProps {
 const STATIC_FAQS = [
   {
     category: "general",
-    question: "SplitMate là gì và hoạt động như thế nào?",
-    answer: "SplitMate là ứng dụng chia tiền nhóm thông minh giúp ghi chép và tính toán chi tiêu chung của tập thể (chuyến đi du lịch, ăn chơi, liên hoan). Tất cả số tiền thừa thiếu của từng thành viên sẽ được gom lại và thanh toán thông qua một quỹ chung duy nhất (như Quỹ MoMo, tài khoản ngân hàng nhóm, hoặc tài khoản ngân hàng của một người thủ quỹ đại diện). Cách này giúp dòng tiền luôn rõ ràng, minh bạch và vô cùng dễ quản lý."
+    get question() { return ui('mbc533aed39'); },
+    get answer() { return ui('m6bc7bd0e8c'); }
   },
   {
     category: "tech",
-    question: "Tại sao SplitMate thanh toán qua Quỹ chung thay vì ghép đôi cấn trừ trực tiếp?",
-    answer: "Phương thức thanh toán qua Quỹ chung giúp giảm thiểu tối đa sự rắc rối khi các thành viên phải tự ghép đôi cấn trừ nợ nần lẻ tẻ với nhau. Thành viên thiếu tiền chỉ cần chuyển khoản một lần vào tài khoản quỹ chung (quỹ momo, ngân hàng hoặc tài khoản của thủ quỹ), sau đó thủ quỹ sẽ thối lại chính xác cho những thành viên đã chi dư từ quỹ này. Quá trình này giúp mọi giao dịch luôn có đối soát rõ ràng và không bị nhầm lẫn."
+    get question() { return ui('mdbeeeb7c4c'); },
+    get answer() { return ui('m4615b39176'); }
   },
   {
     category: "privacy",
-    question: "Cổng thanh toán này có an toàn không? Có liên kết ngân hàng không?",
-    answer: "Hoàn toàn an toàn và bảo mật! Ứng dụng SplitMate chỉ là một công cụ ghi chép và tính toán độc lập, hoàn toàn KHÔNG yêu cầu hoặc thực hiện liên kết tài khoản ngân hàng hay ví điện tử của bạn vào hệ thống. Các ảnh mã QR hiển thị chỉ để giúp mọi người dễ dàng sao chép STK hoặc quét nhanh trên ứng dụng ngân hàng cá nhân của họ mà không lo rò rỉ thông tin riêng tư."
+    get question() { return ui('me1a2ce0e55'); },
+    get answer() { return ui('m8820803a62'); }
   },
   {
     category: "general",
-    question: "Bạn bè của mình có thể vào nhóm tự điền STK mà không cần tạo tài khoản?",
-    answer: "Hoàn toàn được! Thủ quỹ chỉ cần cấp một 'Mã Thành Viên' (Access Code) duy nhất cho mỗi người. Họ chỉ cần chọn cổng 'Đăng nhập Thành viên' bằng mã đó là có thể tự nhập số tài khoản cá nhân, xem số tiền mình cần đóng hoặc nhận lại, và tải ảnh xác thực chuyển khoản cực kỳ nhanh chóng."
+    get question() { return ui('md2af5c971b'); },
+    get answer() { return ui('m844a9fe3ed'); }
   },
   {
     category: "general",
-    question: "Dữ liệu ngoại tuyến (Offline) khác gì khi lưu trữ đồng bộ đám mây?",
-    answer: "Chế độ Ngoại tuyến cho phép bạn dùng thử ứng dụng tức thì không cần đăng ký tài khoản, toàn bộ dữ liệu chỉ lưu trên trình duyệt của thiết bị đó (LocalStorage). Để bảo toàn dữ liệu lâu dài trên server, tránh mất mát khi vô tình xóa lịch sử trình duyệt, xin hãy đăng ký hoặc đăng nhập tài khoản Thủ quỹ để đồng bộ hệ thống cloud."
+    get question() { return ui('mb6de6cdd07'); },
+    get answer() { return ui('m1a9b647d08'); }
   },
   {
     category: "tech",
-    question: "Tôi có thể chia đều chi phí cho cả nhóm hoặc chỉ một vài người được không?",
-    answer: "Ứng dụng hỗ trợ tùy chọn chia chi phí vô cùng linh hoạt. Khi thêm một khoản chi mới, bạn hoàn toàn có thể chọn chia đều cho cả nhóm hoặc chỉ tích chọn những người thực sự tham gia khoản chi đó. Hệ thống sẽ tự động phân bổ chính xác số tiền chịu trách nhiệm cho từng người."
+    get question() { return ui('m59af0c98c3'); },
+    get answer() { return ui('m3e00c87ebd'); }
   },
   {
     category: "general",
-    question: "Làm thế nào để thủ quỹ kiểm tra xem thành viên đã nộp tiền hay chưa?",
-    answer: "Các thành viên sau khi chuyển tiền vào quỹ chung của thủ quỹ có thể chụp màn hình điện thoại và tải ảnh biên lai (Receipt) lên nhóm. Thủ quỹ chỉ cần vào phần 'Lịch sử thanh toán' trên website để duyệt biên nhận, đảm bảo số dư quỹ ngoài thực tế luôn trùng khớp hoàn hảo với hệ thống."
+    get question() { return ui('m6c76d18591'); },
+    get answer() { return ui('me2376e5f96'); }
   }
 ];
 
@@ -115,7 +117,7 @@ export default function FaqPage({ isAdmin, currentUser, onBack }: FaqPageProps) 
           className="inline-flex items-center gap-2 text-emerald-650 hover:text-emerald-800 font-extrabold text-sm transition-all focus:outline-none cursor-pointer self-start sm:self-center"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Về Khu Vực Làm Việc</span>
+          <span>{ui('me7a64a0c4e')}</span>
         </button>
 
         <div className="flex items-center gap-3">
@@ -124,9 +126,8 @@ export default function FaqPage({ isAdmin, currentUser, onBack }: FaqPageProps) 
           </div>
           <div className="text-left">
             <h1 className="font-extrabold text-xl font-sans tracking-tight text-slate-800 leading-tight">
-              Trung tâm FAQ & Giải Đáp
-            </h1>
-            <p className="text-xs text-slate-400 mt-1">Cơ sở dữ liệu hỗ trợ, hiến kế ý kiến đóng góp</p>
+              {ui('m7523bd8627')}</h1>
+            <p className="text-xs text-slate-400 mt-1">{ui('m0c39b3e378')}</p>
           </div>
         </div>
       </div>
@@ -140,14 +141,12 @@ export default function FaqPage({ isAdmin, currentUser, onBack }: FaqPageProps) 
         <div className="max-w-2xl relative space-y-3.5">
           <div className="inline-flex items-center gap-1.5 bg-emerald-500/15 border border-emerald-400/30 rounded-full py-1 px-3 text-[0.625rem] font-black text-emerald-300">
             <HelpCircle className="w-3.5 h-3.5 text-emerald-400" />
-            <span>KÊNH HỖ TRỢ TRỰC TUYẾN</span>
+            <span>{ui('mda622e6bc8')}</span>
           </div>
           <h2 className="text-xl md:text-2xl font-black tracking-tight text-white leading-snug">
-            SplitMate lắng nghe bạn đóng góp ý tưởng & phản ánh sự cố hệ thống !
-          </h2>
+            {ui('m7bee811de9')}</h2>
           <p className="text-xs text-slate-300 leading-relaxed mb-4">
-            Dưới đây là tủ câu hỏi chuẩn và hòm thư phản hồi cộng đồng được lưu trữ thời gian thực trên hệ thống. Nếu bạn có ý tưởng "hiến kế" hay ho hoặc báo cáo lỗi, hãy nhấn nút <strong>Góp Ý & Báo Lỗi</strong> bên dưới để gửi phản hồi ngay lập tức cho Admin!
-          </p>
+            {ui('m2ec42b1d36')}<strong>{ui('m83b54f6596')}</strong> {ui('m6ccfbf3d4c')}</p>
           <div className="pt-2">
             <button 
               onClick={() => setIsFeedbackOpen(true)}
@@ -155,7 +154,7 @@ export default function FaqPage({ isAdmin, currentUser, onBack }: FaqPageProps) 
             >
               <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out" />
               <Sparkles className="w-4 h-4" />
-              <span>Góp Ý & Báo Lỗi</span>
+              <span>{ui('m83b54f6596')}</span>
             </button>
           </div>
         </div>
@@ -168,7 +167,7 @@ export default function FaqPage({ isAdmin, currentUser, onBack }: FaqPageProps) 
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <input
             type="text"
-            placeholder="Tìm kiếm câu hỏi, nội dung..."
+            placeholder={ui('m64b69935c8')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-10 pr-4 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-500 text-slate-800 transition-all"
@@ -193,8 +192,7 @@ export default function FaqPage({ isAdmin, currentUser, onBack }: FaqPageProps) 
                 : "bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/50"
             }`}
           >
-            Tất cả
-          </button>
+            {ui('mf7a578dcbd')}</button>
           <button
             onClick={() => setActiveCategory("general")}
             className={`py-1.5 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
@@ -203,8 +201,7 @@ export default function FaqPage({ isAdmin, currentUser, onBack }: FaqPageProps) 
                 : "bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/50"
             }`}
           >
-            Hỏi đáp chung
-          </button>
+            {ui('m176abe3c5c')}</button>
           <button
             onClick={() => setActiveCategory("tech")}
             className={`py-1.5 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
@@ -213,8 +210,7 @@ export default function FaqPage({ isAdmin, currentUser, onBack }: FaqPageProps) 
                 : "bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/50"
             }`}
           >
-            Tính năng & Công nghệ
-          </button>
+            {ui('m27fb150fc6')}</button>
           <button
             onClick={() => setActiveCategory("privacy")}
             className={`py-1.5 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
@@ -223,8 +219,7 @@ export default function FaqPage({ isAdmin, currentUser, onBack }: FaqPageProps) 
                 : "bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/50"
             }`}
           >
-            Bảo mật & STK
-          </button>
+            {ui('m89d8b70915')}</button>
           <button
             onClick={() => setActiveCategory("community")}
             className={`py-1.5 px-3.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
@@ -234,7 +229,7 @@ export default function FaqPage({ isAdmin, currentUser, onBack }: FaqPageProps) 
             }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            <span>Hòm thư cộng đồng ({feedbacks.length})</span>
+            <span>{ui('m6a70876453')}{feedbacks.length})</span>
           </button>
         </div>
       </div>
@@ -247,13 +242,12 @@ export default function FaqPage({ isAdmin, currentUser, onBack }: FaqPageProps) 
           <div className="md:col-span-6 space-y-4">
             <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2 mb-1.5 pl-1">
               <HelpCircle className="w-4.5 h-4.5 text-emerald-500" />
-              <span>CÂU HỎI THƯỜNG GẶP</span>
+              <span>{ui('m91bb5bcf9b')}</span>
             </h3>
 
             {filteredStaticFaqs.length === 0 ? (
               <div className="bg-slate-50 border border-slate-100 p-8 rounded-2xl text-center text-slate-400 text-xs">
-                Không tìm thấy câu hỏi chuẩn nào phù hợp từ khóa tìm kiếm.
-              </div>
+                {ui('m5f214fdcfb')}</div>
             ) : (
               <div className="space-y-3">
                 {filteredStaticFaqs.map((faq, idx) => {
@@ -304,19 +298,19 @@ export default function FaqPage({ isAdmin, currentUser, onBack }: FaqPageProps) 
           <div className="flex items-center justify-between pl-1 mb-1.5">
             <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2">
               <MessageSquare className="w-4.5 h-4.5 text-emerald-500" />
-              <span>HÒM THƯ GÓP Ý & GIẢI ĐÁP CỘNG ĐỒNG</span>
+              <span>{ui('mc4a519a12c')}</span>
             </h3>
           </div>
 
           {loadingFeedbacks ? (
             <div className="py-12 bg-white rounded-3xl border border-slate-100 shadow-xs flex flex-col items-center justify-center space-y-3">
               <div className="w-8 h-8 border-3 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
-              <p className="text-xs text-slate-400 font-bold">Đang tải phản hồi từ hệ thống...</p>
+              <p className="text-xs text-slate-400 font-bold">{ui('mbc5368eb65')}</p>
             </div>
           ) : filteredFeedbacks.length === 0 ? (
             <div className="bg-white border border-slate-100 p-12 rounded-3xl text-center space-y-3 shadow-xs">
-              <p className="text-xs text-slate-400">Chưa có phản hồi nào trùng khớp hoặc hòm thư trống rỗng.</p>
-              <p className="text-[0.625rem] text-slate-400">Bạn có thể gửi phản hồi đầu tiên bằng nút Góp ý kiến ở góc màn hình!</p>
+              <p className="text-xs text-slate-400">{ui('m470b7580fe')}</p>
+              <p className="text-[0.625rem] text-slate-400">{ui('m5a8824be94')}</p>
             </div>
           ) : (
             <div className="space-y-4.5">
@@ -334,17 +328,17 @@ export default function FaqPage({ isAdmin, currentUser, onBack }: FaqPageProps) 
                       {fb.type === "feedback" ? (
                         <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 py-0.5 px-2 rounded-lg text-[0.625rem] font-extrabold border border-emerald-100">
                           <MessageSquare className="w-3 h-3 text-emerald-500" />
-                          <span>Góp ý</span>
+                          <span>{ui('m321214768b')}</span>
                         </span>
                       ) : fb.type === "suggestion" ? (
                         <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 py-0.5 px-2 rounded-lg text-[0.625rem] font-extrabold border border-amber-100">
                           <Lightbulb className="w-3 h-3 text-amber-500" />
-                          <span>Hiến kế</span>
+                          <span>{ui('mb6ecf2f764')}</span>
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 py-0.5 px-2 rounded-lg text-[0.625rem] font-extrabold border border-rose-100">
                           <AlertTriangle className="w-3 h-3 text-rose-500" />
-                          <span>Báo lỗi</span>
+                          <span>{ui('m0048ce06bf')}</span>
                         </span>
                       )}
 
@@ -362,7 +356,7 @@ export default function FaqPage({ isAdmin, currentUser, onBack }: FaqPageProps) 
                     <div className="flex items-center gap-2">
                       <span className="text-[0.625rem] text-slate-400 font-medium flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        {new Date(fb.createdAt).toLocaleDateString("vi-VN", {
+                        {new Date(fb.createdAt).toLocaleDateString(getLocale(), {
                           hour: "2-digit",
                           minute: "2-digit",
                           day: "2-digit",
@@ -372,12 +366,10 @@ export default function FaqPage({ isAdmin, currentUser, onBack }: FaqPageProps) 
 
                       {(fb.status === "replied" || fb.reply) ? (
                         <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-md text-[0.5625rem] py-0.5 px-1.5 font-bold">
-                          Đã giải đáp
-                        </span>
+                          {ui('m639b9f59ee')}</span>
                       ) : (
                         <span className="bg-amber-50 text-amber-700 border border-amber-100 rounded-md text-[0.5625rem] py-0.5 px-1.5 font-bold animate-pulse">
-                          Chờ Admin xem
-                        </span>
+                          {ui('m4652be094d')}</span>
                       )}
                     </div>
                   </div>
@@ -386,7 +378,7 @@ export default function FaqPage({ isAdmin, currentUser, onBack }: FaqPageProps) 
                   <div className="space-y-2 mb-3">
                     <p className="text-xs font-black flex items-center gap-1 text-slate-800">
                       <User className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{fb.name || "Ẩn danh"}</span>
+                      <span>{fb.name || ui('m7f0ab3a994')}</span>
                       {fb.email && isAdmin && (
                         <span className="text-[0.625rem] text-slate-400 font-normal ml-1">({fb.email})</span>
                       )}
@@ -401,14 +393,14 @@ export default function FaqPage({ isAdmin, currentUser, onBack }: FaqPageProps) 
                     <div className="bg-emerald-50/40 border border-emerald-100/60 p-3.5 rounded-xl space-y-1 text-left mt-2.5">
                       <p className="text-[0.6875rem] font-extrabold text-emerald-700 flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5 fill-emerald-100" />
-                        <span>SplitMate Admin giải đáp:</span>
+                        <span>{ui('me613712cbb')}</span>
                       </p>
                       <p className="text-xs text-slate-700 font-semibold leading-relaxed pl-1">
                         {fb.reply}
                       </p>
                       {fb.repliedAt && (
                         <span className="text-[0.5625rem] text-slate-400 pl-1 block italic mt-1 font-medium">
-                          Đã trả lời lúc: {new Date(fb.repliedAt).toLocaleDateString("vi-VN", {
+                          {ui('m6048c81d51')}{new Date(fb.repliedAt).toLocaleDateString(getLocale(), {
                             hour: "2-digit",
                             minute: "2-digit",
                             day: "2-digit",

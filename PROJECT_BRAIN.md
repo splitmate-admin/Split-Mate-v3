@@ -1,5 +1,17 @@
 # PROJECT_BRAIN.md - SPLITMATE SYSTEM BRAIN
 
+## Cập nhật 17/09/2026: giao diện và ngoại tệ
+
+`I18nProvider` quản lý `vi/en/zh-CN`, lưu `splitmate_language` trong LocalStorage và đặt `document.lang`. Bản dịch tĩnh được viết trực tiếp trong `src/i18n/uiMessages.ts`; nội dung người dùng không tự dịch. Bộ chọn có ở đăng nhập, toolbar desktop và tài khoản mobile.
+
+`Expense.amount` luôn là VND. Snapshot tùy chọn `fx` gồm `currency`, `originalAmount`, `rateToVnd`, `quotedAt`, `source`. Chi phí VND cũ không cần snapshot. Backend lưu nguyên đối tượng chi tiêu trong JSON nên không cần migration. Sửa ngoại tệ dùng lại snapshot, không tự cập nhật quote.
+
+`GET /api/fx/rates` lấy tỷ giá tham khảo Frankfurter v2, đổi tỷ giá VND→ngoại tệ thành VND trên một đơn vị ngoại tệ; cache 1 giờ, timeout 8 giây, lỗi trả `FX_UNAVAILABLE`. Client cho nhập tỷ giá thủ công; không gửi thông tin người dùng vào API tỷ giá. Hỗ trợ VND/USD/EUR/CNY/JPY/GBP/SGD/THB, VND/JPY không có phần thập phân.
+
+Sổ nợ, quỹ, chi phí nâng cấp, chia tùy chỉnh, biên lai và VietQR tiếp tục dùng VND. Chia tùy chỉnh mới phân bổ dư làm tròn để tổng khớp; giá trị VND thập phân ở dữ liệu cũ được giữ tương thích. QR có số tiền cố định khóa VND; OCR hiện giả định VND và đặt lại tiền tệ khi điền số tiền.
+
+`formatDisplayDateTime` chỉ dùng hiển thị theo locale và múi giờ Việt Nam. `formatDateTime`, `parsePatchedTime` giữ hợp đồng cũ phục vụ sắp xếp/sửa timestamp. Marker `[Nộp Quỹ]`/`[Nhận Quỹ]` phải giữ nguyên khi lưu và so sánh, kể cả trong UI tiếng Anh/Trung.
+
 > **BỘ NÃO HỆ THỐNG DỰ ÁN SPLITMATE**
 > Document này lưu trữ toàn bộ kiến trúc, quy tắc, hướng dẫn, và lịch sử thay đổi của dự án SplitMate. File này giúp AI Agent hiểu trọn vẹn ngữ cảnh dự án mà không cần hỏi lại người dùng.
 

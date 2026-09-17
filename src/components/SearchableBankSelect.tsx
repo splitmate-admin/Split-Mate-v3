@@ -1,3 +1,4 @@
+import { ui } from '../i18n/core';
 import React, { useState, useRef, useEffect } from "react";
 import { Search, ChevronDown, Check } from "lucide-react";
 import { VIETNAM_BANKS, BankOption } from "../utils/banks";
@@ -13,7 +14,7 @@ export const SearchableBankSelect: React.FC<SearchableBankSelectProps> = ({
   value,
   onChange,
   className = "",
-  placeholder = "Tìm kiếm ngân hàng..."
+  placeholder = ui('m01c2a95f12')
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -69,7 +70,7 @@ export const SearchableBankSelect: React.FC<SearchableBankSelectProps> = ({
               />
             </div>
           )}
-          <span className="truncate">{selectedBank ? selectedBank.name : "Chọn Ngân hàng"}</span>
+          <span className="truncate">{selectedBank ? selectedBank.name : ui('m70f73ee14e')}</span>
         </div>
         <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 shrink-0 ${isOpen ? "rotate-180" : ""}`} />
       </button>
@@ -123,8 +124,7 @@ export const SearchableBankSelect: React.FC<SearchableBankSelectProps> = ({
               })
             ) : (
               <div className="p-4 text-center text-xs text-slate-400">
-                Không tìm thấy ngân hàng nào
-              </div>
+                {ui('mb457a7b2d9')}</div>
             )}
           </div>
         </div>

@@ -1,5 +1,14 @@
 # BUGS.md - SPLITMATE BUG TRACKER & ISSUE LOG
 
+## Kiểm tra 17/09/2026: i18n và ngoại tệ
+
+- Đã tránh mất phần lẻ ngoại tệ: parser giữ cents và từ chối số sai định dạng; quy đổi lưu VND nguyên.
+- Đã tránh sửa khoản chi theo quote mới: prefill số tiền/tỷ giá từ snapshot; hủy kết quả fetch cũ khi đổi tiền tệ, sửa khoản chi hoặc khóa QR.
+- Đã tránh ghi ngoại tệ vào bank deeplink: mọi amount chuyển khoản đi qua quy đổi VND; QR có amount cố định khóa VND.
+- Đã tránh OCR điền số tiền VND vào ô ngoại tệ: đặt lại currency khi nhận tổng OCR.
+- Đã tránh cấu hình/illustration UI giữ bản dịch cũ khi đổi ngôn ngữ bằng getter; memo thông báo/sao kê phụ thuộc language.
+- Tỷ giá tham khảo không phải tỷ giá mua/bán thực tế. Khi API không hoạt động, nhập tỷ giá thủ công; custom split vẫn nhập bằng VND. Đây là phạm vi thiết kế hiện tại.
+
 > File này ghi nhận danh sách các lỗi (bugs), sự cố hệ thống, và lịch sử sửa lỗi trong quá trình phát triển ứng dụng SplitMate.
 
 ## 1. DANH SÁCH BUGS ĐANG THEO DÕI (ACTIVE ISSUES)

@@ -1,4 +1,5 @@
 
+import { getLanguage, getLocale } from '../i18n/core';
 /**
  * Utility functions for date formatting and patching legacy timestamps
  */
@@ -105,6 +106,23 @@ export const parseFormattedDate = (dateStr?: string): Date => {
   if (!isNaN(d.getTime())) return d;
   return new Date();
 };
+
+/** Display-only formatter. Internal timestamp parsing keeps its legacy contract. */
+export function formatDisplayDateTime(value?: string): string {
+  if (!value || getLanguage() === 'vi') return formatDateTime(value);
+  const legacy = value.match(/^(\d{2}:\d{2})\s+(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (legacy) {
+    const date = new Date(Number(legacy[4]), Number(legacy[3]) - 1, Number(legacy[2]));
+    return `${legacy[1]} ${date.toLocaleDateString(getLocale())}`;
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split('-').map(Number);
+    return new Date(year, month - 1, day).toLocaleDateString(getLocale());
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat(getLocale(), { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(date);
+}
 
 export const parsePatchedTime = (patchedTime: string, rawTime: string) => {
   if (patchedTime.includes(":") && patchedTime.includes("/")) {

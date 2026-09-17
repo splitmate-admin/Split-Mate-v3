@@ -1,3 +1,4 @@
+import { ui } from '../i18n/core';
 import React from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Users, X, Plus } from "lucide-react";
@@ -40,8 +41,8 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                   <Users className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-slate-800 tracking-tight">Tạo nhóm chi tiêu mới</h3>
-                  <p className="text-xs text-slate-500">Quản lý và chia tiền dễ dàng cùng bạn bè</p>
+                  <h3 className="text-lg font-black text-slate-800 tracking-tight">{ui('m36c0424fa9')}</h3>
+                  <p className="text-xs text-slate-500">{ui('m3a45dcda9e')}</p>
                 </div>
               </div>
               <button
@@ -56,14 +57,14 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
             <form onSubmit={onSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Tên nhóm chi tiêu <span className="text-rose-500">*</span>
+                  {ui('mccebc284a7')}<span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   autoFocus
                   value={newGroupName}
                   onChange={(e) => setNewGroupName(e.target.value)}
-                  placeholder="Ví dụ: Du lịch Phú Quốc, Tiền trọ nhà chung, ..."
+                  placeholder={ui('mb9d0e2468e')}
                   className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-sm font-semibold outline-none transition-all placeholder:text-slate-400"
                   required
                 />
@@ -75,15 +76,14 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                   onClick={onClose}
                   className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
-                  Hủy
-                </button>
+                  {ui('m34ca764caf')}</button>
                 <button
                   type="submit"
                   disabled={!newGroupName.trim()}
                   className="px-6 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white shadow-lg shadow-emerald-200 transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Tạo nhóm ngay</span>
+                  <span>{ui('mbbbccc609e')}</span>
                 </button>
               </div>
             </form>

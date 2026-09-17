@@ -428,3 +428,24 @@ Trước khi thực hiện công việc, AI cần kiểm tra `PROJECT_BRAIN.md` 
 
 
 
+
+- **16/09/2026 (Khắc phục triệt để lỗi Supabase bị khóa sau 7 ngày qua Vercel Cron & Tối ưu Keep-Alive)**:
+  - **Mục tiêu**: Khắc phục triệt để sự cố Supabase Free Tier tự động bị tạm dừng (Paused) sau 7 ngày không phát sinh dữ liệu/truy vấn.
+  - **Thực hiện**:
+    - **Cấu hình Vercel Cron (`vercel.json`)**: Bổ sung cron tự động chạy hàng ngày lúc 04:00 UTC (11:00 AM VN) gửi request đến `/api/keep-alive` trên Vercel. Chạy độc lập, vĩnh viễn và không bị ảnh hưởng bởi chính sách tạm dừng sau 60 ngày của GitHub Actions.
+    - **Tối ưu Endpoint Keep-Alive (`api/api-app.ts`)**: Cải tiến truy vấn sang `.select("id").limit(1)` thực tế trên bảng `groups` hoặc `leaders`, kích hoạt trực tiếp I/O database engine và duy trì trạng thái ACTIVE cho Supabase.
+    - **Cập nhật GitHub Actions (`.github/workflows/supabase-keep-alive.yml`)**: Tăng tần suất chạy thành hàng ngày (`0 4 * * *`) làm kênh dự phòng.
+- **16/09/2026 (Hoàn thiện & Đồng bộ Từ điển Song ngữ i18n & TypeScript Type Safety)**:
+  - **Mục tiêu**: Khắc phục các lỗi thiếu translation key trong từ điển `src/utils/i18n.ts` được gọi từ `ExpenseForm.tsx` và `SettleUpSection.tsx`.
+  - **Thực hiện**:
+    - Bổ sung đầy đủ 10 cặp key trong cả 2 từ điển `vi` và `en`: `save_expense_changes`, `submit_expense`, `statement_banner_title`, `statement_banner_desc`, `view_statement_btn`, `direct_debt_offset`, `settle_up_title`, `all_settled_title`, `all_settled_desc`, `confirm_payment_btn`.
+    - Kiểm tra linter và TypeScript compiler (`tsc --noEmit`) đạt 100% sạch lỗi, build ứng dụng thành công.
+- **16/09/2026 (Bổ sung Đa Ngôn Ngữ Tiếng Anh & Hỗ Trợ Đa Tiền Tệ Toàn Cầu)**:
+  - **Mục tiêu**: Bổ sung chuyển đổi ngôn ngữ Tiếng Việt & Tiếng Anh và hỗ trợ đa tiền tệ (VND, USD, EUR, JPY, KRW, THB, SGD) cho nhóm chi tiêu.
+  - **Thực hiện**:
+    - Xây dựng `src/utils/i18n.ts`: hook `useTranslation`, `SUPPORTED_CURRENCIES` và `formatCurrencyAmount`.
+    - Modal Tạo nhóm (`CreateGroupModal.tsx`) & Cài đặt nhóm (`SmartHeader.tsx`): Cho phép chọn đơn vị tiền tệ cho từng nhóm.
+    - Drawer Thông tin cá nhân (`SmartHeader.tsx`): Bổ sung nút chuyển đổi Tiếng Việt ↔ English 1-chạm.
+    - Đồng bộ hiển thị định dạng tiền tệ trên toàn bộ ứng dụng (`ExpenseList.tsx`, `SettleUpSection.tsx`, `FundHistoryList.tsx`, `CloseCycleSection.tsx`, `PersonalStatementModal.tsx`, `StatsSection.tsx`).
+
+Integration: retained the 2026-09-17 keep-alive fixes; the complete VI/EN/zh-CN provider and VND-backed FX entry supersede the earlier partial i18n/group-currency display implementation. Existing raw expense amounts are not reinterpreted or migrated.

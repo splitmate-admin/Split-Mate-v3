@@ -1,12 +1,12 @@
 name: Supabase & SplitMate Keep-Alive
 
 # Workflow này tự động gửi yêu cầu truy vấn siêu nhẹ (ping) đến API SplitMate & Supabase
-# vào mỗi 2 ngày một lần để đảm bảo Supabase Free Tier không bao giờ bị tạm dừng (Paused) sau 7 ngày không hoạt động.
+# vào mỗi ngày một lần để đảm bảo Supabase Free Tier không bao giờ bị tạm dừng (Paused) sau 7 ngày không hoạt động.
 
 on:
   schedule:
-    # Chạy tự động lúc 04:00 UTC (11:00 AM giờ Việt Nam) mỗi 2 ngày
-    - cron: '0 4 */2 * *'
+    # Chạy tự động lúc 04:00 UTC (11:00 AM giờ Việt Nam) hàng ngày
+    - cron: '0 4 * * *'
   workflow_dispatch: # Cho phép bấm nút "Run workflow" thủ công trên GitHub Actions bất kỳ lúc nào
 
 jobs:

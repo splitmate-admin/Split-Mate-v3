@@ -1188,3 +1188,25 @@ Mỗi khi triển khai một tính năng hoặc thay đổi mới:
 
 
 
+
+- **16/09/2026 (Bổ sung Đa Ngôn Ngữ Tiếng Anh & Hỗ Trợ Đa Tiền Tệ Toàn Cầu)**:
+  - **Mục tiêu**: Cho phép người dùng chuyển đổi linh hoạt giao diện giữa Tiếng Việt và Tiếng Anh, đồng thời hỗ trợ các đồng tiền tệ quốc tế phổ biến (VND, USD, EUR, JPY, KRW, THB, SGD) cho từng nhóm chi tiêu.
+  - **Kiến trúc & Tiện ích (`src/utils/i18n.ts`)**:
+    - Cung cấp hook `useTranslation` lưu trạng thái ngôn ngữ trên `localStorage` và phát sự kiện đồng bộ `splitmate_language_change` trên toàn app.
+    - Bảng cấu hình `SUPPORTED_CURRENCIES` và hàm định dạng `formatCurrencyAmount` theo chuẩn `Intl.NumberFormat`, tự động xử lý ký hiệu (trước/sau số) và số lượng chữ số thập phân phù hợp (VND, JPY, KRW làm tròn nguyên vẹn; USD, EUR, SGD hỗ trợ thập phân).
+  - **Tạo & Cài Đặt Nhóm**:
+    - Modal tạo nhóm mới (`CreateGroupModal.tsx`) tích hợp bộ chọn tiền tệ trực quan với quốc kỳ và mã tiền tệ.
+    - Modal Cài đặt nhóm (`SmartHeader.tsx`) cho phép Trưởng nhóm thay đổi đơn vị tiền tệ nhóm bất kỳ lúc nào và lưu trực tiếp vào cơ sở dữ liệu.
+    - Drawer Cá nhân tích hợp nút chuyển đổi ngôn ngữ 1-chạm giữa 🇻🇳 Tiếng Việt và 🇬🇧 English.
+  - **Đồng bộ hiển thị định dạng tiền tệ**:
+    - Thay thế các hàm `formatMoney` cục bộ trên toàn bộ các component: `ExpenseList.tsx`, `SettleUpSection.tsx`, `FundHistoryList.tsx`, `CloseCycleSection.tsx`, `PersonalStatementModal.tsx` và `StatsSection.tsx` sang sử dụng `formatCurrencyAmount` theo `activeGroup.currency`.
+- **16/09/2026 (Khắc phục triệt để lỗi Supabase bị khóa sau 7 ngày qua Vercel Cron & Tối ưu Keep-Alive)**:
+  - **Mục tiêu**: Ngăn chặn tình trạng cơ sở dữ liệu Supabase Free Tier tự động bị tạm dừng (Paused) sau 7 ngày không phát sinh tương tác.
+  - **Nguyên nhân**: GitHub Actions scheduled cron tự động bị tắt nếu repo không có commit trong 60 ngày; thiếu Vercel Cron trực tiếp và truy vấn cũ chưa kích hoạt sâu database engine.
+  - **Thực hiện**:
+    - **Cấu hình Vercel Cron (`vercel.json`)**: Bổ sung `crons` chạy mỗi ngày lúc 04:00 UTC (11:00 AM VN) ping vào `/api/keep-alive` trực tiếp từ hạ tầng Vercel vĩnh viễn, không phụ thuộc GitHub commits.
+    - **Nâng cấp API (`api/api-app.ts`)**: Tối ưu endpoint `/api/keep-alive` thực hiện `.select("id").limit(1)` trực tiếp vào bảng `groups` hoặc `leaders`, đảm bảo Supabase ghi nhận I/O và duy trì trạng thái ACTIVE 100%.
+    - **Nâng cấp GitHub Actions (`.github/workflows/supabase-keep-alive.yml`)**: Chuyển tần suất chạy sang hàng ngày `0 4 * * *` làm lớp phòng thủ dự phòng thứ hai.
+
+
+Integration: retained the 2026-09-17 keep-alive fixes; the complete VI/EN/zh-CN provider and VND-backed FX entry supersede the earlier partial i18n/group-currency display implementation. Existing raw expense amounts are not reinterpreted or migrated.

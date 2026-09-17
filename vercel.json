@@ -5,6 +5,12 @@
       "includeFiles": "{firebase-applet-config.json,groups_db.json,leaders_db.json,api/api-app.ts,src/**}"
     }
   },
+  "crons": [
+    {
+      "path": "/api/keep-alive",
+      "schedule": "0 4 * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",

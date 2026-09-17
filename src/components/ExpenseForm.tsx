@@ -1259,7 +1259,7 @@ export default function ExpenseForm({
               </p>
               <p className="text-[11px] text-slate-600">
                 {!activeQr.amount 
-                  ? ui('m63e90ef7f0') 
+                  ? ui('m63e90ef7f0')
                   : ui('m8223942914')}
                 <b className="text-indigo-700">{ui('m74c24b11c3')}</b> {ui('m2a44e3cc5b')}</p>
             </div>

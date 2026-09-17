@@ -657,7 +657,7 @@ export default function ExpenseList({
             <div className="text-left sm:text-right shrink-0">
               <p className="text-[11px] text-[#64748B] font-bold">
                 {selectedDate 
-                  ? ui('m99f9ca9ea4', { v0: selectedDayExpenses.length }) 
+                  ? ui('m99f9ca9ea4', { v0: selectedDayExpenses.length })
                   : ui('m99f9ca9ea4', { v0: navigatedMonthExpenses.length })}
               </p>
               {selectedDate && (
@@ -733,7 +733,7 @@ export default function ExpenseList({
           <p>{ui('md9e548586c')}</p>
           <p className="text-[10px] text-slate-400">
             {viewMode === "calendar" 
-              ? (selectedDate ? ui('m296fb5a80f') : ui('mf329ff1af8')) 
+              ? (selectedDate ? ui('m296fb5a80f') : ui('mf329ff1af8'))
               : ui('m4e0dbce5c3')}
           </p>
         </div>

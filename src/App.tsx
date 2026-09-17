@@ -3318,7 +3318,7 @@ export default function App() {
               </h2>
               <p className="text-[0.8125rem] sm:text-[0.6875rem] text-slate-500 mt-1.5 md:mt-1.5 leading-normal font-medium px-[10px] sm:px-0">
                 {isAdmin 
-                  ? ui('m344bf21e5e') 
+                  ? ui('m344bf21e5e')
                   : ui('m6d29bf6f10')}
               </p>
               {isAdmin && activeGroup && (

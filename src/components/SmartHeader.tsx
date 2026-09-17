@@ -679,7 +679,7 @@ export default function SmartHeader({
     ? (effectiveMember.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(effectiveMember.name)}`)
     : (user?.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(user?.email || "Guest")}`);
   const userEmail = effectiveMember 
-    ? (effectiveMember.email || (tryOfflineMode ? ui('m51b60aa2fe') : ui('m4a1d394772'))) 
+    ? (effectiveMember.email || (tryOfflineMode ? ui('m51b60aa2fe') : ui('m4a1d394772')))
     : (user?.email || ui('m5d85537a09'));
 
   const groupPlan = tryOfflineMode ? "TRY_OFFLINE" : (activeGroup?.plan || "FREE");

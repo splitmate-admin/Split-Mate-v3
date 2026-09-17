@@ -86,8 +86,8 @@ export default function DuHiOnboarding({
 
       await onBatchAddExpenses([fundExpense]);
       showToast(
-        ui('m006cde8ea1'), 
-        ui('m1a519d0bcc', { v0: new Intl.NumberFormat(getLocale()).format(totalAmount), v1: members.length }), 
+        ui('m006cde8ea1'),
+        ui('m1a519d0bcc', { v0: new Intl.NumberFormat(getLocale()).format(totalAmount), v1: members.length }),
         "success"
       );
     } catch (err) {

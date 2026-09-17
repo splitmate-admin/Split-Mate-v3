@@ -339,8 +339,8 @@ export default function SettleUpSection({
       };
       await onUpdateGroup(updatedGroup);
       setToastMsg({ 
-        get title() { return ui('m8572b96dff'); }, 
-        desc: ui('m01958f7e38', { v0: toM?.name || ui('m1c9742eddd') }), 
+        get title() { return ui('m8572b96dff'); },
+        desc: ui('m01958f7e38', { v0: toM?.name || ui('m1c9742eddd') }),
         type: "success" 
       });
       setIsOffsetBottomSheetOpen(false);

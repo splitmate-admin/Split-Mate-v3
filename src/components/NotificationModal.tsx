@@ -240,7 +240,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
         title: ui('m1f5339a77e', { v0: planName }),
         message: activeGroup.plan === "FREE"
           ? (isAdmin 
-              ? ui('m9f04c274fb') 
+              ? ui('m9f04c274fb')
               : ui('mdccbae9fc0'))
           : ui('m2ef3554958', { v0: activeGroup.name, v1: planName }),
         timestamp: activeGroup.createdAt || new Date().toISOString(),

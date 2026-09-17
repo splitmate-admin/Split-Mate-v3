@@ -815,7 +815,7 @@ export default function ParticipationSection({
                           }`}
                           title={
                             m.email 
-                              ? ui('mb9e6f2d2c7') 
+                              ? ui('mb9e6f2d2c7')
                               : ui('m00fe871c5d')
                           }
                         >

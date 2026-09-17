@@ -524,7 +524,7 @@ export default function FundHistoryList({
                         )}
                         <span>
                           {expense.description.includes("[Nhận Quỹ]") 
-                            ? ui('m5d9903dd63') 
+                            ? ui('m5d9903dd63')
                             : ui('me8c16a825f', { v0: getMemberNameOnly(expense.payerId) })}
                         </span>
                       </span>

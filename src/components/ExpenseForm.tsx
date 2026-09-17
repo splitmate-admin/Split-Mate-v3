@@ -1,3 +1,4 @@
+import { formatDisplayDate } from '../utils/dateUtils';
 import { errorMessage as localizeError } from '../i18n/core';
 import { getLocale } from '../i18n/core';
 import { ui } from '../i18n/core';
@@ -10,7 +11,7 @@ import { SUPPORTED_BANKS, generateBankDeepLink, VietQRData, parseVietQR, scanQrF
 import { BankAppSelectorModal } from "./BankAppSelectorModal";
 import { BankOption } from "../utils/banks";
 import { getMonthlyReceiptImageCount } from "../utils/receiptLimit";
-import { CURRENCIES, SupportedCurrency, parseMoney, convertToVnd, convertCustomSplit } from '../utils/money';
+import { CURRENCIES, SupportedCurrency, parseMoney, parseExchangeRate, convertToVnd, convertCustomSplit } from '../utils/money';
 import { useI18n } from '../i18n/I18nProvider';
 
 interface ExpenseFormProps {
@@ -76,6 +77,7 @@ export default function ExpenseForm({
   const { t, locale } = useI18n();
   const [currency, setCurrency] = useState<SupportedCurrency>('VND');
   const [rateInput, setRateInput] = useState('');
+  const [rateWasTyped, setRateWasTyped] = useState(false);
   const [quoteTime, setQuoteTime] = useState('');
   const [quoteSource, setQuoteSource] = useState('manual');
   const [rateLoading, setRateLoading] = useState(false);
@@ -91,7 +93,7 @@ export default function ExpenseForm({
       const quote = await response.json();
       if (!Number.isFinite(quote.rates?.[code]) || quote.rates[code] <= 0) throw new Error('FX_UNAVAILABLE');
       if (request !== rateRequest.current) return;
-      setRateInput(String(quote.rates[code])); setQuoteTime(quote.quotedAt); setQuoteSource(quote.source);
+      setRateWasTyped(false); setRateInput(String(quote.rates[code])); setQuoteTime(quote.quotedAt); setQuoteSource(quote.source);
     } catch { if (request === rateRequest.current) setRateFailed(true); }
     finally { if (request === rateRequest.current) setRateLoading(false); }
   };
@@ -206,7 +208,7 @@ export default function ExpenseForm({
   useEffect(() => {
     if (editingExpense) {
       if (editingExpense.id !== lastEditingId) {
-        ++rateRequest.current; setRateLoading(false);
+        ++rateRequest.current; setRateLoading(false); setRateWasTyped(false);
         setDescription(editingExpense.description);
         setCurrency(editingExpense.fx?.currency || 'VND');
         setRateInput(editingExpense.fx ? String(editingExpense.fx.rateToVnd) : '');
@@ -744,7 +746,7 @@ export default function ExpenseForm({
   // Safe numerical parser
   const getAmountNumber = () => {
     const original = parseMoney(amountStr, currency);
-    const rate = currency === 'VND' ? 1 : Number(rateInput.replace(',', '.'));
+    const rate = currency === 'VND' ? 1 : (parseExchangeRate(rateInput, rateWasTyped) ?? 0);
     if (original === null || original <= 0) return 0;
     try { return convertToVnd(original, rate); } catch { return 0; }
   };
@@ -886,7 +888,7 @@ export default function ExpenseForm({
     if (editingExpense) {
       const updatedExpense: Expense = {
         ...editingExpense,
-        fx: currency === 'VND' ? undefined : { currency, originalAmount: parseMoney(amountStr, currency)!, rateToVnd: Number(rateInput.replace(',', '.')), quotedAt: quoteTime || new Date().toISOString(), source: quoteSource },
+        fx: currency === 'VND' ? undefined : { currency, originalAmount: parseMoney(amountStr, currency)!, rateToVnd: (parseExchangeRate(rateInput, rateWasTyped) ?? 0), quotedAt: quoteTime || new Date().toISOString(), source: quoteSource },
         id: editingExpense.id,
         description: trimmedDesc,
         amount,
@@ -919,7 +921,7 @@ export default function ExpenseForm({
       });
     } else {
       const newExpense: Expense = {
-        fx: currency === 'VND' ? undefined : { currency, originalAmount: parseMoney(amountStr, currency)!, rateToVnd: Number(rateInput.replace(',', '.')), quotedAt: quoteTime || new Date().toISOString(), source: quoteSource },
+        fx: currency === 'VND' ? undefined : { currency, originalAmount: parseMoney(amountStr, currency)!, rateToVnd: (parseExchangeRate(rateInput, rateWasTyped) ?? 0), quotedAt: quoteTime || new Date().toISOString(), source: quoteSource },
         id: "exp_" + Date.now(),
         description: trimmedDesc,
         amount,
@@ -1429,10 +1431,10 @@ export default function ExpenseForm({
               )}
               {currency !== 'VND' && <div className="space-y-1">
                 <label htmlFor="expense-fx-rate" className="text-xs text-slate-500">{t('rateToVnd', { currency })}</label>
-                <input id="expense-fx-rate" type="text" inputMode="decimal" value={rateInput} onChange={event => { ++rateRequest.current; setRateLoading(false); setRateInput(event.target.value); setQuoteSource('manual'); setQuoteTime(new Date().toISOString()); }} placeholder={t('exchangeRate')} className="w-full rounded-lg border border-slate-200 px-2 py-1 text-sm" />
+                <input id="expense-fx-rate" type="text" inputMode="decimal" value={rateInput} onChange={event => { ++rateRequest.current; setRateLoading(false); setRateWasTyped(true); setRateInput(event.target.value); setQuoteSource('manual'); setQuoteTime(new Date().toISOString()); }} placeholder={t('exchangeRate')} className="w-full rounded-lg border border-slate-200 px-2 py-1 text-sm" />
                 <button type="button" disabled={rateLoading} onClick={() => void refreshRate(currency)} className="text-xs font-semibold text-emerald-700">{t(rateLoading ? 'loadingRate' : 'updateRate')}</button>
                 {rateFailed && <p role="status" className="text-xs text-amber-700">{t('rateUnavailable')}</p>}
-                {quoteTime && <p className="text-xs text-slate-500">{quoteSource === 'manual' ? t('manualSource') : quoteSource} · {new Date(quoteTime).toLocaleDateString(locale)}</p>}
+                {quoteTime && <p className="text-xs text-slate-500">{quoteSource === 'manual' ? t('manualSource') : quoteSource} · {formatDisplayDate(quoteTime, quoteSource === 'manual' ? 'Asia/Ho_Chi_Minh' : 'UTC')}</p>}
                 <p className="text-xs text-slate-500">{t('convertedAmount', { amount: new Intl.NumberFormat(locale, { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(getAmountNumber()) })}</p>
                 {splitMode === 'custom' && <p className="text-xs text-slate-500">{t('splitInVnd')}</p>}
               </div>}

@@ -1,4 +1,4 @@
-import { formatDisplayDateTime } from '../utils/dateUtils';
+import { formatDisplayDateTime, formatDisplayDate } from '../utils/dateUtils';
 import { errorMessage as localizeError } from '../i18n/core';
 import { ui } from '../i18n/core';
 import React, { useState, useEffect } from "react";
@@ -457,7 +457,7 @@ export default function UpgradeModal({
                            
                            // Thời hạn nếu đang sử dụng
                            const fallbackExpiredAt = group.planExpiredAt || (group.createdAt ? new Date(parseFormattedDate(group.createdAt).getTime() + 365*24*60*60*1000).toISOString() : new Date("2027-07-14T00:00:00.000Z").toISOString());
-                           const expireDateFormatted = formatDateTime(fallbackExpiredAt).split(" ")[1] || formatDateTime(fallbackExpiredAt);
+                           const expireDateFormatted = formatDisplayDate(fallbackExpiredAt);
                            
                            return (
                              <div

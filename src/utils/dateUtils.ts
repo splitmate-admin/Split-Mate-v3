@@ -107,6 +107,15 @@ export const parseFormattedDate = (dateStr?: string): Date => {
   return new Date();
 };
 
+/** Date-only display; source calendar dates use UTC, business timestamps use Vietnam time. */
+export function formatDisplayDate(value?: string, timeZone = 'Asia/Ho_Chi_Minh'): string {
+  if (!value) return '';
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+  const date = new Date(dateOnly ? value + 'T00:00:00.000Z' : value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat(getLocale(), { timeZone: dateOnly ? 'UTC' : timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+}
+
 /** Display-only formatter. Internal timestamp parsing keeps its legacy contract. */
 export function formatDisplayDateTime(value?: string): string {
   if (!value || getLanguage() === 'vi') return formatDateTime(value);

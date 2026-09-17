@@ -1,7 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { activateLanguage } from '../i18n/core.js';
-import { formatDisplayDateTime, formatDateTime, parseFormattedDate } from './dateUtils.js';
+import { formatDisplayDate, formatDisplayDateTime, formatDateTime, parseFormattedDate } from './dateUtils.js';
+
+test('quote calendar dates stay UTC and expiry dates stay in Vietnam time', () => {
+  activateLanguage('en');
+  assert.equal(formatDisplayDate('2026-09-17T00:00:00.000Z', 'UTC'), '09/17/2026');
+  assert.equal(formatDisplayDate('2026-09-17', 'America/Los_Angeles'), '09/17/2026');
+  assert.equal(formatDisplayDate('2026-09-16T18:30:00Z'), '09/17/2026');
+  activateLanguage('vi');
+});
 
 test('date-only display does not move to the previous day', () => {
   activateLanguage('en');

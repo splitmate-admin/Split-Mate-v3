@@ -196,3 +196,6 @@
 
 
 Integration: retained the 2026-09-17 keep-alive fixes; the complete VI/EN/zh-CN provider and VND-backed FX entry supersede the earlier partial i18n/group-currency display implementation. Existing raw expense amounts are not reinterpreted or migrated.
+
+### C2C review corrections
+Manual rates now use grouping-aware parsing consistently; provider/stored numeric quotes retain full precision. Quote calendar dates display in UTC; plan expiry dates display in Vietnam time. Statement watermark timestamps use the active display locale. Regression suite: 11 tests.

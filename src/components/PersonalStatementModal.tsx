@@ -250,7 +250,7 @@ export default function PersonalStatementModal({
       time: new Date(latestPayment.updated_at).getTime(),
       amount: latestPayment.amount,
       description: latestPayment.description,
-      formattedTime: formatDateTime(latestPayment.updated_at)
+      formattedTime: formatDisplayDateTime(latestPayment.updated_at)
     };
   }, [statementItems]);
 

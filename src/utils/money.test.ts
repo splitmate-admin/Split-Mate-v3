@@ -1,6 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseMoney, convertToVnd, convertCustomSplit } from './money.ts';
+import { parseMoney, parseExchangeRate, convertToVnd, convertCustomSplit } from './money.ts';
+
+test('typed grouped rates cannot silently reduce the ledger by 1000 times', () => {
+  for (const input of ['25000', '25.000', '25,000', '25 000']) {
+    assert.equal(parseExchangeRate(input), 25000);
+    assert.equal(convertToVnd(12.5, parseExchangeRate(input)!), 312500);
+  }
+  for (const input of ['25.000,50', '25,000.50', '25000.50', '25000,50']) assert.equal(parseExchangeRate(input), 25000.5);
+  assert.equal(parseExchangeRate('2734.123', false), 2734.123);
+  for (const input of ['-1', '0', '1e3', '1,2,3', 'Infinity']) assert.equal(parseExchangeRate(input), null);
+});
 
 test('decimal and grouped amounts retain cents', () => {
   for (const value of ['1234.56', '1234,56', '1,234.56', '1.234,56']) assert.equal(parseMoney(value, 'USD'), 1234.56);

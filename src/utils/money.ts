@@ -5,6 +5,25 @@ export function currencyDecimals(currency: SupportedCurrency): number {
   return currency === 'VND' || currency === 'JPY' ? 0 : 2;
 }
 
+/** Typed rates accept conventional grouping. Provider/snapshot strings retain their exact decimals. */
+export function parseExchangeRate(input: string, typed = true): number | null {
+  const text = input.trim().replace(/[\s\u00a0\u202f]/g, '');
+  let normalized = text;
+  if (typed) {
+    if (/^\d{1,3}([.,]\d{3})+$/.test(text)) normalized = text.replace(/[.,]/g, '');
+    else if (text.includes('.') && text.includes(',')) {
+      const decimal = text.lastIndexOf('.') > text.lastIndexOf(',') ? '.' : ',';
+      const group = decimal === '.' ? ',' : '.';
+      const parts = text.split(decimal);
+      if (parts.length !== 2 || !new RegExp(`^\\d{1,3}(\\${group}\\d{3})+$`).test(parts[0]) || !/^\d+$/.test(parts[1])) return null;
+      normalized = parts[0].split(group).join('') + '.' + parts[1];
+    } else normalized = text.replace(',', '.');
+  }
+  if (!/^\d+(\.\d+)?$/.test(normalized)) return null;
+  const rate = Number(normalized);
+  return Number.isFinite(rate) && rate > 0 && rate <= Number.MAX_SAFE_INTEGER ? rate : null;
+}
+
 /** Accept decimal comma/dot and conventional grouping; reject ambiguous malformed input. */
 export function parseMoney(input: string, currency: SupportedCurrency): number | null {
   const text = input.trim().replace(/[\s\u00a0\u202f]/g, '');

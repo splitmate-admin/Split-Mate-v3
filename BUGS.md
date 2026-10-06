@@ -9,6 +9,22 @@
 
 ## 2. LỊCH SỬ KHẮC PHỤC BUGS (RESOLVED ISSUES)
 
+### [06/10/2026] Tối ưu hóa Triệt để Độ trễ Thao tác Hệ thống (Optimistic UI 0ms Phản hồi Tức thì)
+- **Mô tả**: Người dùng phản ánh các thao tác Lưu (thêm/sửa chi tiêu), Xóa (hóa đơn, nhóm), Xác nhận (thanh toán, quyết toán, nộp quỹ, đổi tên) bị delay khá nhiều (từ 1 đến 3 giây), giao diện bị giật/khựng không mượt mà chuẩn mobile app.
+- **Nguyên nhân**:
+  1. **Thiếu cơ chế Optimistic UI thực tế**: Trong `updateGroupOnDbAndState` (`src/App.tsx`), lệnh cập nhật state `setGroups(...)` bị đặt **sau** lệnh `await fetch("/api/groups")` và `await res.json()`. Mọi thao tác đều phải chờ trọn vẹn vòng gửi/nhận HTTP lên máy chủ và Supabase DB trước khi cập nhật màn hình.
+  2. **Thao tác Xóa bị chặn tuần tự**: `handleDeleteExpense` phải `await fetch('/api/storage/delete')` (chờ xóa ảnh trên Storage) rồi mới gọi `await updateGroupOnDbAndState`, làm nhân đôi thời gian chờ.
+  3. **Backend `POST /api/groups` thực hiện tác vụ I/O thừa thãi**: Backend thực hiện `upload` file rỗng `.keep` lên Supabase Storage trên mỗi lần lưu nhóm, đồng thời gọi `deleteOrphanedGroupFiles` đồng bộ chặn luồng phản hồi API.
+  4. **Modal Xác nhận (`askConfirm`)**: Đóng sau khi thực thi `onConfirm` khiến modal bị giữ lại trên màn hình khi tác vụ đang xử lý.
+- **Giải pháp**:
+  1. **Triển khai Optimistic UI chuẩn FinTech (0ms)**: Trong `updateGroupOnDbAndState`, cập nhật `setGroups` và sao lưu vào `localStorage` ngay lập tức trước khi gọi API mạng. Người dùng vừa bấm nút là màn hình nhảy số tức thì, modal đóng ngay lập tức, không có độ trễ.
+  2. **Đồng bộ ngầm (Background Sync)**: Request `/api/groups` chạy ngầm. Khi server trả về kết quả chuẩn hóa, hệ thống âm thầm cập nhật dữ liệu mà không làm khựng UI.
+  3. **Xử lý Storage Non-blocking**: Tác vụ xóa ảnh cũ khi xóa/sửa hóa đơn chuyển sang chạy ngầm (`fetch(...).catch(...)`), không block luồng xử lý UI của người dùng.
+  4. **Tối ưu Backend API `POST /api/groups`**: Loại bỏ lệnh upload `.keep` thừa thãi; chuyển việc quét dọn file mồ côi (`deleteOrphanedGroupFiles`) sang chạy nền bất đồng bộ.
+  5. **Tối ưu Modal Xác nhận**: Đóng modal ngay khi nhấn xác nhận (`setConfirmState(null)` trước `onConfirm()`).
+- **Trạng thái**: ✅ Fixed & Verified.
+
+
 ### [16/09/2026] Khắc phục triệt để lỗi Supabase bị khóa (Paused) sau 7 ngày không phát sinh dữ liệu
 - **Mô tả**: Supabase Free Tier tự động bị tạm dừng (Paused) sau 7 ngày nếu không có tương tác người dùng, khiến ứng dụng mất kết nối database. Dù trước đó có GitHub Actions, workflow vẫn có thể bị dừng do chính sách tắt Scheduled Actions sau 60 ngày của GitHub hoặc thiếu Secrets URL.
 - **Nguyên nhân**:

@@ -445,6 +445,18 @@ export default function App() {
   };
 
   const updateGroupOnDbAndState = async (updatedGroup: Group) => {
+    // 1. Phản hồi tức thì 0ms (Optimistic UI chuẩn FinTech)
+    setGroups((prev) => {
+      const next = prev.map((g) => (g.id === updatedGroup.id ? updatedGroup : g));
+      try {
+        localStorage.setItem("splitmate_groups", JSON.stringify(next));
+      } catch (e) {
+        // quota exceeded fallback
+      }
+      return next;
+    });
+
+    // 2. Đồng bộ ngầm lên máy chủ (Background Synchronization)
     if (user || memberAccessCodeUser) {
       try {
         const res = await fetch("/api/groups", {
@@ -458,18 +470,13 @@ export default function App() {
         if (!res.ok) throw new Error("API post fail");
         const data = await res.json();
         
-        // Optimistically update locally
-        setGroups((prev) => prev.map((g) => (g.id === updatedGroup.id ? data.group : g)));
+        // Cập nhật ngầm dữ liệu chuẩn từ server (nếu server có bổ sung data chuẩn)
+        if (data && data.group) {
+          setGroups((prev) => prev.map((g) => (g.id === updatedGroup.id ? { ...g, ...data.group } : g)));
+        }
       } catch (err) {
-        console.error("Server API save error, saving locally as backup:", err);
-        setGroups((prev) => {
-          const next = prev.map((g) => (g.id === updatedGroup.id ? updatedGroup : g));
-          localStorage.setItem("splitmate_groups", JSON.stringify(next));
-          return next;
-        });
+        console.error("Server API save error, data saved locally as backup:", err);
       }
-    } else {
-      setGroups((prev) => prev.map((g) => (g.id === updatedGroup.id ? updatedGroup : g)));
     }
   };
 
@@ -1063,8 +1070,8 @@ export default function App() {
       title,
       message,
       onConfirm: () => {
-        onConfirm();
         setConfirmState(null);
+        onConfirm();
       }
     });
   };
@@ -1302,6 +1309,16 @@ export default function App() {
 
     const performDeletion = async () => {
       const remaining = groups.filter((g) => g.id !== groupId);
+      // 1. Cập nhật giao diện tức thì 0ms (Optimistic UI)
+      setGroups(remaining);
+      if (selectedGroupId === groupId) {
+        setSelectedGroupId(remaining[0]?.id || "");
+      }
+      try {
+        localStorage.setItem("splitmate_groups", JSON.stringify(remaining));
+      } catch (e) {}
+
+      // 2. Gửi xóa máy chủ ở background
       if (user) {
         try {
           const delRes = await fetch(`/api/groups/${groupId}`, { method: "DELETE" });
@@ -1315,18 +1332,9 @@ export default function App() {
             }
             throw new Error(errData.error || `Lỗi xóa nhóm từ máy chủ: ${text}`);
           }
-          setGroups(remaining);
-          if (selectedGroupId === groupId) {
-            setSelectedGroupId(remaining[0]?.id || "");
-          }
         } catch (err: any) {
           console.error(err);
-          showAlert("Lỗi xóa nhóm", err.message || "Gặp lỗi khi xóa nhóm.");
-        }
-      } else {
-        setGroups(remaining);
-        if (selectedGroupId === groupId) {
-          setSelectedGroupId(remaining[0]?.id || "");
+          showAlert("Lỗi xóa nhóm", err.message || "Gặp lỗi khi xóa nhóm trên máy chủ.");
         }
       }
     };
@@ -1354,9 +1362,11 @@ export default function App() {
       imageUrl: tempGroupImage || activeGroup.imageUrl
     };
 
+    // Đóng chế độ sửa tên ngay lập tức
+    setIsEditingGroupName(false);
+
     try {
       await updateGroupOnDbAndState(updatedGroup);
-      setIsEditingGroupName(false);
     } catch (err) {
       console.error(err);
       showAlert("Lỗi sửa nhóm", "Không thể cập nhật thông tin nhóm.");
@@ -1615,38 +1625,30 @@ export default function App() {
     }
     const expenseToDelete = (activeGroup.expenses || []).find((e) => e.id === expenseId);
     if (expenseToDelete?.receiptImage && expenseToDelete.receiptImage.startsWith("/api/receipt/view/")) {
-      try {
-        await fetch('/api/storage/delete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileUrl: expenseToDelete.receiptImage })
-        });
-      } catch (e) {
-        console.error("Lỗi khi xóa hóa đơn khi xóa chi phí:", e);
-      }
+      fetch('/api/storage/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileUrl: expenseToDelete.receiptImage })
+      }).catch((e) => console.error("Lỗi khi xóa ảnh hóa đơn chạy ngầm:", e));
     }
     const updated = {
       ...activeGroup,
       expenses: (activeGroup.expenses || []).filter((e) => e.id !== expenseId)
     };
-    await updateGroupOnDbAndState(updated);
     if (editingExpense?.id === expenseId) {
       setEditingExpense(null);
     }
+    await updateGroupOnDbAndState(updated);
   };
 
   const handleUpdateExpense = async (updatedExpense: Expense) => {
     const oldExpense = (activeGroup.expenses || []).find(e => e.id === updatedExpense.id);
     if (oldExpense?.receiptImage && oldExpense.receiptImage !== updatedExpense.receiptImage && oldExpense.receiptImage.startsWith("/api/receipt/view/")) {
-      try {
-        await fetch('/api/storage/delete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileUrl: oldExpense.receiptImage })
-        });
-      } catch (e) {
-        console.error("Lỗi khi xóa hóa đơn cũ khi cập nhật chi phí:", e);
-      }
+      fetch('/api/storage/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileUrl: oldExpense.receiptImage })
+      }).catch((e) => console.error("Lỗi khi xóa ảnh hóa đơn cũ chạy ngầm:", e));
     }
     
     const nowIso = new Date().toISOString();
@@ -1661,8 +1663,8 @@ export default function App() {
       ...activeGroup,
       expenses: (activeGroup.expenses || []).map((e) => (e.id === updatedExpense.id ? expenseWithEditor : e))
     };
-    await updateGroupOnDbAndState(updated);
     setEditingExpense(null);
+    await updateGroupOnDbAndState(updated);
   };
 
   const handleUpdateGroupConfig = async (config: any) => {

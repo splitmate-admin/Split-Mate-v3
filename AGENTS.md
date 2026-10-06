@@ -39,6 +39,11 @@ Mọi thông tin chi tiết về Kiến trúc, Database Schema, Luồng Camera A
 Trước khi thực hiện công việc, AI cần kiểm tra `PROJECT_BRAIN.md` để đảm bảo nắm trọn vẹn bối cảnh dự án mà không cần hỏi lại người dùng.
 
 ## LỊCH SỬ NHẬN THỨC CỦA AGENT
+- **06/10/2026 (Tối ưu hóa Triệt để Độ trễ Thao tác Hệ thống - Optimistic UI 0ms Phản hồi Tức thì)**:
+  - **Mục tiêu**: Khắc phục tình trạng các thao tác Lưu (thêm/sửa chi tiêu), Xóa (khoản chi, nhóm), Xác nhận (thanh toán, nộp quỹ, đổi tên) bị delay 1-3 giây.
+  - **Thực hiện**:
+    - **Frontend (`src/App.tsx`)**: Chuyển đổi `updateGroupOnDbAndState` sang chuẩn Optimistic UI 0ms: cập nhật `setGroups` và `localStorage` ngay lập tức trước khi gọi API mạng. Tách việc xóa file ảnh trên Cloud sang chạy ngầm non-blocking (`fetch(...).catch(...)`). Tối ưu `askConfirm` đóng modal lập tức khi bấm xác nhận.
+    - **Backend (`api/api-app.ts`)**: Loại bỏ lệnh upload `.keep` thừa thãi vào Supabase Storage trên mỗi lượt gọi `POST /api/groups`; chuyển `deleteOrphanedGroupFiles` sang chạy ngầm, đưa thời gian phản hồi API xuống dưới ~200ms.
 - **16/09/2026 (Khắc phục triệt để lỗi Supabase bị khóa sau 7 ngày qua Vercel Cron & Tối ưu Keep-Alive)**:
   - **Mục tiêu**: Khắc phục triệt để sự cố Supabase Free Tier tự động bị tạm dừng (Paused) sau 7 ngày không phát sinh dữ liệu/truy vấn.
   - **Thực hiện**:

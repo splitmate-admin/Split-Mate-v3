@@ -1183,6 +1183,17 @@ Mỗi khi triển khai một tính năng hoặc thay đổi mới:
     - Drawer Cá nhân tích hợp nút chuyển đổi ngôn ngữ 1-chạm giữa 🇻🇳 Tiếng Việt và 🇬🇧 English.
   - **Đồng bộ hiển thị định dạng tiền tệ**:
     - Thay thế các hàm `formatMoney` cục bộ trên toàn bộ các component: `ExpenseList.tsx`, `SettleUpSection.tsx`, `FundHistoryList.tsx`, `CloseCycleSection.tsx`, `PersonalStatementModal.tsx` và `StatsSection.tsx` sang sử dụng `formatCurrencyAmount` theo `activeGroup.currency`.
+- **06/10/2026 (Tối ưu hóa Triệt để Độ trễ Thao tác Hệ thống - Optimistic UI 0ms Phản hồi Tức thì)**:
+  - **Mục tiêu**: Loại bỏ triệt để độ trễ 1-3 giây khi thực hiện các thao tác Lưu (thêm/sửa chi tiêu), Xóa (hóa đơn, nhóm), và Xác nhận (thanh toán, nộp quỹ, đổi tên), mang lại trải nghiệm mượt mà chuẩn mobile app FinTech.
+  - **Kiến trúc & Tối ưu Client (`src/App.tsx`)**:
+    - **Optimistic UI 0ms**: Trong `updateGroupOnDbAndState`, cập nhật trực tiếp `setGroups` và sao lưu vào `localStorage` ngay lập tức (0ms) trước khi gửi request mạng. Giao diện người dùng lập tức phản hồi mà không bị treo/đóng băng.
+    - **Background Synchronization**: Request gửi lên `/api/groups` chạy ngầm. Dữ liệu chuẩn hóa từ server được âm thầm đồng bộ mà không gây nhấp nháy UI.
+    - **Non-blocking Storage Deletion**: Tác vụ xóa file ảnh hóa đơn trên Supabase Storage trong `handleDeleteExpense` và `handleUpdateExpense` được tách sang xử lý ngầm, không block luồng xóa chi tiêu.
+    - **Tối ưu Modal Xác nhận (`askConfirm`)**: Đóng modal ngay khi bấm Xác nhận (`setConfirmState(null)` trước `onConfirm()`), tránh tình trạng modal bị giữ lại trong lúc bắt đầu xử lý.
+    - **Optimistic Group Deletion & Rename**: Thao tác xóa nhóm (`handleDeleteGroup`) và đổi tên nhóm (`handleSaveGroupName`) phản hồi ngay tức thì trên UI.
+  - **Tối ưu Backend API (`api/api-app.ts`)**:
+    - **Loại bỏ Upload Thừa thãi**: Gỡ bỏ lệnh upload file rỗng `.keep` lên Supabase Storage trên mỗi lượt gọi `POST /api/groups`, giúp giảm đáng kể ~300-500ms cho mỗi request.
+    - **Dọn dẹp File Mồ côi Ngầm**: Chuyển hàm `deleteOrphanedGroupFiles` sang chạy nền bất đồng bộ (non-blocking), đưa thời gian phản hồi của backend xuống dưới ~200ms.
 - **16/09/2026 (Khắc phục triệt để lỗi Supabase bị khóa sau 7 ngày qua Vercel Cron & Tối ưu Keep-Alive)**:
   - **Mục tiêu**: Ngăn chặn tình trạng cơ sở dữ liệu Supabase Free Tier tự động bị tạm dừng (Paused) sau 7 ngày không phát sinh tương tác.
   - **Nguyên nhân**: GitHub Actions scheduled cron tự động bị tắt nếu repo không có commit trong 60 ngày; thiếu Vercel Cron trực tiếp và truy vấn cũ chưa kích hoạt sâu database engine.

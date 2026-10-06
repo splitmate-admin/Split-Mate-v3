@@ -3248,15 +3248,18 @@ Lưu ý quan trọng:
 
       let saveResult = false;
       if (supabaseDb) {
-        const oldGroup = await supabaseGetGroupById(group.id);
-        
         // Automatically check & convert base64 images to supabase urls on save too
         const { group: finalGroup } = await autoConvertGroupBase64Images(group);
         group = finalGroup;
-        
-        if (oldGroup) {
-          await deleteOrphanedGroupFiles(oldGroup, group);
-        }
+
+        // Cleanup orphaned files in background to prevent blocking response
+        supabaseGetGroupById(group.id).then((oldGroup) => {
+          if (oldGroup) {
+            deleteOrphanedGroupFiles(oldGroup, group).catch((err) =>
+              console.error("[SUPABASE] Lỗi dọn dẹp file rác ngầm:", err)
+            );
+          }
+        }).catch((err) => console.error("[SUPABASE] Lỗi lấy nhóm cũ để dọn rác:", err));
         
         saveResult = await supabaseSaveGroup(group);
       } else {
@@ -3272,16 +3275,6 @@ Lưu ý quan trọng:
 
       if (!saveResult) {
         return res.status(500).json({ error: "Lưu dữ liệu nhóm lên máy chủ thất bại (Có thể do chế độ Chỉ Đọc)." });
-      }
-
-      // Tự động tạo folder cho nhóm trong Supabase Storage
-      if (supabaseDb) {
-        try {
-          await supabaseDb.storage.from('Split Mate').upload(`${group.id}/.keep`, Buffer.from(''), { contentType: 'text/plain', upsert: true, cacheControl: "31536000" });
-          console.log(`[SUPABASE] Tạo folder cho nhóm ${group.id} thành công.`);
-        } catch (storageErr: any) {
-          console.error(`[SUPABASE] Lỗi tạo folder cho nhóm ${group.id}:`, storageErr);
-        }
       }
 
       return res.json({ success: true, group });

@@ -1183,6 +1183,18 @@ Mỗi khi triển khai một tính năng hoặc thay đổi mới:
     - Drawer Cá nhân tích hợp nút chuyển đổi ngôn ngữ 1-chạm giữa 🇻🇳 Tiếng Việt và 🇬🇧 English.
   - **Đồng bộ hiển thị định dạng tiền tệ**:
     - Thay thế các hàm `formatMoney` cục bộ trên toàn bộ các component: `ExpenseList.tsx`, `SettleUpSection.tsx`, `FundHistoryList.tsx`, `CloseCycleSection.tsx`, `PersonalStatementModal.tsx` và `StatsSection.tsx` sang sử dụng `formatCurrencyAmount` theo `activeGroup.currency`.
+- **06/10/2026 (Loại bỏ nút thao tác dư thừa trên Biên Lai Đã Duyệt)**:
+  - **Mục tiêu**: Loại bỏ 2 nút `[Chuyển về Chờ duyệt]` và `[Khấu trừ công nợ]` trên các thẻ biên lai đã có trạng thái `ĐÃ DUYỆT`, đảm bảo giao diện tinh gọn, không gây hiểu lầm và ngăn ngừa rủi ro trừ nợ 2 lần.
+  - **Thực hiện (`src/components/SettleUpSection.tsx`)**:
+    - Gỡ bỏ hoàn toàn khối hiển thị nút thao tác cho `rec.status === "approved"`.
+    - Thẻ biên lai đã duyệt hiển thị chuẩn Flat Minimalist: thông tin giao dịch, số tiền, badge xanh lá `ĐÃ DUYỆT` kèm mốc thời gian, nút xem ảnh phóng to và nút Thùng rác xóa biên lai cho Trưởng nhóm.
+- **06/10/2026 (Khắc phục triệt để lỗi Báo cáo PDF không khấu trừ các khoản Cấn Trừ Công Nợ)**:
+  - **Mục tiêu**: Đảm bảo báo cáo PDF xuất ra (kể cả sau khi Chốt Sổ hay ở kỳ hiện tại) luôn khấu trừ chính xác 100% các khoản cấn trừ công nợ trực tiếp đã duyệt, không bị hiển thị nợ gốc chưa cấn trừ.
+  - **Kiến trúc & Tối ưu Báo Cáo PDF (`src/App.tsx` & `CloseCycleSection.tsx`)**:
+    - **Tự động đối soát cấn trừ cho kỳ chốt sổ**: Trong `handleExportPDF` và `getReportHTML`, bổ sung tham số `archiveDebtOffsets`. Nếu xuất PDF cho một kỳ lưu trữ (archive cycle), hệ thống tự động tìm và trích xuất `cycle.archivedDebtOffsets` của kỳ đó; nếu xuất kỳ hiện tại, lấy `activeGroup.debtOffsets`.
+    - **Tính toán chuẩn xác 100%**: Truyền đầy đủ `targetDebtOffsets` vào `calculateBalances(members, targetExpenses, targetDebtOffsets)` và `simplifyDebts(members, targetExpenses, targetDebtOffsets)`. Số dư công nợ trong bảng Tổng kết và số tiền trong các Mã QR trả nợ đều được trừ sạch sẽ các khoản cấn trừ.
+    - **Cập nhật nút bấm trong `CloseCycleSection.tsx`**: Cả 2 nút "PDF Báo Cáo" và "Xuất PDF Kế Toán Kỳ Này" đều truyền `cycle.archivedDebtOffsets ?? cycle.debtOffsets`.
+    - **Bảng Kế Toán Cấn Trừ Minh Bạch**: Bổ sung bảng "CÁC KHOẢN CẤN TRỪ CÔNG NỢ ĐÃ THỰC HIỆN" (ghi rõ ngày, người cấn trừ, người nhận cấn trừ, số tiền trừ và ghi chú) hiển thị ngay dưới bảng Tổng Kết Công Nợ trong file PDF.
 - **06/10/2026 (Tối ưu hóa Triệt để Độ trễ Thao tác Hệ thống - Optimistic UI 0ms Phản hồi Tức thì)**:
   - **Mục tiêu**: Loại bỏ triệt để độ trễ 1-3 giây khi thực hiện các thao tác Lưu (thêm/sửa chi tiêu), Xóa (hóa đơn, nhóm), và Xác nhận (thanh toán, nộp quỹ, đổi tên), mang lại trải nghiệm mượt mà chuẩn mobile app FinTech.
   - **Kiến trúc & Tối ưu Client (`src/App.tsx`)**:

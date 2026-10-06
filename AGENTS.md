@@ -39,6 +39,15 @@ Mọi thông tin chi tiết về Kiến trúc, Database Schema, Luồng Camera A
 Trước khi thực hiện công việc, AI cần kiểm tra `PROJECT_BRAIN.md` để đảm bảo nắm trọn vẹn bối cảnh dự án mà không cần hỏi lại người dùng.
 
 ## LỊCH SỬ NHẬN THỨC CỦA AGENT
+- **06/10/2026 (Loại bỏ nút thao tác dư thừa trên Biên Lai Đã Duyệt)**:
+  - **Mục tiêu**: Loại bỏ 2 nút `[Chuyển về Chờ duyệt]` và `[Khấu trừ công nợ]` trên thẻ biên lai đã duyệt, ngăn ngừa rủi ro trừ tiền 2 lần và giữ giao diện sạch đẹp, tinh tế.
+  - **Thực hiện (`src/components/SettleUpSection.tsx`)**:
+    - Gỡ bỏ hoàn toàn khối 2 nút khi `rec.status === "approved"`. Thẻ biên lai đã duyệt hiển thị gọn gàng với badge `ĐÃ DUYỆT`, thời gian, nút xem ảnh và nút xóa cho Trưởng nhóm.
+- **06/10/2026 (Khắc phục lỗi Báo cáo PDF không khấu trừ các khoản Cấn Trừ Công Nợ sau khi Chốt Sổ)**:
+  - **Mục tiêu**: Đảm bảo báo cáo PDF xuất ra sau khi Chốt Sổ (hoặc kỳ hiện tại) luôn khấu trừ chính xác 100% các khoản cấn trừ công nợ, không hiển thị nợ gốc trước cấn trừ.
+  - **Thực hiện**:
+    - **Frontend (`src/App.tsx`)**: Bổ sung `archiveDebtOffsets` vào `getReportHTML` và `handleExportPDF`. Tự động đối soát trích xuất `cycle.archivedDebtOffsets` nếu xuất kỳ lưu trữ hoặc `activeGroup.debtOffsets` nếu xuất kỳ hiện tại. Truyền đầy đủ `targetDebtOffsets` vào `calculateBalances` và `simplifyDebts`. Bổ sung bảng kế toán "CÁC KHOẢN CẤN TRỪ CÔNG NỢ ĐÃ THỰC HIỆN" trong file PDF.
+    - **Modal Chốt Sổ (`src/components/CloseCycleSection.tsx`)**: Cập nhật cả 2 nút xuất PDF để truyền `cycle.archivedDebtOffsets ?? cycle.debtOffsets`.
 - **06/10/2026 (Tối ưu hóa Triệt để Độ trễ Thao tác Hệ thống - Optimistic UI 0ms Phản hồi Tức thì)**:
   - **Mục tiêu**: Khắc phục tình trạng các thao tác Lưu (thêm/sửa chi tiêu), Xóa (khoản chi, nhóm), Xác nhận (thanh toán, nộp quỹ, đổi tên) bị delay 1-3 giây.
   - **Thực hiện**:

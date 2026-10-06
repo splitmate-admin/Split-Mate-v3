@@ -16,7 +16,7 @@ import {
   User,
   Users
 } from "lucide-react";
-import { Group, Member, Expense, BillingCycle, getPlanLabel } from "../types";
+import { Group, Member, Expense, BillingCycle, DebtOffset, getPlanLabel } from "../types";
 import { calculateBalances } from "../utils/debtSimplifier";
 import { formatCurrencyAmount, useTranslation } from "../utils/i18n";
 
@@ -31,7 +31,7 @@ interface CloseCycleSectionProps {
   tryOfflineMode?: boolean;
   showAlert: (title: string, desc: string) => void;
   askConfirm: (title: string, desc: string, onConfirm: () => void) => void;
-  onGeneratePDFReport: (archiveExpenses?: Expense[], archiveCycleName?: string) => void;
+  onGeneratePDFReport: (archiveExpenses?: Expense[], archiveCycleName?: string, archiveDebtOffsets?: DebtOffset[]) => void;
   user?: any;
   memberAccessCodeUser?: any;
   setIsAdmin: (isAdmin: boolean) => void;
@@ -421,7 +421,7 @@ export default function CloseCycleSection({
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => onGeneratePDFReport(cycle.archivedExpenses ?? cycle.expenses, cycle.name)}
+                      onClick={() => onGeneratePDFReport(cycle.archivedExpenses ?? cycle.expenses, cycle.name, cycle.archivedDebtOffsets ?? (cycle as any).debtOffsets)}
                       className="text-[10px] font-black text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100/85 border border-indigo-100 py-1.5 px-3 rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-3xs"
                     >
                       <FileText className="w-3.5 h-3.5" />
@@ -570,7 +570,11 @@ export default function CloseCycleSection({
               type="button"
               onClick={() => {
                 setShowArchivedDetails(false);
-                onGeneratePDFReport(selectedArchivedCycle.archivedExpenses ?? selectedArchivedCycle.expenses, selectedArchivedCycle.name);
+                onGeneratePDFReport(
+                  selectedArchivedCycle.archivedExpenses ?? selectedArchivedCycle.expenses, 
+                  selectedArchivedCycle.name,
+                  selectedArchivedCycle.archivedDebtOffsets ?? (selectedArchivedCycle as any).debtOffsets
+                );
               }}
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs py-3 rounded-xl mt-4 cursor-pointer text-center flex items-center justify-center gap-1.5 transition-all active:scale-98"
             >

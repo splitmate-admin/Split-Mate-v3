@@ -1296,7 +1296,7 @@ export default function SettleUpSection({
                         {isApproved && (
                           <span className="bg-emerald-100 text-emerald-800 border border-emerald-300/80 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
                             <Check className="w-3 h-3 text-emerald-600" />
-                            ✅ Đã cấn trừ
+                            Đã cấn trừ
                           </span>
                         )}
                         {isRejected && (
@@ -1493,29 +1493,6 @@ export default function SettleUpSection({
                         className="flex-1 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-600 font-extrabold text-xs rounded-xl transition-all cursor-pointer"
                       >
                         Duyệt biên lai
-                      </button>
-                    </div>
-                  )}
-
-                  {rec.status === "approved" && isAdmin && (
-                    <div className="flex gap-2 border-t border-slate-50 pt-2 mt-0.5">
-                      <button
-                        type="button"
-                        onClick={() => handleResetReceiptToPending(rec.id)}
-                        className="flex-1 py-1.5 px-3 bg-slate-50 hover:bg-slate-100 active:scale-95 text-slate-600 font-bold text-[11px] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                        title="Chuyển trạng thái về chờ duyệt để duyệt lại"
-                      >
-                        <RefreshCw className="w-3 h-3" />
-                        Chuyển về Chờ duyệt
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleApproveReceipt(rec)}
-                        className="flex-1 py-1.5 px-3 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-700 font-bold text-[11px] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                        title="Khấu trừ công nợ ngay nếu trước đó chưa được trừ"
-                      >
-                        <CheckCircle2 className="w-3 h-3" />
-                        Khấu trừ công nợ
                       </button>
                     </div>
                   )}

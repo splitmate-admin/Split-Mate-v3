@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 // @ts-ignore
 import html2pdf from "html2pdf.js";
-import { Group, Member, Expense, PendingReceipt, Feedback, getPlanLabel } from "./types";
+import { Group, Member, Expense, PendingReceipt, DebtOffset, Feedback, getPlanLabel } from "./types";
 import { MOCK_GROUPS, MEMBER_COLORS, MEMBER_EMOJIS } from "./utils/mockData";
 import { calculateBalances, simplifyDebts } from "./utils/debtSimplifier";
 import { TEST_MEMBERS, TEST_EXPENSES } from "./vungTauTestData";
@@ -1788,7 +1788,12 @@ export default function App() {
     });
   };
 
-  const getReportHTML = async (archiveExpenses?: Expense[], archiveCycleName?: string, includeHistory: boolean = false) => {
+  const getReportHTML = async (
+    archiveExpenses?: Expense[], 
+    archiveCycleName?: string, 
+    includeHistory: boolean = false,
+    archiveDebtOffsets?: DebtOffset[]
+  ) => {
     if (!activeGroup) return document.createElement("div");
 
     const element = document.createElement("div");
@@ -1800,7 +1805,19 @@ export default function App() {
     const targetExpenses = Array.isArray(archiveExpenses) ? archiveExpenses : expenses;
     const cycleTitle = (typeof archiveCycleName === "string" && archiveCycleName) || activeGroup.currentCycleName || "Kỳ Hiện Tại";
     
-    const balances = calculateBalances(members, targetExpenses);
+    // Tìm kiếm kỳ lưu trữ tương ứng nếu đang xuất một kỳ đã chốt sổ
+    const matchedCycle = activeGroup?.billingCycles?.find((c) =>
+      (archiveCycleName && c.name === archiveCycleName) ||
+      (archiveExpenses && (c.archivedExpenses === archiveExpenses || c.expenses === archiveExpenses))
+    );
+
+    // Xác định chính xác các khoản cấn trừ công nợ áp dụng cho kỳ này
+    const targetDebtOffsets: DebtOffset[] = Array.isArray(archiveDebtOffsets)
+      ? archiveDebtOffsets
+      : (matchedCycle ? (matchedCycle.archivedDebtOffsets ?? (matchedCycle as any).debtOffsets ?? []) : (archiveExpenses ? [] : (activeGroup?.debtOffsets || [])));
+
+    // Tính toán số dư công nợ có khấu trừ đầy đủ cấn trừ công nợ
+    const balances = calculateBalances(members, targetExpenses, targetDebtOffsets);
     const debtsData = balances
       .map((b) => {
         const mem = members.find((m) => m.id === b.memberId)?.name || b.memberId;
@@ -1968,7 +1985,7 @@ export default function App() {
         }
       } else {
         // Mode 2: Pair-to-pair settlement fallback if Group Fund bank is not configured
-        const simplifiedTransactions = simplifyDebts(members, targetExpenses, activeGroup.debtOffsets);
+        const simplifiedTransactions = simplifyDebts(members, targetExpenses, targetDebtOffsets);
         if (simplifiedTransactions.length > 0) {
           const qrCardsPromises = simplifiedTransactions.map(async (tx) => {
             const debtor = members.find(m => m.id === tx.fromId);
@@ -2199,6 +2216,54 @@ export default function App() {
       }
     }
 
+    // Bảng chi tiết các khoản Cấn Trừ Công Nợ đã thực hiện trong kỳ (nếu có)
+    let debtOffsetsHtml = "";
+    const approvedOffsets = (targetDebtOffsets || []).filter((o) => o.status === "approved" || (!o.status && !!o.approvedAt));
+    if (approvedOffsets.length > 0) {
+      debtOffsetsHtml = `
+        <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); page-break-inside: avoid;">
+          <div style="background: #f0fdf4; padding: 14px 20px; border-bottom: 1px solid #bbf7d0; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="color: #166534; font-size: 14px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">
+              🤝 CÁC KHOẢN CẤN TRỪ CÔNG NỢ ĐÃ THỰC HIỆN (${approvedOffsets.length})
+            </h2>
+            <span style="font-size: 11px; background: #22c55e; color: #ffffff; font-weight: 700; padding: 2px 8px; border-radius: 9999px;">
+              Đã Khấu Trừ
+            </span>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+            <thead>
+              <tr style="background-color: #f8fafc; text-transform: uppercase; font-size: 10px; color: #64748b;">
+                <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0; width: 85px;">Ngày</th>
+                <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0;">Người cấn trừ</th>
+                <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0;">Người nhận cấn trừ</th>
+                <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0; width: 140px;">Ghi chú</th>
+                <th style="padding: 10px 16px; border-bottom: 1px solid #e2e8f0; text-align: right; width: 120px;">Số tiền trừ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${approvedOffsets.map((offset, i) => {
+                const fromMem = members.find((m) => m.id === offset.fromId)?.name || offset.fromId;
+                const toMem = members.find((m) => m.id === offset.toId)?.name || offset.toId;
+                const offsetDate = offset.approvedAt || offset.createdAt ? new Date(offset.approvedAt || offset.createdAt!).toLocaleDateString('vi-VN') : "-";
+                const rowBg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
+                return `
+                  <tr style="background-color: ${rowBg}; color: #1e293b; page-break-inside: avoid;">
+                    <td style="padding: 10px 16px; border-bottom: 1px solid #f1f5f9; white-space: nowrap;">${offsetDate}</td>
+                    <td style="padding: 10px 16px; border-bottom: 1px solid #f1f5f9; font-weight: 700; color: #0284c7;">${fromMem}</td>
+                    <td style="padding: 10px 16px; border-bottom: 1px solid #f1f5f9; font-weight: 700; color: #16a34a;">${toMem}</td>
+                    <td style="padding: 10px 16px; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 11px;">${offset.note || "Bù trừ nợ trực tiếp"}</td>
+                    <td style="padding: 10px 16px; text-align: right; border-bottom: 1px solid #f1f5f9; font-weight: 700; font-family: monospace; font-size: 13px; color: #059669; white-space: nowrap;">
+                      -${Math.round(offset.amount).toLocaleString('vi-VN')} đ
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
     element.innerHTML = `
       <div style="font-family: system-ui, -apple-system, sans-serif; color: #1e293b; max-width: 750px; margin: 0 auto; background: #ffffff; padding: 10px;">
         <div style="text-align: center; margin-bottom: 24px;">
@@ -2242,6 +2307,8 @@ export default function App() {
             </tbody>
           </table>
         </div>
+
+        ${debtOffsetsHtml}
 
         ${debtQrHtml}
 
@@ -2432,7 +2499,7 @@ export default function App() {
     }
   };
 
-  const handleExportPDF = async (archiveExpenses?: any, archiveCycleName?: any) => {
+  const handleExportPDF = async (archiveExpenses?: any, archiveCycleName?: any, archiveDebtOffsets?: any) => {
     let element: HTMLDivElement | null = null;
     let loadingDiv: HTMLDivElement | null = null;
     const originalScrollX = window.scrollX;
@@ -2466,8 +2533,9 @@ export default function App() {
 
       const cleanExpenses = Array.isArray(archiveExpenses) ? archiveExpenses : undefined;
       const cleanCycleName = typeof archiveCycleName === "string" ? archiveCycleName : undefined;
+      const cleanDebtOffsets = Array.isArray(archiveDebtOffsets) ? archiveDebtOffsets : undefined;
       
-      element = await getReportHTML(cleanExpenses, cleanCycleName, true);
+      element = await getReportHTML(cleanExpenses, cleanCycleName, true, cleanDebtOffsets);
       element.id = "pdf-export-element";
       
       const cycleTitle = cleanCycleName || activeGroup?.currentCycleName || "Ky_Hien_Tai";

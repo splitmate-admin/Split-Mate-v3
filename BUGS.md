@@ -9,6 +9,30 @@
 
 ## 2. LỊCH SỬ KHẮC PHỤC BUGS (RESOLVED ISSUES)
 
+### [06/10/2026] Loại bỏ nút thao tác dư thừa ("Khấu trừ công nợ" / "Chuyển về Chờ duyệt") trên Biên Lai Đã Duyệt
+- **Mô tả**: Khi biên lai chuyển khoản đã được Trưởng nhóm duyệt thành công và công nợ đã được khấu trừ, thẻ biên lai vẫn tiếp tục hiển thị 2 nút `[Chuyển về Chờ duyệt]` và `[Khấu trừ công nợ]`. Điều này gây hiểu lầm là tiền chưa được khấu trừ, đồng thời tiềm ẩn rủi ro người dùng bấm lại nút "Khấu trừ công nợ" dẫn đến tạo thêm giao dịch nộp quỹ trùng lặp (trừ tiền 2 lần).
+- **Nguyên nhân**: 2 nút này trước đây được thêm làm công cụ dự phòng khi còn luồng AI cũ (lúc AI tự đổi trạng thái sang đã duyệt mà chưa tạo giao dịch). Khi hệ thống đã hoàn thiện duyệt nguyên tử (vừa đổi trạng thái vừa tạo giao dịch nộp quỹ), 2 nút này không còn cần thiết nhưng vẫn chưa được gỡ bỏ.
+- **Giải pháp**:
+  - Gỡ bỏ hoàn toàn khối 2 nút `[Chuyển về Chờ duyệt]` và `[Khấu trừ công nợ]` khi `rec.status === "approved"`.
+  - Thẻ biên lai đã duyệt hiển thị tinh gọn, mỏng nhẹ chuẩn FinTech: huy hiệu xanh `ĐÃ DUYỆT`, thời gian, người gửi, số tiền, nút phóng to ảnh biên lai và nút Thùng rác xóa biên lai cho Trưởng nhóm.
+- **Trạng thái**: ✅ Fixed & Verified.
+
+
+### [06/10/2026] Khắc phục lỗi Báo cáo PDF sau khi Chốt Sổ không khấu trừ các khoản Cấn Trừ Công Nợ
+- **Mô tả**: Khi người dùng Chốt sổ và xuất báo cáo PDF (hoặc xuất PDF trực tiếp của nhóm có cấn trừ nợ), file PDF vẫn hiển thị nợ gốc trước khi cấn trừ, các khoản cấn trừ công nợ đã duyệt không được loại trừ ra khỏi tổng kết công nợ và mã QR thanh toán.
+- **Nguyên nhân**:
+  1. **Thiếu tham số cấn trừ trong hàm tạo PDF (`getReportHTML` tại `src/App.tsx`)**: Lệnh tính công nợ chỉ gọi `calculateBalances(members, targetExpenses)`, thiếu tham số thứ 3 `debtOffsets`. Do đó `calculateBalances` chỉ tính toán dựa trên chi tiêu thuần túy mà bỏ qua toàn bộ các khoản bù trừ nợ.
+  2. **Mất liên kết `archivedDebtOffsets` khi xuất kỳ đã chốt**: Khi chốt sổ, các khoản cấn trừ được lưu vào `cycle.archivedDebtOffsets` và mảng hoạt động `activeGroup.debtOffsets` bị reset về `[]`. Khi bấm xuất PDF từ `CloseCycleSection.tsx`, cả 2 nút chỉ truyền `archivedExpenses` mà không truyền `cycle.archivedDebtOffsets`.
+  3. **Thuật toán sinh QR trả nợ (`simplifyDebts`)**: Gọi nhầm `activeGroup.debtOffsets` (đã rỗng sau khi chốt sổ) thay vì cấn trừ của kỳ đang xuất.
+  4. **Thiếu bảng kế toán cấn trừ trên file PDF**: Không có danh sách đối soát các khoản cấn trừ công nợ đã thực hiện.
+- **Giải pháp**:
+  1. **Nâng cấp `getReportHTML` và `handleExportPDF`**: Bổ sung tham số `archiveDebtOffsets` và cơ chế tự động đối soát thông minh: nếu xuất một kỳ lưu trữ, tự động tìm và trích xuất `cycle.archivedDebtOffsets` của kỳ đó; nếu xuất kỳ hiện tại, lấy `activeGroup.debtOffsets`.
+  2. **Tính toán số dư chính xác 100%**: Truyền đầy đủ `targetDebtOffsets` vào `calculateBalances(members, targetExpenses, targetDebtOffsets)` và `simplifyDebts(members, targetExpenses, targetDebtOffsets)`.
+  3. **Cập nhật cả 2 nút xuất PDF trong `CloseCycleSection.tsx`**: Truyền `cycle.archivedDebtOffsets ?? cycle.debtOffsets`.
+  4. **Bổ sung Bảng Kế Toán Cấn Trừ Công Nợ**: Thêm bảng "CÁC KHOẢN CẤN TRỪ CÔNG NỢ ĐÃ THỰC HIỆN" (ghi rõ ngày, người cấn trừ, người nhận cấn trừ, số tiền khấu trừ và ghi chú) hiển thị ngay dưới bảng Tổng Kết Công Nợ trong file PDF.
+- **Trạng thái**: ✅ Fixed & Verified.
+
+
 ### [06/10/2026] Tối ưu hóa Triệt để Độ trễ Thao tác Hệ thống (Optimistic UI 0ms Phản hồi Tức thì)
 - **Mô tả**: Người dùng phản ánh các thao tác Lưu (thêm/sửa chi tiêu), Xóa (hóa đơn, nhóm), Xác nhận (thanh toán, quyết toán, nộp quỹ, đổi tên) bị delay khá nhiều (từ 1 đến 3 giây), giao diện bị giật/khựng không mượt mà chuẩn mobile app.
 - **Nguyên nhân**:

@@ -140,6 +140,7 @@ export interface DebtOffset {
   createdAt: string;
   approvedAt?: string;
   rejectedAt?: string;
+  note?: string;
 }
 
 export interface SimplifiedTransaction {
